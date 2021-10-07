@@ -1,15 +1,7 @@
-mod evaluator;
-mod expression;
-mod parser;
-mod token;
-mod tokenizer;
-mod value;
-mod visitor;
-
-use evaluator::Evaluate;
-use parser::Parse;
+use rocklang::evaluator::{Evaluate, Evaluator};
+use rocklang::parser::{Parse, Parser};
+use rocklang::tokenizer::{Tokenize, Tokenizer};
 use std::{env, fs};
-use tokenizer::Tokenize;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -20,15 +12,15 @@ fn main() {
 
     let source = fs::read_to_string(filename).expect("Error reading input file");
 
-    let mut tokenizer = tokenizer::Tokenizer::new(source);
+    let mut tokenizer = Tokenizer::new(source);
     let tokens = tokenizer.tokenize();
 
-    let mut parser = parser::Parser::new(tokens);
+    let mut parser = Parser::new(tokens);
     let ast = parser.parse();
 
     // let json = serde_json::to_string_pretty(&ast).unwrap();
     // println!("{}", json);
 
-    let mut evaluator = evaluator::Evaluator::new(ast);
+    let mut evaluator = Evaluator::new(ast);
     evaluator.evaluate();
 }

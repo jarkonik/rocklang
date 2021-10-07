@@ -44,84 +44,89 @@ impl Tokenizer {
     fn scan_token(&mut self) {
         let chr = self.advance();
         match chr {
-            ' ' | '\r' | '\t' => (),
-            '\n' => self.line += 1,
-            '<' => {
-                if self.advance() == '=' {
+            Some(' ' | '\r' | '\t') => (),
+            Some('\n') => self.line += 1,
+            Some('<') => {
+                if let Some('=') = self.advance() {
                     self.add_token(Token::LessOrEqual)
                 } else {
                     self.add_token(Token::Less)
                 }
             }
-            '>' => {
-                if self.advance() == '=' {
+            Some('>') => {
+                if let Some('=') = self.advance() {
                     self.add_token(Token::GreaterOrEqual)
                 } else {
                     self.add_token(Token::Greater)
                 }
             }
-            '(' => self.add_token(Token::LeftParen),
-            ')' => self.add_token(Token::RightParen),
-            '+' => self.add_token(Token::Plus),
-            '-' => self.add_token(Token::Minus),
-            '*' => self.add_token(Token::Asterisk),
-            '%' => self.add_token(Token::Percent),
-            '"' => self.string(),
-            '!' => {
-                if self.advance() == '=' {
+            Some('(') => self.add_token(Token::LeftParen),
+            Some(')') => self.add_token(Token::RightParen),
+            Some('+') => self.add_token(Token::Plus),
+            Some('-') => self.add_token(Token::Minus),
+            Some('*') => self.add_token(Token::Asterisk),
+            Some('%') => self.add_token(Token::Percent),
+            Some('"') => self.string(),
+            Some('!') => {
+                if let Some('=') = self.advance() {
                     self.add_token(Token::NotEqual);
                 } else {
                     self.add_token(Token::Exclamation);
                 }
             }
-            '|' => {
-                if self.advance() == '|' {
+            Some('|') => {
+                if let Some('|') = self.advance() {
                     self.add_token(Token::Or);
                 } else {
                     panic!("unexpected character {}", self.previous())
                 }
             }
-            '&' => {
-                if self.advance() == '&' {
+            Some('&') => {
+                if let Some('&') = self.advance() {
                     self.add_token(Token::And);
                 } else {
                     panic!("unexpected character {}", self.previous())
                 }
             }
-            '=' => match self.peek() {
-                '=' => {
+            Some('=') => match self.peek() {
+                Some('=') => {
                     self.add_token(Token::DoubleEqual);
                     self.advance();
                 }
-                '>' => {
+                Some('>') => {
                     self.add_token(Token::Arrow);
                     self.advance();
                 }
                 _ => self.add_token(Token::Equal),
             },
-            '{' => self.add_token(Token::LCurly),
-            '}' => self.add_token(Token::RCurly),
-            ',' => self.add_token(Token::Comma),
-            '/' => {
-                if self.match_char('/') {
-                    while self.peek() != '\n' && !self.at_end() {
+            Some('{') => self.add_token(Token::LCurly),
+            Some('}') => self.add_token(Token::RCurly),
+            Some(',') => self.add_token(Token::Comma),
+            Some('/') => {
+                if let Some('/') = self.peek() {
+                    while !matches!(self.peek(), Some('\n')) && !self.at_end() {
                         self.advance();
                     }
                 } else {
                     self.add_token(Token::Slash);
                 }
             }
-            c if c.is_alphabetic() => self.identifier(),
-            c if c.is_numeric() => self.numeric(),
-            c => panic!("Unexpected character '{}'", c),
+            Some(c) if c.is_alphabetic() => self.identifier(),
+            Some(c) if c.is_numeric() => self.numeric(),
+            Some(c) => panic!("Unexpected character '{}'", c),
+            _ => panic!("End of stream"),
         };
     }
 
     fn string(&mut self) {
         let mut literal = String::new();
 
-        while self.peek() != '"' {
-            literal.push(self.advance());
+        while !matches!(self.peek(), Some('"')) {
+            if let Some(chr) = self.advance() {
+                literal.push(chr);
+            } else {
+                break;
+            }
         }
         self.advance();
         self.add_token(Token::String(literal));
@@ -131,8 +136,13 @@ impl Tokenizer {
         let mut literal = String::new();
         literal.push(self.previous());
 
-        while self.peek().is_numeric() || self.peek() == '.' {
-            literal.push(self.advance());
+        while let Some(chr) = self.peek() {
+            if chr.is_numeric() || chr == '.' {
+                literal.push(chr);
+                self.advance();
+            } else {
+                break;
+            }
         }
 
         self.add_token(Token::Numeric(
@@ -144,8 +154,13 @@ impl Tokenizer {
         let mut literal = String::new();
         literal.push(self.previous());
 
-        while self.peek().is_alphanumeric() {
-            literal.push(self.advance());
+        while let Some(chr) = self.peek() {
+            if chr.is_alphanumeric() {
+                literal.push(chr);
+                self.advance();
+            } else {
+                break;
+            }
         }
 
         match literal.as_str() {
@@ -163,7 +178,7 @@ impl Tokenizer {
         self.tokens.push(token);
     }
 
-    fn advance(&mut self) -> char {
+    fn advance(&mut self) -> Option<char> {
         let chr = self.peek();
         self.current += 1;
         chr
@@ -174,21 +189,8 @@ impl Tokenizer {
         chr
     }
 
-    fn peek(&mut self) -> char {
-        let chr = self.source.chars().nth(self.current).unwrap();
-        chr
-    }
-
-    fn match_char(&mut self, expected: char) -> bool {
-        if self.at_end() {
-            return false;
-        }
-
-        if self.peek() != expected {
-            return false;
-        }
-
-        true
+    fn peek(&mut self) -> Option<char> {
+        self.source.chars().nth(self.current)
     }
 
     fn at_end(&self) -> bool {
