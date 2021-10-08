@@ -7,6 +7,7 @@ fn it_tokenizes_all_tokens() {
 		"< > () + - * % \"test\" !  != || && = == => { } , / identifier identifier123 23123.321 123",
 	));
 	let tokens = tokenizer.tokenize();
+	assert_eq!(25, tokens.len());
 	assert_eq!(Token::Less, tokens[0]);
 	assert_eq!(Token::Greater, tokens[1]);
 	assert_eq!(Token::LeftParen, tokens[2]);
@@ -31,4 +32,5 @@ fn it_tokenizes_all_tokens() {
 	assert_eq!(Token::Identifier(String::from("identifier123")), tokens[21]);
 	assert_eq!(Token::Numeric(23123.321), tokens[22]);
 	assert_eq!(Token::Numeric(123.0), tokens[23]);
+	assert_eq!(Token::Eof, tokens[24]);
 }
