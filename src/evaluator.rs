@@ -214,7 +214,7 @@ impl Visitor<Value> for Evaluator {
                             self.locals.push(frame);
 
                             for stmt in &f.body {
-                                res = self.walk(&stmt);
+                                res = self.walk(stmt);
                             }
 
                             self.locals.pop();
