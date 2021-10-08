@@ -12,7 +12,7 @@ fn it_parses_addition() {
 		Token::Eof,
 	]);
 
-	let ast = parser.parse().body;
+	let ast = parser.parse().unwrap().body;
 	let json = serde_json::to_value(&ast).unwrap();
 
 	assert_json_eq!(

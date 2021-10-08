@@ -2,6 +2,20 @@ use crate::expression;
 use crate::expression::{Expression, Operator};
 use crate::token::Token;
 use serde::Serialize;
+use std::fmt;
+
+#[derive(Clone)]
+pub struct SyntaxError {
+    token: Token,
+}
+
+impl fmt::Debug for SyntaxError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Syntax error: unexpected token {}", self.token)
+    }
+}
+
+type Result<T> = std::result::Result<T, SyntaxError>;
 
 #[derive(Serialize, Clone)]
 pub struct Program {
@@ -9,7 +23,7 @@ pub struct Program {
 }
 
 pub trait Parse {
-    fn parse(&mut self) -> Program;
+    fn parse(&mut self) -> Result<Program>;
 }
 
 pub struct Parser {
@@ -18,14 +32,14 @@ pub struct Parser {
 }
 
 impl Parse for Parser {
-    fn parse(&mut self) -> Program {
+    fn parse(&mut self) -> Result<Program> {
         let mut statements: Vec<Expression> = Vec::new();
 
         while !self.at_end() {
-            statements.push(self.expression());
+            statements.push(self.expression()?);
         }
 
-        Program { body: statements }
+        Ok(Program { body: statements })
     }
 }
 
@@ -37,19 +51,23 @@ impl Parser {
         }
     }
 
-    fn expression(&mut self) -> Expression {
+    fn expression(&mut self) -> Result<Expression> {
         self.while_loop()
     }
 
-    fn while_loop(&mut self) -> Expression {
+    fn while_loop(&mut self) -> Result<Expression> {
         match self.peek() {
             Token::While => {
                 self.advance();
-                let predicate = self.expression();
+                let predicate = self.expression()?;
 
                 match self.advance() {
                     Token::LCurly => (),
-                    _ => panic!("unexpected token {}", self.previous()),
+                    _ => {
+                        return Err(SyntaxError {
+                            token: self.previous().clone(),
+                        })
+                    }
                 };
 
                 let mut body: Vec<Expression> = Vec::new();
@@ -60,29 +78,33 @@ impl Parser {
                         false
                     }
                     _ => {
-                        body.push(self.expression());
+                        body.push(self.expression()?);
                         true
                     }
                 } {}
 
-                Expression::While(expression::While {
+                Ok(Expression::While(expression::While {
                     predicate: Box::new(predicate),
                     body,
-                })
+                }))
             }
             _ => self.conditional(),
         }
     }
 
-    fn conditional(&mut self) -> Expression {
+    fn conditional(&mut self) -> Result<Expression> {
         match self.peek() {
             Token::If => {
                 self.advance();
-                let predicate = self.expression();
+                let predicate = self.expression()?;
 
                 match self.advance() {
                     Token::LCurly => (),
-                    _ => panic!("unexpected token {}", self.previous()),
+                    _ => {
+                        return Err(SyntaxError {
+                            token: self.previous().clone(),
+                        })
+                    }
                 };
 
                 let mut body: Vec<Expression> = Vec::new();
@@ -94,7 +116,7 @@ impl Parser {
                         false
                     }
                     _ => {
-                        body.push(self.expression());
+                        body.push(self.expression()?);
                         true
                     }
                 } {}
@@ -104,7 +126,11 @@ impl Parser {
 
                     match self.advance() {
                         Token::LCurly => (),
-                        _ => panic!("unexpected token {}", self.previous()),
+                        _ => {
+                            return Err(SyntaxError {
+                                token: self.previous().clone(),
+                            })
+                        }
                     };
 
                     while match self.peek() {
@@ -113,42 +139,42 @@ impl Parser {
                             false
                         }
                         _ => {
-                            else_body.push(self.expression());
+                            else_body.push(self.expression()?);
                             true
                         }
                     } {}
                 }
 
-                Expression::Conditional(expression::Conditional {
+                Ok(Expression::Conditional(expression::Conditional {
                     predicate: Box::new(predicate),
                     body,
                     else_body,
-                })
+                }))
             }
             _ => self.assignment(),
         }
     }
 
-    fn assignment(&mut self) -> Expression {
-        let mut expr = self.equality();
+    fn assignment(&mut self) -> Result<Expression> {
+        let mut expr = self.equality()?;
 
         while match self.peek() {
             Token::Equal => {
                 self.advance();
                 expr = Expression::Assignment(expression::Assignment {
                     left: Box::new(expr),
-                    right: Box::new(self.equality()),
+                    right: Box::new(self.equality()?),
                 });
                 true
             }
             _ => false,
         } {}
 
-        expr
+        Ok(expr)
     }
 
-    fn equality(&mut self) -> Expression {
-        let mut expr = self.term();
+    fn equality(&mut self) -> Result<Expression> {
+        let mut expr = self.term()?;
 
         while match self.peek() {
             Token::DoubleEqual => {
@@ -156,7 +182,7 @@ impl Parser {
                 expr = Expression::Binary(expression::Binary {
                     left: Box::new(expr),
                     operator: Operator::Equal,
-                    right: Box::new(self.term()),
+                    right: Box::new(self.term()?),
                 });
                 true
             }
@@ -165,7 +191,7 @@ impl Parser {
                 expr = Expression::Binary(expression::Binary {
                     left: Box::new(expr),
                     operator: Operator::NotEqual,
-                    right: Box::new(self.term()),
+                    right: Box::new(self.term()?),
                 });
                 true
             }
@@ -174,7 +200,7 @@ impl Parser {
                 expr = Expression::Binary(expression::Binary {
                     left: Box::new(expr),
                     operator: Operator::LessOrEqual,
-                    right: Box::new(self.term()),
+                    right: Box::new(self.term()?),
                 });
                 true
             }
@@ -183,18 +209,18 @@ impl Parser {
                 expr = Expression::Binary(expression::Binary {
                     left: Box::new(expr),
                     operator: Operator::Less,
-                    right: Box::new(self.term()),
+                    right: Box::new(self.term()?),
                 });
                 true
             }
             _ => false,
         } {}
 
-        expr
+        Ok(expr)
     }
 
-    fn term(&mut self) -> Expression {
-        let mut expr = self.factor();
+    fn term(&mut self) -> Result<Expression> {
+        let mut expr = self.factor()?;
 
         while match self.peek() {
             Token::Plus => {
@@ -202,7 +228,7 @@ impl Parser {
                 expr = Expression::Binary(expression::Binary {
                     left: Box::new(expr),
                     operator: Operator::Plus,
-                    right: Box::new(self.factor()),
+                    right: Box::new(self.factor()?),
                 });
                 true
             }
@@ -211,7 +237,7 @@ impl Parser {
                 expr = Expression::Binary(expression::Binary {
                     left: Box::new(expr),
                     operator: Operator::Minus,
-                    right: Box::new(self.factor()),
+                    right: Box::new(self.factor()?),
                 });
                 true
             }
@@ -220,18 +246,18 @@ impl Parser {
                 expr = Expression::Binary(expression::Binary {
                     left: Box::new(expr),
                     operator: Operator::Mod,
-                    right: Box::new(self.factor()),
+                    right: Box::new(self.factor()?),
                 });
                 true
             }
             _ => false,
         } {}
 
-        expr
+        Ok(expr)
     }
 
-    fn factor(&mut self) -> Expression {
-        let mut expr = self.unary();
+    fn factor(&mut self) -> Result<Expression> {
+        let mut expr = self.unary()?;
 
         while match self.peek() {
             Token::Asterisk => {
@@ -239,7 +265,7 @@ impl Parser {
                 expr = Expression::Binary(expression::Binary {
                     left: Box::new(expr),
                     operator: Operator::Asterisk,
-                    right: Box::new(self.unary()),
+                    right: Box::new(self.unary()?),
                 });
                 true
             }
@@ -248,30 +274,30 @@ impl Parser {
                 expr = Expression::Binary(expression::Binary {
                     left: Box::new(expr),
                     operator: Operator::Slash,
-                    right: Box::new(self.unary()),
+                    right: Box::new(self.unary()?),
                 });
                 true
             }
             _ => false,
         } {}
 
-        expr
+        Ok(expr)
     }
 
-    fn unary(&mut self) -> Expression {
+    fn unary(&mut self) -> Result<Expression> {
         match self.peek() {
             Token::Minus => {
                 self.advance();
-                Expression::Unary(expression::Unary {
+                Ok(Expression::Unary(expression::Unary {
                     operator: Operator::Minus,
-                    right: Box::new(self.unary()),
-                })
+                    right: Box::new(self.unary()?),
+                }))
             }
             _ => self.func_declr(),
         }
     }
 
-    fn func_declr(&mut self) -> Expression {
+    fn func_declr(&mut self) -> Result<Expression> {
         match self.peek() {
             Token::LeftParen => {
                 let current = self.current;
@@ -295,12 +321,20 @@ impl Parser {
 
                 match self.advance() {
                     Token::Arrow => (),
-                    _ => panic!("unexpected token {}", self.previous()),
+                    _ => {
+                        return Err(SyntaxError {
+                            token: self.previous().clone(),
+                        })
+                    }
                 }
 
                 match self.advance() {
                     Token::LCurly => (),
-                    _ => panic!("unexpected token {}", self.previous()),
+                    _ => {
+                        return Err(SyntaxError {
+                            token: self.previous().clone(),
+                        })
+                    }
                 }
 
                 let mut body: Vec<Expression> = Vec::new();
@@ -311,18 +345,18 @@ impl Parser {
                         false
                     }
                     _ => {
-                        body.push(self.expression());
+                        body.push(self.expression()?);
                         true
                     }
                 } {}
-                Expression::FuncDecl(expression::FuncDecl { body, params })
+                Ok(Expression::FuncDecl(expression::FuncDecl { body, params }))
             }
             _ => self.func_call(),
         }
     }
 
-    fn func_call(&mut self) -> Expression {
-        let mut expr = self.primary();
+    fn func_call(&mut self) -> Result<Expression> {
+        let mut expr = self.primary()?;
 
         while match self.peek() {
             Token::LeftParen => {
@@ -341,7 +375,7 @@ impl Parser {
                                 false
                             }
                             _ => {
-                                args.push(self.expression());
+                                args.push(self.expression()?);
                                 true
                             }
                         } {}
@@ -351,35 +385,47 @@ impl Parser {
                             args,
                         });
                     }
-                    _ => panic!("unexpected token {}", self.peek()),
+                    _ => {
+                        return Err(SyntaxError {
+                            token: self.peek().clone(),
+                        })
+                    }
                 }
 
                 true
             }
             _ => false,
         } {}
-        expr
+        Ok(expr)
     }
 
-    fn primary(&mut self) -> Expression {
+    fn primary(&mut self) -> Result<Expression> {
         match self.advance() {
-            Token::Numeric(val) => Expression::Numeric(*val),
+            Token::Numeric(val) => Ok(Expression::Numeric(*val)),
             Token::LeftParen => {
-                let expr = Expression::Grouping(Box::new(self.expression()));
+                let expr = Expression::Grouping(Box::new(self.expression()?));
 
                 match self.advance() {
                     Token::RightParen => (),
-                    _ => panic!("Unmatched paren"),
+                    _ => {
+                        return Err(SyntaxError {
+                            token: self.previous().clone(),
+                        })
+                    }
                 };
 
-                expr
+                Ok(expr)
             }
-            Token::Identifier(literal) => Expression::Identifier(literal.to_string()),
-            Token::String(literal) => Expression::String(literal.to_string()),
-            Token::True => Expression::Bool(true),
-            Token::False => Expression::Bool(false),
-            Token::Break => Expression::Break,
-            _ => panic!("unexpected token {}", self.previous()),
+            Token::Identifier(literal) => Ok(Expression::Identifier(literal.to_string())),
+            Token::String(literal) => Ok(Expression::String(literal.to_string())),
+            Token::True => Ok(Expression::Bool(true)),
+            Token::False => Ok(Expression::Bool(false)),
+            Token::Break => Ok(Expression::Break),
+            _ => {
+                return Err(SyntaxError {
+                    token: self.previous().clone(),
+                })
+            }
         }
     }
 
