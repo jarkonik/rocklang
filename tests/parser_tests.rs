@@ -34,3 +34,49 @@ fn it_parses_addition() {
 		json
 	)
 }
+
+#[test]
+fn it_parses_parentheses() {
+	let mut parser = Parser::new(&vec![
+		Token::LeftParen,
+		Token::Numeric(10.0),
+		Token::Plus,
+		Token::Numeric(2.0),
+		Token::RightParen,
+		Token::Slash,
+		Token::Numeric(3.0),
+		Token::Eof,
+	]);
+
+	let ast = parser.parse().unwrap().body;
+	let json = serde_json::to_value(&ast).unwrap();
+
+	assert_json_eq!(
+		json!(
+			[
+				{
+					"Binary": {
+						"left": {
+							"Grouping": {
+								"Binary": {
+									"left":{
+										"Numeric": 10.0
+									},
+									"operator": "Plus",
+									"right":{
+										"Numeric": 2.0
+									}
+								}
+							}
+						},
+						"operator":"Slash",
+						"right": {
+							"Numeric": 3.0
+						}
+					}
+				}
+			]
+		),
+		json
+	)
+}
