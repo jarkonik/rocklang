@@ -2,6 +2,7 @@ use crate::expression;
 use crate::expression::{Expression, Operator};
 use crate::token::Token;
 use serde::Serialize;
+use std::error::Error;
 use std::fmt;
 
 #[derive(Clone)]
@@ -9,11 +10,19 @@ pub struct SyntaxError {
     token: Token,
 }
 
+impl fmt::Display for SyntaxError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "TOKEN[{}]", self.token)
+    }
+}
+
 impl fmt::Debug for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Syntax error: unexpected token {}", self.token)
     }
 }
+
+impl Error for SyntaxError {}
 
 type Result<T> = std::result::Result<T, SyntaxError>;
 

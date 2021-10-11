@@ -1,10 +1,11 @@
-use rocklang::evaluator::{Evaluate, Evaluator};
-use rocklang::parser::SyntaxError;
+// use rocklang::evaluator::{Evaluate, Evaluator};
+use rocklang::compiler::{Compile, Compiler};
 use rocklang::parser::{Parse, Parser};
 use rocklang::tokenizer::{Tokenize, Tokenizer};
+use std::error::Error;
 use std::{env, fs};
 
-fn main() -> Result<(), SyntaxError> {
+fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         panic!("No input file provided");
@@ -22,7 +23,12 @@ fn main() -> Result<(), SyntaxError> {
     // let json = serde_json::to_string_pretty(&ast).unwrap();
     // println!("{}", json);
 
-    let mut evaluator = Evaluator::new(ast);
-    evaluator.evaluate();
+    // let mut evaluator = Evaluator::new(ast);
+    // evaluator.evaluate();
+
+    let mut compiler = Compiler::new(ast);
+    compiler.compile()?;
+    compiler.dump_ir();
+
     Ok(())
 }
