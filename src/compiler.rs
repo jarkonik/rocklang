@@ -81,8 +81,17 @@ impl Visitor<Value> for Compiler {
 		}
 	}
 
-	fn visit_while(&mut self, _: &expression::While) -> Value {
-		todo!()
+	fn visit_while(&mut self, expr: &expression::While) -> Value {
+		// self.context.create_basic_block("loop");
+		// let fun = self.builder.get_insert_block().get_parent();
+		// let preheader_block = self.builder.get_insert_block();
+		// let loop_block = self.context.append_basic_block(&fun, "loop");
+		// self.builder.position_builder_at_end(&loop_block);
+		for stmt in &expr.body {
+			self.walk(stmt);
+		}
+		// self.builder.create_br(&loop_block);
+		Value::Null
 	}
 
 	fn visit_identifier(&mut self, _: &str) -> Value {
@@ -118,7 +127,7 @@ impl Visitor<Value> for Compiler {
 		);
 		let sum_fun = self.module.add_function(MAIN_FUNCTION, sum_type);
 		let block = self.context.append_basic_block(&sum_fun, "entry");
-		self.builder.position_builder_at_end(block);
+		self.builder.position_builder_at_end(&block);
 
 		for stmt in program.body {
 			self.walk(&stmt);

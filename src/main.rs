@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut compiler = Compiler::new(ast);
     compiler.compile()?;
-    if (dump_ir) {
+    if dump_ir {
         compiler.dump_ir();
     }
 

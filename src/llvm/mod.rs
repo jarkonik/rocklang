@@ -73,7 +73,11 @@ impl Builder {
 		Builder(unsafe { LLVMCreateBuilderInContext(context.0) })
 	}
 
-	pub fn position_builder_at_end(&self, block: BasicBlock) {
+	pub fn create_br(&self, basic_block: &BasicBlock) -> Value {
+		Value(unsafe { LLVMBuildBr(self.0, basic_block.0) })
+	}
+
+	pub fn position_builder_at_end(&self, block: &BasicBlock) {
 		unsafe { LLVMPositionBuilderAtEnd(self.0, block.0) }
 	}
 
@@ -87,6 +91,10 @@ impl Builder {
 
 	pub fn build_ret_void(&self) -> Value {
 		Value(unsafe { LLVMBuildRetVoid(self.0) })
+	}
+
+	pub fn get_insert_block(&self) -> BasicBlock {
+		BasicBlock(unsafe { LLVMGetInsertBlock(self.0) })
 	}
 
 	pub fn build_call(&self, func: Value, args: &[Value], name: &str) -> Value {
@@ -170,6 +178,12 @@ impl Type {
 
 pub struct BasicBlock(*mut llvm::LLVMBasicBlock);
 
+impl BasicBlock {
+	pub fn get_parent(&self) -> Value {
+		Value(unsafe { LLVMGetBasicBlockParent(self.0) })
+	}
+}
+
 impl Context {
 	pub fn new() -> Self {
 		Context(unsafe { LLVMContextCreate() })
@@ -185,6 +199,10 @@ impl Context {
 
 	pub fn i8_type(&self) -> Type {
 		Type(unsafe { LLVMIntTypeInContext(self.0, 8) })
+	}
+
+	pub fn create_basic_block(&self, name: &str) -> BasicBlock {
+		BasicBlock(unsafe { LLVMCreateBasicBlockInContext(self.0, c_str(name).as_ptr()) })
 	}
 
 	pub fn append_basic_block(&self, function: &Value, name: &str) -> BasicBlock {
