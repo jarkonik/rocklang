@@ -19,75 +19,93 @@ pub struct Compiler {
 	builder: llvm::Builder,
 }
 
-impl Visitor<()> for Compiler {
-	fn visit_binary(&mut self, _: &expression::Binary) {
+enum Value {
+	Null,
+	String(llvm::Value),
+}
+
+impl Visitor<Value> for Compiler {
+	fn visit_binary(&mut self, _: &expression::Binary) -> Value {
 		todo!()
 	}
 
-	fn visit_numeric(&mut self, _: &f64) {
+	fn visit_numeric(&mut self, _: &f64) -> Value {
 		todo!()
 	}
 
-	fn visit_conditional(&mut self, _: &expression::Conditional) {
+	fn visit_conditional(&mut self, _: &expression::Conditional) -> Value {
 		todo!()
 	}
 
-	fn visit_assignment(&mut self, _: &expression::Assignment) {
+	fn visit_assignment(&mut self, _: &expression::Assignment) -> Value {
 		todo!()
 	}
 
-	fn visit_unary(&mut self, _: &expression::Unary) {
+	fn visit_unary(&mut self, _: &expression::Unary) -> Value {
 		todo!()
 	}
 
-	fn visit_grouping(&mut self, _: &expression::Expression) {
+	fn visit_grouping(&mut self, _: &expression::Expression) -> Value {
 		todo!()
 	}
 
-	fn visit_func_call(&mut self, _: &expression::FuncCall) {}
+	fn visit_func_call(&mut self, expr: &expression::FuncCall) -> Value {
+		match &*expr.calee {
+			expression::Expression::Identifier(literal) => match literal.as_str() {
+				"print" => {
+					if expr.args.len() != 1 {
+						panic!("arity 1 expected");
+					}
+					let res = self.walk(&expr.args[0]);
 
-	fn visit_while(&mut self, _: &expression::While) {
-		todo!()
-	}
+					match res {
+						Value::String(s) => {
+							let void_type = self.context.void_type();
+							let i8_pointer_type = self.context.i8_type().pointer_type(0);
+							let func_type =
+								llvm::FunctionType::new(void_type, &[i8_pointer_type], false);
+							let printf_func = self
+								.module
+								.get_function("printf")
+								.unwrap_or(self.module.add_function("printf", func_type));
+							self.builder.build_call(printf_func, &[s], "");
+						}
+						_ => panic!("type error, not a string"),
+					}
 
-	fn visit_identifier(&mut self, _: &str) {
-		todo!()
-	}
-
-	fn visit_string(&mut self, _: &str) {
-		todo!()
-	}
-
-	fn visit_bool(&mut self, _: &bool) {
-		todo!()
-	}
-
-	fn visit_break(&mut self) {
-		todo!()
-	}
-
-	fn visit_program(&mut self, program: parser::Program) {
-		for stmt in program.body {
-			self.walk(&stmt);
+					Value::Null
+				}
+				_ => panic!("undefined function"),
+			},
+			_ => panic!("evaluation error"),
 		}
 	}
 
-	fn visit_func_decl(&mut self, _: &expression::FuncDecl) {
+	fn visit_while(&mut self, _: &expression::While) -> Value {
 		todo!()
 	}
-}
 
-impl Compile for Compiler {
-	fn compile(&mut self) -> Result<(), Box<dyn Error>> {
-		self.create_sum_fn()?;
-		self.visit_program(self.program.clone());
-		self.engine.call(MAIN_FUNCTION);
-		Ok(())
+	fn visit_identifier(&mut self, _: &str) -> Value {
+		todo!()
 	}
-}
 
-impl Compiler {
-	fn create_sum_fn(&self) -> Result<(), Box<dyn Error>> {
+	fn visit_string(&mut self, expr: &str) -> Value {
+		let with_newlines = expr.to_string().replace("\\n", "\n");
+		Value::String(
+			self.builder
+				.build_global_string_ptr(with_newlines.as_str(), ""),
+		)
+	}
+
+	fn visit_bool(&mut self, _: &bool) -> Value {
+		todo!()
+	}
+
+	fn visit_break(&mut self) -> Value {
+		todo!()
+	}
+
+	fn visit_program(&mut self, program: parser::Program) -> Value {
 		let i64t = self.context.i64_type();
 		let sum_type = llvm::FunctionType::new(
 			i64t,
@@ -102,27 +120,33 @@ impl Compiler {
 		let block = self.context.append_basic_block(&sum_fun, "entry");
 		self.builder.position_builder_at_end(block);
 
-		let hello_world_str = self.builder.build_global_string_ptr("hello world\n", "");
-		let void_type = self.context.void_type();
-		let i8_pointer_type = self.context.i8_type().pointer_type(0);
-		let func_type = llvm::FunctionType::new(void_type, &[i8_pointer_type], false);
-		let log_func = self.module.add_function("printf", func_type);
-		self.builder.build_call(log_func, &[hello_world_str], "");
-
-		// let x = sum_fun.get_param(0);
-		// let y = sum_fun.get_param(1);
-		// let z = sum_fun.get_param(2);
-
-		// let sum = self.builder.build_add(x, y, "");
-		// let sum = self.builder.build_add(sum, z, "");
+		for stmt in program.body {
+			self.walk(&stmt);
+		}
 
 		self.builder.build_ret_void();
-
-		Ok(())
+		Value::Null
 	}
 
+	fn visit_func_decl(&mut self, _: &expression::FuncDecl) -> Value {
+		todo!()
+	}
+}
+
+impl Compile for Compiler {
+	fn compile(&mut self) -> Result<(), Box<dyn Error>> {
+		self.visit_program(self.program.clone());
+		Ok(())
+	}
+}
+
+impl Compiler {
 	pub fn dump_ir(&self) {
 		self.module.dump();
+	}
+
+	pub fn run(&self) {
+		self.engine.call(MAIN_FUNCTION);
 	}
 
 	pub fn new(program: Program) -> Self {

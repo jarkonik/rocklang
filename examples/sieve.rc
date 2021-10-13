@@ -1,1 +1,2 @@
-sum(1, 2, 3)
+print("Hello from JIT\n")
+print("Hello from JIT\n")

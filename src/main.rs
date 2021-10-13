@@ -28,7 +28,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut compiler = Compiler::new(ast);
     compiler.compile()?;
+    println!("=====BEGIN IR=====");
     compiler.dump_ir();
+    println!("======END IR======");
+
+    compiler.run();
 
     Ok(())
 }

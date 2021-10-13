@@ -135,6 +135,15 @@ impl Module {
 		Value(unsafe { LLVMAddFunction(self.0, c_str(name).as_ptr(), function_type.0) })
 	}
 
+	pub fn get_function(&self, name: &str) -> Option<Value> {
+		let fun = unsafe { LLVMGetNamedFunction(self.0, c_str(name).as_ptr()) };
+		if fun.is_null() {
+			None
+		} else {
+			Some(Value(fun))
+		}
+	}
+
 	pub fn dump(&self) {
 		unsafe { LLVMDumpModule(self.0) }
 	}
