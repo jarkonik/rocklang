@@ -12,6 +12,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let filename = &args[1];
 
+    let mut dump_ir = false;
+
+    for arg in std::env::args() {
+        match arg.as_str() {
+            "--ir" => dump_ir = true,
+            _ => (),
+        }
+    }
+
     let source = fs::read_to_string(filename).expect("Error reading input file");
 
     let mut tokenizer = Tokenizer::new(source);
@@ -28,9 +37,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut compiler = Compiler::new(ast);
     compiler.compile()?;
-    println!("=====BEGIN IR=====");
-    compiler.dump_ir();
-    println!("======END IR======");
+    if (dump_ir) {
+        compiler.dump_ir();
+    }
 
     compiler.run();
 
