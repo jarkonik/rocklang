@@ -82,15 +82,17 @@ impl Visitor<Value> for Compiler {
 	}
 
 	fn visit_while(&mut self, expr: &expression::While) -> Value {
-		// self.context.create_basic_block("loop");
-		// let fun = self.builder.get_insert_block().get_parent();
-		// let preheader_block = self.builder.get_insert_block();
-		// let loop_block = self.context.append_basic_block(&fun, "loop");
-		// self.builder.position_builder_at_end(&loop_block);
+		self.context.create_basic_block("loop");
+		let fun = self.builder.get_insert_block().get_parent();
+		let loop_block = self.context.append_basic_block(&fun, "loop");
+		self.builder.create_br(&loop_block);
+		self.builder.position_builder_at_end(&loop_block);
 		for stmt in &expr.body {
 			self.walk(stmt);
 		}
-		// self.builder.create_br(&loop_block);
+		self.builder.create_br(&loop_block);
+		let after_loop_block = self.context.append_basic_block(&fun, "afterloop");
+		self.builder.position_builder_at_end(&after_loop_block);
 		Value::Null
 	}
 
@@ -115,16 +117,8 @@ impl Visitor<Value> for Compiler {
 	}
 
 	fn visit_program(&mut self, program: parser::Program) -> Value {
-		let i64t = self.context.i64_type();
-		let sum_type = llvm::FunctionType::new(
-			i64t,
-			&[
-				self.context.i64_type(),
-				self.context.i64_type(),
-				self.context.i64_type(),
-			],
-			false,
-		);
+		let void_t = self.context.void_type();
+		let sum_type = llvm::FunctionType::new(void_t, &[], false);
 		let sum_fun = self.module.add_function(MAIN_FUNCTION, sum_type);
 		let block = self.context.append_basic_block(&sum_fun, "entry");
 		self.builder.position_builder_at_end(&block);
