@@ -274,6 +274,8 @@ impl Parser {
     fn func_declr(&mut self) -> Expression {
         match self.peek() {
             Token::LeftParen => {
+                let current = self.current;
+
                 self.advance();
 
                 let mut params: Vec<String> = Vec::new();
@@ -285,7 +287,10 @@ impl Parser {
                     }
                     Token::Comma => true,
                     Token::RightParen => false,
-                    _ => panic!("unexpected token {}", self.previous()),
+                    _ => {
+                        self.current = current;
+                        return self.func_call();
+                    }
                 } {}
 
                 match self.advance() {
