@@ -73,6 +73,14 @@ impl Builder {
 		Builder(unsafe { LLVMCreateBuilderInContext(context.0) })
 	}
 
+	pub fn build_alloca(&self, el_type: Type, name: &str) -> Value {
+		Value(unsafe { LLVMBuildAlloca(self.0, el_type.0, c_str(name).as_ptr()) })
+	}
+
+	pub fn build_malloc(&self, el_type: Type, name: &str) -> Value {
+		Value(unsafe { LLVMBuildMalloc(self.0, el_type.0, c_str(name).as_ptr()) })
+	}
+
 	pub fn create_br(&self, basic_block: &BasicBlock) -> Value {
 		Value(unsafe { LLVMBuildBr(self.0, basic_block.0) })
 	}
@@ -97,7 +105,11 @@ impl Builder {
 		BasicBlock(unsafe { LLVMGetInsertBlock(self.0) })
 	}
 
-	pub fn build_call(&self, func: Value, args: &[Value], name: &str) -> Value {
+	pub fn build_bitcast(&self, value: &Value, dest_type: Type, name: &str) -> Value {
+		Value(unsafe { LLVMBuildBitCast(self.0, value.0, dest_type.0, c_str(name).as_ptr()) })
+	}
+
+	pub fn build_call(&self, func: Value, args: &[&Value], name: &str) -> Value {
 		let mut args: Vec<*mut llvm::LLVMValue> = args.iter().map(|t| t.0).collect();
 
 		Value(unsafe {
@@ -167,7 +179,7 @@ impl Drop for Context {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Type(*mut llvm::LLVMType);
 
 impl Type {
@@ -193,6 +205,22 @@ impl Context {
 		Type(unsafe { LLVMInt64TypeInContext(self.0) })
 	}
 
+	pub fn array_type(&self, el_type: Type, el_count: u32) -> Type {
+		Type(unsafe { LLVMArrayType(el_type.0, el_count) })
+	}
+
+	pub fn i32_type(&self) -> Type {
+		Type(unsafe { LLVMInt32TypeInContext(self.0) })
+	}
+
+	pub fn float_type(&self) -> Type {
+		Type(unsafe { LLVMFloatTypeInContext(self.0) })
+	}
+
+	pub fn double_type(&self) -> Type {
+		Type(unsafe { LLVMDoubleTypeInContext(self.0) })
+	}
+
 	pub fn void_type(&self) -> Type {
 		Type(unsafe { LLVMVoidTypeInContext(self.0) })
 	}
@@ -209,6 +237,18 @@ impl Context {
 		BasicBlock(unsafe {
 			LLVMAppendBasicBlockInContext(self.0, function.0, c_str(name).as_ptr())
 		})
+	}
+
+	pub fn const_float(&self, value: f32) -> Value {
+		Value(unsafe { LLVMConstReal(self.float_type().0, value.into()) })
+	}
+
+	pub fn const_double(&self, value: f64) -> Value {
+		Value(unsafe { LLVMConstReal(self.double_type().0, value.into()) })
+	}
+
+	pub fn const_i32(&self, value: i32) -> Value {
+		Value(unsafe { LLVMConstInt(self.i32_type().0, value as u64, 0) })
 	}
 }
 

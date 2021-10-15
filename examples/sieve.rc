@@ -1,3 +1,2 @@
-while true {
-	print("Hello from JIT\n")
-}
+print(itoa(100000))
+print("\n")

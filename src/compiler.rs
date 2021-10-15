@@ -22,6 +22,7 @@ pub struct Compiler {
 enum Value {
 	Null,
 	String(llvm::Value),
+	Numeric(llvm::Value),
 }
 
 impl Visitor<Value> for Compiler {
@@ -29,8 +30,8 @@ impl Visitor<Value> for Compiler {
 		todo!()
 	}
 
-	fn visit_numeric(&mut self, _: &f64) -> Value {
-		todo!()
+	fn visit_numeric(&mut self, f: &f64) -> Value {
+		Value::Numeric(self.context.const_double(*f))
 	}
 
 	fn visit_conditional(&mut self, _: &expression::Conditional) -> Value {
@@ -68,14 +69,48 @@ impl Visitor<Value> for Compiler {
 								.module
 								.get_function("printf")
 								.unwrap_or(self.module.add_function("printf", func_type));
-							self.builder.build_call(printf_func, &[s], "");
+							self.builder.build_call(printf_func, &[&s], "");
 						}
 						_ => panic!("type error, not a string"),
 					}
 
 					Value::Null
 				}
-				_ => panic!("undefined function"),
+				"itoa" => {
+					if expr.args.len() != 1 {
+						panic!("arity 1 expected");
+					}
+					let res = self.walk(&expr.args[0]);
+
+					match res {
+						Value::Numeric(f) => {
+							let i8_pointer_type = self.context.i8_type().pointer_type(0);
+
+							let func_type = llvm::FunctionType::new(
+								i8_pointer_type,
+								&[i8_pointer_type, i8_pointer_type, self.context.double_type()],
+								true,
+							);
+							let sprintf = self
+								.module
+								.get_function("sprintf")
+								.unwrap_or(self.module.add_function("sprintf", func_type));
+
+							let arr_type = self.context.array_type(self.context.i8_type(), 100);
+
+							let format_str = self.builder.build_global_string_ptr("%f", "");
+
+							let arr = self.builder.build_alloca(arr_type, "");
+							self.builder
+								.build_call(sprintf, &[&arr, &format_str, &f], "");
+							Value::String(arr)
+						}
+						_ => panic!("type error, not a string"),
+					}
+				}
+				_ => {
+					panic!("undefined function")
+				}
 			},
 			_ => panic!("evaluation error"),
 		}
