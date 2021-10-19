@@ -55,16 +55,26 @@ impl Visitor<Value> for Compiler {
 
 	fn visit_conditional(&mut self, expr: &expression::Conditional) -> Value {
 		let fun = self.builder.get_insert_block().get_parent();
+
 		let then_block = self.context.append_basic_block(&fun, "then");
+		let else_block = self.context.append_basic_block(&fun, "else");
+		let after_if_block = self.context.append_basic_block(&fun, "afterif");
+
 		self.builder.create_br(&then_block);
 		self.builder.position_builder_at_end(&then_block);
 		for stmt in &expr.body {
 			self.walk(stmt);
 		}
-		let after_if_block = self.context.append_basic_block(&fun, "afterif");
-		self.builder.position_builder_at_end(&then_block);
 		self.builder.create_br(&after_if_block);
+
+		self.builder.position_builder_at_end(&else_block);
+		for stmt in &expr.else_body {
+			self.walk(stmt);
+		}
+		self.builder.create_br(&after_if_block);
+
 		self.builder.position_builder_at_end(&after_if_block);
+
 		Value::Null
 	}
 
