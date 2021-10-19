@@ -1,2 +1,6 @@
-print(itoa(100000))
-print("\n")
+i = 10000000000
+while true {
+	print(itoa(i))
+	print("\n")
+	i = i + 1
+}

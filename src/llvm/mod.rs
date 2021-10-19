@@ -1,5 +1,7 @@
 extern crate llvm_sys as llvm;
 
+use llvm_sys::analysis::*;
+use llvm_sys::transforms::util::LLVMAddPromoteMemoryToRegisterPass;
 use std::borrow::Cow;
 use std::ffi::CStr;
 use std::ffi::CString;
@@ -8,6 +10,7 @@ use std::mem;
 use llvm::core::*;
 use llvm::execution_engine::*;
 use llvm::target::*;
+use llvm::transforms::scalar::*;
 use std::convert::TryInto;
 
 pub(crate) fn c_str(mut s: &str) -> Cow<CStr> {
@@ -77,8 +80,28 @@ impl Builder {
 		Value(unsafe { LLVMBuildAlloca(self.0, el_type.0, c_str(name).as_ptr()) })
 	}
 
+	pub fn create_store(&self, val: Value, ptr: &Value) -> Value {
+		Value(unsafe { LLVMBuildStore(self.0, val.0, ptr.0) })
+	}
+
 	pub fn build_malloc(&self, el_type: Type, name: &str) -> Value {
 		Value(unsafe { LLVMBuildMalloc(self.0, el_type.0, c_str(name).as_ptr()) })
+	}
+
+	pub fn build_load(&self, ptr: &Value, name: &str) -> Value {
+		Value(unsafe { LLVMBuildLoad(self.0, ptr.0, c_str(name).as_ptr()) })
+	}
+
+	pub fn build_add(&self, lhs: Value, rhs: Value, name: &str) -> Value {
+		Value(unsafe { LLVMBuildAdd(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
+	}
+
+	pub fn build_fadd(&self, lhs: Value, rhs: Value, name: &str) -> Value {
+		Value(unsafe { LLVMBuildFAdd(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
+	}
+
+	pub fn build_free(&self, value: Value) -> Value {
+		Value(unsafe { LLVMBuildFree(self.0, value.0) })
 	}
 
 	pub fn create_br(&self, basic_block: &BasicBlock) -> Value {
@@ -87,10 +110,6 @@ impl Builder {
 
 	pub fn position_builder_at_end(&self, block: &BasicBlock) {
 		unsafe { LLVMPositionBuilderAtEnd(self.0, block.0) }
-	}
-
-	pub fn build_add(&self, lhs: Value, rhs: Value, name: &str) -> Value {
-		Value(unsafe { LLVMBuildAdd(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
 	}
 
 	pub fn build_ret(&self, value: Value) -> Value {
@@ -187,6 +206,40 @@ impl Type {
 		Type(unsafe { LLVMPointerType(self.0, address_space) })
 	}
 }
+
+pub struct PassManager(*mut llvm::LLVMPassManager);
+impl PassManager {
+	pub fn new(module: &Module) -> Self {
+		let prov = unsafe { LLVMCreateModuleProviderForExistingModule(module.0) };
+
+		let res = PassManager(unsafe { LLVMCreateFunctionPassManager(prov) });
+		unsafe {
+			LLVMAddInstructionCombiningPass(res.0);
+			LLVMAddReassociatePass(res.0);
+			LLVMAddGVNPass(res.0);
+			LLVMAddCFGSimplificationPass(res.0);
+			LLVMAddBasicAliasAnalysisPass(res.0);
+			LLVMAddPromoteMemoryToRegisterPass(res.0);
+			LLVMAddInstructionCombiningPass(res.0);
+			LLVMAddReassociatePass(res.0);
+			LLVMInitializeFunctionPassManager(res.0);
+		}
+		res
+	}
+
+	pub fn run(&self, fun: Value) {
+		unsafe {
+			if LLVMVerifyFunction(fun.0, LLVMVerifierFailureAction::LLVMAbortProcessAction) == -1 {
+				panic!("malformed fun");
+			}
+			if LLVMRunFunctionPassManager(self.0, fun.0) == 0 {
+				panic!("failed");
+			}
+		}
+	}
+}
+
+impl PassManager {}
 
 pub struct BasicBlock(*mut llvm::LLVMBasicBlock);
 

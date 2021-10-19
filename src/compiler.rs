@@ -1,8 +1,10 @@
 use crate::expression;
 use crate::llvm;
+use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
 use crate::visitor::Visitor;
+use std::collections::HashMap;
 use std::error::Error;
 
 const MAIN_FUNCTION: &str = "__main__";
@@ -17,17 +19,34 @@ pub struct Compiler {
 	context: llvm::Context,
 	module: llvm::Module,
 	builder: llvm::Builder,
+	vars: HashMap<String, Value>,
+	fpm: PassManager,
 }
 
+#[derive(Debug)]
 enum Value {
 	Null,
 	String(llvm::Value),
+	GlobalString(llvm::Value),
 	Numeric(llvm::Value),
+	Ptr(llvm::Value),
 }
 
 impl Visitor<Value> for Compiler {
-	fn visit_binary(&mut self, _: &expression::Binary) -> Value {
-		todo!()
+	fn visit_binary(&mut self, expr: &expression::Binary) -> Value {
+		let l = match self.walk(&expr.left) {
+			Value::Ptr(p) => p,
+			Value::Numeric(n) => n,
+			_ => panic!("panic"),
+		};
+
+		let r = match self.walk(&expr.right) {
+			Value::Ptr(p) => p,
+			Value::Numeric(n) => n,
+			_ => panic!("panic"),
+		};
+
+		Value::Numeric(self.builder.build_fadd(l, r, ""))
 	}
 
 	fn visit_numeric(&mut self, f: &f64) -> Value {
@@ -38,8 +57,33 @@ impl Visitor<Value> for Compiler {
 		todo!()
 	}
 
-	fn visit_assignment(&mut self, _: &expression::Assignment) -> Value {
-		todo!()
+	fn visit_assignment(&mut self, expr: &expression::Assignment) -> Value {
+		let val = self.walk(&expr.right);
+
+		match val {
+			Value::Numeric(n) => match &*expr.left {
+				expression::Expression::Identifier(literal) => {
+					let var = self.vars.get(literal);
+
+					match var {
+						Some(v) => match v {
+							Value::Ptr(p) => {
+								self.builder.create_store(n, p);
+							}
+							_ => panic!("panic"),
+						},
+						_ => {
+							let alloca = self.builder.build_alloca(self.context.double_type(), "");
+							self.vars.insert(literal.to_string(), Value::Ptr(alloca));
+						}
+					};
+
+					Value::Null
+				}
+				_ => panic!("Evaluation error"),
+			},
+			_ => panic!("not a numeric"),
+		}
 	}
 
 	fn visit_unary(&mut self, _: &expression::Unary) -> Value {
@@ -60,6 +104,18 @@ impl Visitor<Value> for Compiler {
 					let res = self.walk(&expr.args[0]);
 
 					match res {
+						Value::GlobalString(s) => {
+							let void_type = self.context.void_type();
+							let i8_pointer_type = self.context.i8_type().pointer_type(0);
+							let func_type =
+								llvm::FunctionType::new(void_type, &[i8_pointer_type], false);
+							let printf_func = self
+								.module
+								.get_function("printf")
+								.unwrap_or(self.module.add_function("printf", func_type));
+							let p = self.builder.build_bitcast(&s, i8_pointer_type, "");
+							self.builder.build_call(printf_func, &[&p], "");
+						}
 						Value::String(s) => {
 							let void_type = self.context.void_type();
 							let i8_pointer_type = self.context.i8_type().pointer_type(0);
@@ -69,7 +125,9 @@ impl Visitor<Value> for Compiler {
 								.module
 								.get_function("printf")
 								.unwrap_or(self.module.add_function("printf", func_type));
-							self.builder.build_call(printf_func, &[&s], "");
+							let p = self.builder.build_bitcast(&s, i8_pointer_type, "");
+							self.builder.build_call(printf_func, &[&p], "");
+							self.builder.build_free(s);
 						}
 						_ => panic!("type error, not a string"),
 					}
@@ -100,9 +158,18 @@ impl Visitor<Value> for Compiler {
 
 							let format_str = self.builder.build_global_string_ptr("%f", "");
 
-							let arr = self.builder.build_alloca(arr_type, "");
-							self.builder
-								.build_call(sprintf, &[&arr, &format_str, &f], "");
+							// 							/// CreateEntryBlockAlloca - Create an alloca instruction in the entry block of
+							// /// the function.  This is used for mutable variables etc.
+							// static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
+							//                                           const std::string &VarName) {
+							//   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
+							//                  TheFunction->getEntryBlock().begin());
+							//   return TmpB.CreateAlloca(Type::getDoubleTy(TheContext), 0,
+							//                            VarName.c_str());
+							let arr = self.builder.build_malloc(arr_type, "");
+							let p = self.builder.build_bitcast(&arr, i8_pointer_type, "");
+							self.builder.build_call(sprintf, &[&p, &format_str, &f], "");
+
 							Value::String(arr)
 						}
 						_ => panic!("type error, not a string"),
@@ -131,13 +198,16 @@ impl Visitor<Value> for Compiler {
 		Value::Null
 	}
 
-	fn visit_identifier(&mut self, _: &str) -> Value {
-		todo!()
+	fn visit_identifier(&mut self, expr: &str) -> Value {
+		match &self.vars[expr] {
+			Value::Ptr(n) => Value::Numeric(self.builder.build_load(n, "")),
+			_ => panic!("error"),
+		}
 	}
 
 	fn visit_string(&mut self, expr: &str) -> Value {
 		let with_newlines = expr.to_string().replace("\\n", "\n");
-		Value::String(
+		Value::GlobalString(
 			self.builder
 				.build_global_string_ptr(with_newlines.as_str(), ""),
 		)
@@ -163,6 +233,9 @@ impl Visitor<Value> for Compiler {
 		}
 
 		self.builder.build_ret_void();
+
+		self.fpm.run(sum_fun);
+
 		Value::Null
 	}
 
@@ -193,12 +266,16 @@ impl Compiler {
 		let builder = llvm::Builder::new(&context);
 		let engine = llvm::Engine::new(&module);
 
+		let fpm = llvm::PassManager::new(&module);
+
 		Compiler {
 			program,
 			context,
 			module,
 			builder,
 			engine,
+			vars: HashMap::new(),
+			fpm,
 		}
 	}
 }
