@@ -76,7 +76,7 @@ impl Builder {
 		Builder(unsafe { LLVMCreateBuilderInContext(context.0) })
 	}
 
-	pub fn build_cond_br(&self, iff: Value, then: BasicBlock, els: BasicBlock) -> Value {
+	pub fn build_cond_br(&self, iff: Value, then: &BasicBlock, els: &BasicBlock) -> Value {
 		Value(unsafe { LLVMBuildCondBr(self.0, iff.0, then.0, els.0) })
 	}
 
@@ -286,6 +286,10 @@ impl Context {
 		Type(unsafe { LLVMIntTypeInContext(self.0, 8) })
 	}
 
+	pub fn i1_type(&self) -> Type {
+		Type(unsafe { LLVMIntTypeInContext(self.0, 1) })
+	}
+
 	pub fn create_basic_block(&self, name: &str) -> BasicBlock {
 		BasicBlock(unsafe { LLVMCreateBasicBlockInContext(self.0, c_str(name).as_ptr()) })
 	}
@@ -310,6 +314,10 @@ impl Context {
 
 	pub fn const_i8(&self, value: i8) -> Value {
 		Value(unsafe { LLVMConstInt(self.i8_type().0, value as u64, 0) })
+	}
+
+	pub fn const_bool(&self, value: bool) -> Value {
+		Value(unsafe { LLVMConstInt(self.i1_type().0, if value { 1 } else { 0 }, 0) })
 	}
 }
 

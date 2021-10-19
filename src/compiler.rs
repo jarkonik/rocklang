@@ -60,7 +60,8 @@ impl Visitor<Value> for Compiler {
 		let else_block = self.context.append_basic_block(&fun, "else");
 		let after_if_block = self.context.append_basic_block(&fun, "afterif");
 
-		self.builder.create_br(&then_block);
+		self.builder
+			.build_cond_br(self.context.const_bool(false), &then_block, &else_block);
 		self.builder.position_builder_at_end(&then_block);
 		for stmt in &expr.body {
 			self.walk(stmt);
