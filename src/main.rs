@@ -39,9 +39,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     compiler.compile()?;
     if dump_ir {
         compiler.dump_ir();
+    } else {
+        compiler.run();
     }
-
-    compiler.run();
 
     Ok(())
 }

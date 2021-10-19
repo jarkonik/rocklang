@@ -53,8 +53,19 @@ impl Visitor<Value> for Compiler {
 		Value::Numeric(self.context.const_double(*f))
 	}
 
-	fn visit_conditional(&mut self, _: &expression::Conditional) -> Value {
-		todo!()
+	fn visit_conditional(&mut self, expr: &expression::Conditional) -> Value {
+		let fun = self.builder.get_insert_block().get_parent();
+		let then_block = self.context.append_basic_block(&fun, "then");
+		self.builder.create_br(&then_block);
+		self.builder.position_builder_at_end(&then_block);
+		for stmt in &expr.body {
+			self.walk(stmt);
+		}
+		let after_if_block = self.context.append_basic_block(&fun, "afterif");
+		self.builder.position_builder_at_end(&then_block);
+		self.builder.create_br(&after_if_block);
+		self.builder.position_builder_at_end(&after_if_block);
+		Value::Null
 	}
 
 	fn visit_assignment(&mut self, expr: &expression::Assignment) -> Value {
@@ -184,7 +195,6 @@ impl Visitor<Value> for Compiler {
 	}
 
 	fn visit_while(&mut self, expr: &expression::While) -> Value {
-		self.context.create_basic_block("loop");
 		let fun = self.builder.get_insert_block().get_parent();
 		let loop_block = self.context.append_basic_block(&fun, "loop");
 		self.builder.create_br(&loop_block);

@@ -303,6 +303,10 @@ impl Context {
 	pub fn const_i32(&self, value: i32) -> Value {
 		Value(unsafe { LLVMConstInt(self.i32_type().0, value as u64, 0) })
 	}
+
+	pub fn const_i8(&self, value: i8) -> Value {
+		Value(unsafe { LLVMConstInt(self.i8_type().0, value as u64, 0) })
+	}
 }
 
 impl Default for Context {
