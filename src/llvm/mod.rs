@@ -76,7 +76,7 @@ impl Builder {
 		Builder(unsafe { LLVMCreateBuilderInContext(context.0) })
 	}
 
-	pub fn build_cond_br(&self, iff: Value, then: &BasicBlock, els: &BasicBlock) -> Value {
+	pub fn build_cond_br(&self, iff: &Value, then: &BasicBlock, els: &BasicBlock) -> Value {
 		Value(unsafe { LLVMBuildCondBr(self.0, iff.0, then.0, els.0) })
 	}
 
@@ -102,6 +102,18 @@ impl Builder {
 
 	pub fn build_fadd(&self, lhs: Value, rhs: Value, name: &str) -> Value {
 		Value(unsafe { LLVMBuildFAdd(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
+	}
+
+	pub fn build_fcmp(&self, lhs: Value, rhs: Value, name: &str) -> Value {
+		Value(unsafe {
+			LLVMBuildFCmp(
+				self.0,
+				llvm::LLVMRealPredicate::LLVMRealOLE,
+				lhs.0,
+				rhs.0,
+				c_str(name).as_ptr(),
+			)
+		})
 	}
 
 	pub fn build_free(&self, value: Value) -> Value {
@@ -132,7 +144,7 @@ impl Builder {
 		Value(unsafe { LLVMBuildBitCast(self.0, value.0, dest_type.0, c_str(name).as_ptr()) })
 	}
 
-	pub fn build_call(&self, func: Value, args: &[&Value], name: &str) -> Value {
+	pub fn build_call(&self, func: &Value, args: &[&Value], name: &str) -> Value {
 		let mut args: Vec<*mut llvm::LLVMValue> = args.iter().map(|t| t.0).collect();
 
 		Value(unsafe {
@@ -174,7 +186,7 @@ impl Module {
 		}
 	}
 
-	pub fn add_function(&self, name: &str, function_type: FunctionType) -> Value {
+	pub fn add_function(&self, name: &str, function_type: Type) -> Value {
 		Value(unsafe { LLVMAddFunction(self.0, c_str(name).as_ptr(), function_type.0) })
 	}
 
@@ -231,7 +243,7 @@ impl PassManager {
 		res
 	}
 
-	pub fn run(&self, fun: Value) {
+	pub fn run(&self, fun: &Value) {
 		unsafe {
 			if LLVMVerifyFunction(fun.0, LLVMVerifierFailureAction::LLVMAbortProcessAction) == -1 {
 				panic!("malformed fun");
@@ -260,6 +272,18 @@ impl Context {
 
 	pub fn i64_type(&self) -> Type {
 		Type(unsafe { LLVMInt64TypeInContext(self.0) })
+	}
+
+	pub fn function_type(&self, return_type: Type, param_types: &[Type], is_var_arg: bool) -> Type {
+		let mut args: Vec<*mut llvm::LLVMType> = param_types.iter().map(|t| t.0).collect();
+		Type(unsafe {
+			LLVMFunctionType(
+				return_type.0,
+				args.as_mut_ptr(),
+				param_types.len().try_into().unwrap(),
+				if is_var_arg { 1 } else { 0 },
+			)
+		})
 	}
 
 	pub fn array_type(&self, el_type: Type, el_count: u32) -> Type {
@@ -328,18 +352,3 @@ impl Default for Context {
 }
 
 pub struct FunctionType(*mut llvm::LLVMType);
-
-impl FunctionType {
-	pub fn new(return_type: Type, param_types: &[Type], is_var_arg: bool) -> Self {
-		let mut args: Vec<*mut llvm::LLVMType> = param_types.iter().map(|t| t.0).collect();
-
-		FunctionType(unsafe {
-			LLVMFunctionType(
-				return_type.0,
-				args.as_mut_ptr(),
-				param_types.len().try_into().unwrap(),
-				if is_var_arg { 1 } else { 0 },
-			)
-		})
-	}
-}

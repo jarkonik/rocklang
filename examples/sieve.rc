@@ -1,6 +1,10 @@
-i = 0
-if true {
-	print(itoa(i))
-	print("\n")
-	i = i + 1
+memset = (arr, val, n) => {
+	i = 0
+	while i <= 1000 {
+		i = i + 1
+		print(itoa(i))
+		print("\n")
+	}
 }
+
+memset()
