@@ -71,6 +71,15 @@ impl Drop for Builder {
 	}
 }
 
+pub enum Cmp {
+	Less,
+	LessOrEqual,
+	Equal,
+	NotEqual,
+	Greater,
+	GreaterOrEqual,
+}
+
 impl Builder {
 	pub fn new(context: &Context) -> Self {
 		Builder(unsafe { LLVMCreateBuilderInContext(context.0) })
@@ -104,11 +113,18 @@ impl Builder {
 		Value(unsafe { LLVMBuildFAdd(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
 	}
 
-	pub fn build_fcmp(&self, lhs: Value, rhs: Value, name: &str) -> Value {
+	pub fn build_fcmp(&self, lhs: Value, rhs: Value, operator: Cmp, name: &str) -> Value {
 		Value(unsafe {
 			LLVMBuildFCmp(
 				self.0,
-				llvm::LLVMRealPredicate::LLVMRealOLE,
+				match operator {
+					Cmp::LessOrEqual => llvm::LLVMRealPredicate::LLVMRealOLE,
+					Cmp::Less => llvm::LLVMRealPredicate::LLVMRealOLT,
+					Cmp::GreaterOrEqual => llvm::LLVMRealPredicate::LLVMRealOGE,
+					Cmp::Greater => llvm::LLVMRealPredicate::LLVMRealOGT,
+					Cmp::Equal => llvm::LLVMRealPredicate::LLVMRealOEQ,
+					Cmp::NotEqual => llvm::LLVMRealPredicate::LLVMRealONE,
+				},
 				lhs.0,
 				rhs.0,
 				c_str(name).as_ptr(),

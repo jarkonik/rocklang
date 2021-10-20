@@ -1,10 +1,39 @@
 memset = (arr, val, n) => {
 	i = 0
-	while i <= 1000 {
+	while i < n {
+		arr = arrset(arr, i, val)
 		i = i + 1
-		print(itoa(i))
-		print("\n")
+	}
+	arr
+}
+
+sieve = (n) => {
+	prime = memset(arrnew(), true, n + 1)
+
+	p = 2
+
+	while p * p <= n {
+		if arrget(prime, p) {
+			i = p * p
+			while i <= n {
+				prime = arrset(prime, i, false)
+				i = i + p
+			}
+		}
+
+		p = p + 1
+	}
+
+	p = 2
+
+	while p <= n {
+		if arrget(prime, p) {
+			print(p)
+			print("\n")
+		}
+
+		p = p + 1
 	}
 }
 
-memset()
+sieve(7)

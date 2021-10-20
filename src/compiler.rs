@@ -66,7 +66,22 @@ impl Visitor<Value> for Compiler {
 					_ => panic!("panic"),
 				};
 
-				Value::Bool(self.builder.build_fcmp(l, r, ""))
+				Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::LessOrEqual, ""))
+			}
+			expression::Operator::Less => {
+				let l = match self.walk(&expr.left) {
+					Value::Ptr(p) => p,
+					Value::Numeric(n) => n,
+					_ => panic!("panic"),
+				};
+
+				let r = match self.walk(&expr.right) {
+					Value::Ptr(p) => p,
+					Value::Numeric(n) => n,
+					_ => panic!("panic"),
+				};
+
+				Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::Less, ""))
 			}
 			_ => todo!(),
 		}
