@@ -160,7 +160,7 @@ impl Builder {
 		Value(unsafe { LLVMBuildBitCast(self.0, value.0, dest_type.0, c_str(name).as_ptr()) })
 	}
 
-	pub fn build_call(&self, func: &Value, args: &[&Value], name: &str) -> Value {
+	pub fn build_call(&self, func: &Value, args: &[Value], name: &str) -> Value {
 		let mut args: Vec<*mut llvm::LLVMValue> = args.iter().map(|t| t.0).collect();
 
 		Value(unsafe {
@@ -181,7 +181,7 @@ impl Builder {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Value(*mut llvm::LLVMValue);
 
 impl Value {
