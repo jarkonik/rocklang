@@ -261,12 +261,8 @@ impl PassManager {
 
 	pub fn run(&self, fun: &Value) {
 		unsafe {
-			if LLVMVerifyFunction(fun.0, LLVMVerifierFailureAction::LLVMAbortProcessAction) == -1 {
-				panic!("malformed fun");
-			}
-			if LLVMRunFunctionPassManager(self.0, fun.0) == 0 {
-				panic!("failed");
-			}
+			LLVMVerifyFunction(fun.0, LLVMVerifierFailureAction::LLVMAbortProcessAction);
+			LLVMRunFunctionPassManager(self.0, fun.0);
 		}
 	}
 }

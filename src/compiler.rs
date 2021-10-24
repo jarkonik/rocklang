@@ -310,7 +310,17 @@ impl Visitor<Value> for Compiler {
 							.build_call(&self.builder.build_load(f, ""), &args, "");
 						Value::Null
 					}
-					_ => panic!("{} undefined", literal),
+					_ => {
+						let fun_type =
+							self.context
+								.function_type(self.context.void_type(), &[], false);
+						let fun = self
+							.module
+							.get_function(literal)
+							.unwrap_or(self.module.add_function(literal, fun_type));
+						self.builder.build_call(&fun, &[], "");
+						Value::Null
+					}
 				},
 			},
 			_ => panic!("evaluation error"),
