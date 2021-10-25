@@ -1,10 +1,8 @@
-#[no_mangle]
 pub extern "C" fn printd(x: f32) -> f32 {
     println!("{}", x);
     x
 }
 
-#[no_mangle]
 pub extern "C" fn vecnew() -> *const std::ffi::c_void {
     let vec: Vec<f64> = Vec::new();
     Box::into_raw(Box::new(vec)) as *mut std::ffi::c_void
