@@ -276,7 +276,7 @@ impl Visitor<Value> for Compiler {
 
 					Value::Null
 				}
-				"itoa" => {
+				"string" => {
 					if expr.args.len() != 1 {
 						panic!("arity 1 expected");
 					}

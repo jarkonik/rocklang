@@ -120,7 +120,7 @@ impl Visitor<Value> for Evaluator {
                     line.pop();
                     Value::String(line)
                 }
-                "itoa" => {
+                "string" => {
                     if expr.args.len() != 1 {
                         panic!("arity 1 expected");
                     }
