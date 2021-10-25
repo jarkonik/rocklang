@@ -1,8 +1,3 @@
-pub extern "C" fn printd(x: f32) -> f32 {
-    println!("{}", x);
-    x
-}
-
 pub extern "C" fn vecnew() -> *mut std::vec::Vec<f64> {
     let vec: Vec<f64> = Vec::new();
     Box::into_raw(Box::new(vec))
