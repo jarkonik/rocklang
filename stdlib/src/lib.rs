@@ -26,7 +26,7 @@ pub extern "C" fn vecget(vec: *mut Vec<f64>, idx: f64) -> f64 {
     val
 }
 
-pub extern "C" fn vecfree(vec: *mut Vec<f64>, idx: f64) {
+pub extern "C" fn vecfree(vec: *mut Vec<f64>) {
     unsafe {
         Box::from_raw(vec);
     }
