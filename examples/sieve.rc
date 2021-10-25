@@ -1,39 +1,7 @@
-memset = (arr, val, n) => {
-	i = 0
-	while i < n {
-		arr = arrset(arr, i, val)
-		i = i + 1
-	}
-	arr
-}
-
-sieve = (n) => {
-	prime = memset(arrnew(), true, n + 1)
-
-	p = 2
-
-	while p * p <= n {
-		if arrget(prime, p) {
-			i = p * p
-			while i <= n {
-				prime = arrset(prime, i, false)
-				i = i + p
-			}
-		}
-
-		p = p + 1
-	}
-
-	p = 2
-
-	while p <= n {
-		if arrget(prime, p) {
-			print(p)
-			print("\n")
-		}
-
-		p = p + 1
-	}
-}
-
-sieve(7)
+vec = vecnew()
+vec = vecset(vec, 0, 1)
+print(string(vecget(vec, 0)))
+print("\n")
+vec = vecset(vec, 0, 666)
+print(string(vecget(vec, 0)))
+print("\n")

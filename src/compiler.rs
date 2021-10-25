@@ -380,7 +380,37 @@ impl Visitor<Value> for Compiler {
 
 							Value::Vec(self.builder.build_call(&ptr, &args, ""))
 						}
-						_ => panic!("undefined function"),
+						"vecget" => {
+							let args: Vec<llvm::Value> = expr
+								.args
+								.iter()
+								.map(|arg| match self.walk(arg) {
+									Value::Vec(n) => self.builder.build_load(&n, ""),
+									Value::Numeric(n) => n.clone(),
+									_ => panic!("{:?}", self.walk(arg)),
+								})
+								.collect();
+
+							let fun_type = self.context.function_type(
+								self.context.double_type(),
+								&[
+									self.context.void_type().pointer_type(0),
+									self.context.double_type(),
+								],
+								false,
+							);
+
+							let fun_addr = unsafe {
+								std::mem::transmute::<*const (), u64>(stdlib::vecget as *const ())
+							};
+							let ptr = self.context.const_u64_to_ptr(
+								self.context.const_u64(fun_addr),
+								fun_type.pointer_type(0),
+							);
+
+							Value::Numeric(self.builder.build_call(&ptr, &args, ""))
+						}
+						_ => panic!("undefined function {}", literal),
 					},
 				},
 			},
