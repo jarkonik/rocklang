@@ -11,7 +11,7 @@ pub extern "C" fn vecnew() -> *mut std::vec::Vec<f64> {
 pub extern "C" fn vecset(vec: *mut Vec<f64>, idx: f64, value: f64) -> *mut std::vec::Vec<f64> {
     let mut v = unsafe { Box::from_raw(vec) };
 
-    while v.len() < (idx + 1.0) as usize {
+    while v.len() <= idx as usize {
         v.push(0.0);
     }
     v[idx as usize] = value;
