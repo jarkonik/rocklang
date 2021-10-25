@@ -60,6 +60,7 @@ enum Value {
 	Ptr(llvm::Value),
 	Bool(llvm::Value),
 	Function(llvm::Value),
+	Vec(llvm::Value),
 }
 
 impl Visitor<Value> for Compiler {
@@ -174,6 +175,27 @@ impl Visitor<Value> for Compiler {
 						self.set_var(literal, Value::Ptr(alloca));
 					}
 				};
+				Value::Null
+			}
+			Value::Vec(ptr) => {
+				let var = self.get_var(literal);
+
+				match var {
+					Some(v) => match v {
+						Value::Vec(p) => {
+							self.builder.create_store(ptr, &p);
+						}
+						_ => panic!("panic"),
+					},
+					_ => {
+						let alloca = self
+							.builder
+							.build_alloca(self.context.void_type().pointer_type(0), "");
+						self.builder.create_store(ptr, &alloca);
+						self.set_var(literal, Value::Vec(alloca));
+					}
+				};
+
 				Value::Null
 			}
 			Value::Function(f) => {
@@ -310,17 +332,56 @@ impl Visitor<Value> for Compiler {
 							.build_call(&self.builder.build_load(f, ""), &args, "");
 						Value::Null
 					}
-					_ => {
-						let fun_type =
-							self.context
-								.function_type(self.context.void_type(), &[], false);
-						let fun = self
-							.module
-							.get_function(literal)
-							.unwrap_or(self.module.add_function(literal, fun_type));
-						self.builder.build_call(&fun, &[], "");
-						Value::Null
-					}
+					_ => match literal.as_str() {
+						"vecnew" => {
+							let fun_type = self.context.function_type(
+								self.context.void_type().pointer_type(0),
+								&[],
+								false,
+							);
+
+							let fun_addr = unsafe {
+								std::mem::transmute::<*const (), u64>(stdlib::vecnew as *const ())
+							};
+							let ptr = self.context.const_u64_to_ptr(
+								self.context.const_u64(fun_addr),
+								fun_type.pointer_type(0),
+							);
+							Value::Vec(self.builder.build_call(&ptr, &[], ""))
+						}
+						"vecset" => {
+							let args: Vec<llvm::Value> = expr
+								.args
+								.iter()
+								.map(|arg| match self.walk(arg) {
+									Value::Vec(n) => self.builder.build_load(&n, ""),
+									Value::Numeric(n) => n.clone(),
+									_ => panic!("{:?}", self.walk(arg)),
+								})
+								.collect();
+
+							let fun_type = self.context.function_type(
+								self.context.void_type().pointer_type(0),
+								&[
+									self.context.void_type().pointer_type(0),
+									self.context.double_type(),
+									self.context.double_type(),
+								],
+								false,
+							);
+
+							let fun_addr = unsafe {
+								std::mem::transmute::<*const (), u64>(stdlib::vecset as *const ())
+							};
+							let ptr = self.context.const_u64_to_ptr(
+								self.context.const_u64(fun_addr),
+								fun_type.pointer_type(0),
+							);
+
+							Value::Vec(self.builder.build_call(&ptr, &args, ""))
+						}
+						_ => panic!("undefined function"),
+					},
 				},
 			},
 			_ => panic!("evaluation error"),
@@ -366,7 +427,10 @@ impl Visitor<Value> for Compiler {
 		match &self.get_var(expr) {
 			Some(Value::Ptr(n)) => Value::Numeric(self.builder.build_load(n, "")),
 			Some(Value::Numeric(n)) => Value::Numeric(n.clone()),
-			_ => Value::Numeric(self.context.const_float(0.0)),
+			Some(Value::Function(n)) => Value::Function(n.clone()),
+			Some(Value::Vec(n)) => Value::Vec(n.clone()),
+			None => Value::Null,
+			_ => todo!("{:?}", &self.get_var(expr)),
 		}
 	}
 

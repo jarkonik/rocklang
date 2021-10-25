@@ -286,6 +286,10 @@ impl Context {
 		Type(unsafe { LLVMInt64TypeInContext(self.0) })
 	}
 
+	pub fn const_u64_to_ptr(&self, val: Value, tp: Type) -> Value {
+		Value(unsafe { LLVMConstIntToPtr(val.0, tp.0) })
+	}
+
 	pub fn function_type(&self, return_type: Type, param_types: &[Type], is_var_arg: bool) -> Type {
 		let mut args: Vec<*mut llvm::LLVMType> = param_types.iter().map(|t| t.0).collect();
 		Type(unsafe {
@@ -322,6 +326,10 @@ impl Context {
 		Type(unsafe { LLVMIntTypeInContext(self.0, 8) })
 	}
 
+	pub fn u64_type(&self) -> Type {
+		Type(unsafe { LLVMIntTypeInContext(self.0, 64) })
+	}
+
 	pub fn i1_type(&self) -> Type {
 		Type(unsafe { LLVMIntTypeInContext(self.0, 1) })
 	}
@@ -350,6 +358,10 @@ impl Context {
 
 	pub fn const_i8(&self, value: i8) -> Value {
 		Value(unsafe { LLVMConstInt(self.i8_type().0, value as u64, 0) })
+	}
+
+	pub fn const_u64(&self, value: u64) -> Value {
+		Value(unsafe { LLVMConstInt(self.u64_type().0, value, 1) })
 	}
 
 	pub fn const_bool(&self, value: bool) -> Value {

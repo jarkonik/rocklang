@@ -5,9 +5,6 @@ use rocklang::tokenizer::{Tokenize, Tokenizer};
 use std::error::Error;
 use std::{env, fs};
 
-#[used]
-static EXTERNAL_FNS: [extern "C" fn(); 1] = [stdlib::hello];
-
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
