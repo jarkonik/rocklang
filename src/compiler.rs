@@ -356,7 +356,7 @@ impl Visitor<Value> for Compiler {
 								.map(|arg| match self.walk(arg) {
 									Value::Vec(n) => self.builder.build_load(&n, ""),
 									Value::Numeric(n) => n.clone(),
-									_ => panic!("{:?}", self.walk(arg)),
+									_ => todo!("{:?}", self.walk(arg)),
 								})
 								.collect();
 
