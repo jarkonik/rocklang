@@ -22,14 +22,17 @@ sieve = (n) => {
 
 	p = 2
 
+	counter = 0
+
 	while p < n {
 		if vecget(prime, p) == 1 {
-			print(string(p))
-			print("\n")
+			counter = counter + 1
 		}
 
 		p = p + 1
 	}
+	print(string(counter))
+	print("\n")
 }
 
-sieve(1000)
+sieve(100000000)
