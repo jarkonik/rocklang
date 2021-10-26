@@ -113,6 +113,10 @@ impl Builder {
 		Value(unsafe { LLVMBuildFAdd(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
 	}
 
+	pub fn build_fmul(&self, lhs: Value, rhs: Value, name: &str) -> Value {
+		Value(unsafe { LLVMBuildFMul(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
+	}
+
 	pub fn build_fcmp(&self, lhs: Value, rhs: Value, operator: Cmp, name: &str) -> Value {
 		Value(unsafe {
 			LLVMBuildFCmp(

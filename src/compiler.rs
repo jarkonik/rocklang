@@ -81,6 +81,21 @@ impl Visitor<Value> for Compiler {
 
 				Value::Numeric(self.builder.build_fadd(l, r, ""))
 			}
+			expression::Operator::Asterisk => {
+				let l = match self.walk(&expr.left) {
+					Value::Ptr(p) => p,
+					Value::Numeric(n) => n,
+					_ => panic!("panic"),
+				};
+
+				let r = match self.walk(&expr.right) {
+					Value::Ptr(p) => p,
+					Value::Numeric(n) => n,
+					_ => panic!("panic"),
+				};
+
+				Value::Numeric(self.builder.build_fmul(l, r, ""))
+			}
 			expression::Operator::LessOrEqual => {
 				let l = match self.walk(&expr.left) {
 					Value::Ptr(p) => p,
@@ -111,7 +126,22 @@ impl Visitor<Value> for Compiler {
 
 				Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::Less, ""))
 			}
-			_ => todo!(),
+			expression::Operator::Equal => {
+				let l = match self.walk(&expr.left) {
+					Value::Ptr(p) => p,
+					Value::Numeric(n) => n,
+					_ => panic!("panic"),
+				};
+
+				let r = match self.walk(&expr.right) {
+					Value::Ptr(p) => p,
+					Value::Numeric(n) => n,
+					_ => panic!("panic"),
+				};
+
+				Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::Equal, ""))
+			}
+			_ => todo!("{:?}", expr.operator),
 		}
 	}
 
@@ -146,7 +176,7 @@ impl Visitor<Value> for Compiler {
 
 				Value::Null
 			}
-			_ => panic!("type error"),
+			_ => todo!("{:?}", predicate),
 		}
 	}
 
@@ -328,9 +358,11 @@ impl Visitor<Value> for Compiler {
 							})
 							.collect();
 
-						self.builder
-							.build_call(&self.builder.build_load(f, ""), &args, "");
-						Value::Null
+						Value::Numeric(self.builder.build_call(
+							&self.builder.build_load(f, ""),
+							&args,
+							"",
+						))
 					}
 					_ => match literal.as_str() {
 						"vecnew" => {
@@ -459,7 +491,7 @@ impl Visitor<Value> for Compiler {
 			Some(Value::Numeric(n)) => Value::Numeric(n.clone()),
 			Some(Value::Function(n)) => Value::Function(n.clone()),
 			Some(Value::Vec(n)) => Value::Vec(n.clone()),
-			None => Value::Null,
+			None => panic!("undefined identifier {}", expr),
 			_ => todo!("{:?}", &self.get_var(expr)),
 		}
 	}
