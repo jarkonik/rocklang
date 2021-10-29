@@ -222,6 +222,15 @@ impl Parser {
                 });
                 true
             }
+            Token::Greater => {
+                self.advance();
+                expr = Expression::Binary(expression::Binary {
+                    left: Box::new(expr),
+                    operator: Operator::Greater,
+                    right: Box::new(self.term()?),
+                });
+                true
+            }
             _ => false,
         } {}
 

@@ -76,6 +76,7 @@ impl Visitor<Value> for Evaluator {
             Operator::Equal => Value::Boolean((l - r).abs() < f64::EPSILON),
             Operator::NotEqual => Value::Boolean((l - r).abs() > f64::EPSILON),
             Operator::Less => Value::Boolean(l < r),
+            Operator::Greater => Value::Boolean(l > r),
             Operator::LessOrEqual => Value::Boolean(l <= r),
         }
     }

@@ -11,6 +11,7 @@ pub enum Operator {
     Equal,
     Mod,
     NotEqual,
+    Greater,
 }
 
 #[derive(Serialize, Debug, Clone)]
