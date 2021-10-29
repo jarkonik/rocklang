@@ -1,5 +1,7 @@
 # Rock
 
+<img src="./rock.svg" width="100" height="100">
+
 Hobby programming language. Inspired by many languages that I have enjoyed programming in through my career. Dynamically typed and interpreted for now, but we'll see what future brings when it comes to that :)
 
 ## Example
