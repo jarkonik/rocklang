@@ -26,6 +26,18 @@ impl Error for SyntaxError {}
 
 type Result<T> = std::result::Result<T, SyntaxError>;
 
+#[derive(Clone, Serialize, Debug)]
+pub enum Type {
+    Numeric,
+    Vector,
+}
+
+#[derive(Clone, Serialize, Debug)]
+pub struct Param {
+    pub typ: Type,
+    pub name: String,
+}
+
 #[derive(Serialize, Clone)]
 pub struct Program {
     pub body: Vec<Expression>,
@@ -322,11 +334,34 @@ impl Parser {
 
                 self.advance();
 
-                let mut params: Vec<String> = Vec::new();
+                let mut params: Vec<Param> = Vec::new();
 
-                while match self.advance() {
-                    Token::Identifier(literal) => {
-                        params.push(literal.to_string());
+                while match self.advance().clone() {
+                    Token::Identifier(name_literal) => {
+                        match self.advance() {
+                            Token::Colon => match self.advance() {
+                                Token::Identifier(type_literal) => {
+                                    params.push(Param {
+                                        name: name_literal.to_string(),
+                                        typ: match type_literal.as_str() {
+                                            "number" => Type::Numeric,
+                                            "vec" => Type::Vector,
+                                            _ => panic!("unkown type {}", type_literal),
+                                        },
+                                    });
+                                }
+                                _ => {
+                                    return Err(SyntaxError {
+                                        token: self.previous().clone(),
+                                    })
+                                }
+                            },
+                            _ => {
+                                return Err(SyntaxError {
+                                    token: self.previous().clone(),
+                                })
+                            }
+                        }
                         true
                     }
                     Token::Comma => true,

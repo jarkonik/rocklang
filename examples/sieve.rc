@@ -1,38 +1,10 @@
-sieve = (n) => {
+test = (n: number, val: number) => {
 	i = 0
-	prime = vecnew()
 	while i < n {
-		prime = vecset(prime, i, 1)
+		print(string(val))
+		print("\n")
 		i = i + 1
 	}
-
-	p = 2
-
-	while p * p <= n {
-		if vecget(prime, p) == 1 {
-			i = p * p
-			while i <= n {
-				prime = vecset(prime, i, 0)
-				i = i + p
-			}
-		}
-
-		p = p + 1
-	}
-
-	p = 2
-
-	counter = 0
-
-	while p < n {
-		if vecget(prime, p) == 1 {
-			counter = counter + 1
-		}
-
-		p = p + 1
-	}
-	print(string(counter))
-	print("\n")
 }
 
-sieve(100000000)
+test(5, 5)

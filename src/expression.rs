@@ -1,3 +1,4 @@
+use crate::parser::Param;
 use serde::Serialize;
 
 #[derive(Serialize, Debug, Clone)]
@@ -54,7 +55,7 @@ pub struct FuncCall {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct FuncDecl {
-    pub params: Vec<String>,
+    pub params: Vec<Param>,
     pub body: Vec<Expression>,
 }
 

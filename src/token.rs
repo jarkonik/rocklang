@@ -30,6 +30,7 @@ pub enum Token {
     And,
     Greater,
     GreaterOrEqual,
+    Colon,
     String(String),
     Identifier(String),
     Numeric(f64),
@@ -69,6 +70,7 @@ fn token_name(token: &Token) -> &str {
         Token::Or => "Or",
         Token::And => "And",
         Token::Else => "Else",
+        Token::Colon => "Colon",
     }
 }
 

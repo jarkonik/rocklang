@@ -209,7 +209,8 @@ impl Visitor<Value> for Evaluator {
                         Value::Function(f) => {
                             let mut frame: HashMap<String, Value> = HashMap::new();
                             for i in 0..f.params.len() {
-                                frame.insert(f.params[i].to_string(), self.walk(&expr.args[i]));
+                                frame
+                                    .insert(f.params[i].name.to_string(), self.walk(&expr.args[i]));
                             }
 
                             self.locals.push(frame);

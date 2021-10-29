@@ -1,10 +1,11 @@
 use crate::expression::Expression;
+use crate::parser::Param;
 use core::fmt;
 use core::fmt::Display;
 
 #[derive(Clone, Debug)]
 pub struct Function {
-    pub params: Vec<String>,
+    pub params: Vec<Param>,
     pub body: Vec<Expression>,
 }
 

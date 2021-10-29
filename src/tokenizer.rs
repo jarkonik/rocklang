@@ -102,6 +102,7 @@ impl Tokenizer {
             Some('{') => self.add_token(Token::LCurly),
             Some('}') => self.add_token(Token::RCurly),
             Some(',') => self.add_token(Token::Comma),
+            Some(':') => self.add_token(Token::Colon),
             Some('/') => {
                 if let Some('/') = self.peek() {
                     while !matches!(self.peek(), Some('\n')) && !self.at_end() {
