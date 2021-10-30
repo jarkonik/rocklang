@@ -1,10 +1,10 @@
-test = (n: number, val: number) => {
-	i = 0
-	while i < n {
-		print(string(val))
-		print("\n")
-		i = i + 1
-	}
+test = (vec: vec, n: number, val: number) => {
+	print(string(vecget(vec, n)))
+	print("\n")
 }
 
-test(5, 5)
+vec = vecnew()
+vec = vecset(vec, 5, 666)
+print(string(vecget(vec, 5)))
+print("\n")
+test(vec, 5, 5)

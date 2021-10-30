@@ -261,7 +261,7 @@ impl Visitor<Value> for Compiler {
                     _ => {
                         let alloca = self
                             .builder
-                            .build_alloca(self.context.void_type().pointer_type(0), "");
+                            .build_alloca(self.context.double_type().pointer_type(0), "");
                         self.builder.create_store(ptr, &alloca);
                         self.set_var(literal, Value::Vec(alloca));
                     }
@@ -378,7 +378,8 @@ impl Visitor<Value> for Compiler {
                             //                            VarName.c_str());
                             let arr = self.builder.build_malloc(arr_type, "");
                             let p = self.builder.build_bitcast(&arr, i8_pointer_type, "");
-                            self.builder.build_call(&sprintf, &[p, format_str, f], "");
+                            self.builder
+                                .build_call(&sprintf, &[p, format_str, f], "string");
 
                             Value::String(arr)
                         }
@@ -387,7 +388,7 @@ impl Visitor<Value> for Compiler {
                 }
                 "vecnew" => {
                     let fun_type = self.context.function_type(
-                        self.context.void_type().pointer_type(0),
+                        self.context.double_type().pointer_type(0),
                         &[],
                         false,
                     );
@@ -399,7 +400,7 @@ impl Visitor<Value> for Compiler {
                         self.context.const_u64(fun_addr),
                         fun_type.pointer_type(0),
                     );
-                    Value::Vec(self.builder.build_call(&ptr, &[], ""))
+                    Value::Vec(self.builder.build_call(&ptr, &[], "vecnew"))
                 }
                 "vecset" => {
                     let args: Vec<llvm::Value> = expr
@@ -413,9 +414,9 @@ impl Visitor<Value> for Compiler {
                         .collect();
 
                     let fun_type = self.context.function_type(
-                        self.context.void_type().pointer_type(0),
+                        self.context.double_type().pointer_type(0),
                         &[
-                            self.context.void_type().pointer_type(0),
+                            self.context.double_type().pointer_type(0),
                             self.context.double_type(),
                             self.context.double_type(),
                         ],
@@ -430,7 +431,7 @@ impl Visitor<Value> for Compiler {
                         fun_type.pointer_type(0),
                     );
 
-                    Value::Vec(self.builder.build_call(&ptr, &args, ""))
+                    Value::Vec(self.builder.build_call(&ptr, &args, "vecset"))
                 }
                 "vecget" => {
                     let args: Vec<llvm::Value> = expr
@@ -446,7 +447,7 @@ impl Visitor<Value> for Compiler {
                     let fun_type = self.context.function_type(
                         self.context.double_type(),
                         &[
-                            self.context.void_type().pointer_type(0),
+                            self.context.double_type().pointer_type(0),
                             self.context.double_type(),
                         ],
                         false,
@@ -460,7 +461,7 @@ impl Visitor<Value> for Compiler {
                         fun_type.pointer_type(0),
                     );
 
-                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
+                    Value::Numeric(self.builder.build_call(&ptr, &args, "vecget"))
                 }
                 _ => match &self.get_var(literal) {
                     Some(Value::Function { typ: _, val }) => {
@@ -489,7 +490,7 @@ impl Visitor<Value> for Compiler {
                         Value::Numeric(self.builder.build_call(
                             &self.stack.last().unwrap().fun,
                             &args,
-                            "",
+                            literal,
                         ))
                     }
                     Some(e) => panic!("unexpected {:?}", e),
@@ -595,7 +596,7 @@ impl Visitor<Value> for Compiler {
             .params
             .iter()
             .map(|arg| match arg.typ {
-                parser::Type::Vector => self.context.double_type().pointer_type(0),
+                parser::Type::Vector => self.context.double_type().pointer_type(0).pointer_type(0),
                 parser::Type::Numeric => self.context.double_type(),
             })
             .collect();
