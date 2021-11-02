@@ -2,35 +2,52 @@ name: Build, bump tag version and release
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - "v[0-9]+.*"
 
 jobs:
   release:
-    name: Build and Release
-    runs-on: ${{ matrix.os }}
+    name: Create release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: true
 
+  release_assets:
+    name: Release assets
+    needs: create_release
+    runs-on: ${{ matrix.config.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
+        config:
+          - os: ubuntu-latest
+          - os: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
+
       - name: Install llvm
         uses: ./.github/actions/install_llvm
+
       - name: Build project
         run: cargo build --release --locked
-      - name: Bump version and push tag/create release point
-        uses: mathieudutour/github-tag-action@v5.6
+
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-        id: bump_version
-      - name: Upload binary to release
-        uses: svenstaro/upload-release-action@v1-release
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/rocklang
-          asset_name: rocklang-${{ matrix.os }}-amd64
-          tag: ${{ steps.bump_version.outputs.new_tag }}
-          overwrite: true
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_name: program-name-${{ matrix.config.os }}
+          asset_path: ./path/to/your/file
+          asset_content_type: application/octet-stream
