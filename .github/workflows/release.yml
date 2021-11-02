@@ -37,21 +37,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Install llvm
+      - name: Install llvm when platform != Windows
         if: ${{ runner.os != 'Windows' }}
         uses: ./.github/actions/install_llvm
 
-      - name: Install llvm
+      - name: Download llvm when platform == Windows
         if: ${{ runner.os == 'Windows' }}
         run: Invoke-WebRequest -OutFile llvm.7z https://github.com/vovkos/llvm-package-windows/releases/download/llvm-master/llvm-13.0.0-windows-amd64-msvc15-libcmt.7z
         shell: pwsh
 
-      - name: Extract llvm
+      - name: Extract llvm when platform == Windows
         if: ${{ runner.os == 'Windows' }}
         run: 7z.exe e .\llvm.7z -oC:\LLVM -y
         shell: pwsh
 
-      - name: Build project when platform == windows
+      - name: Build project when platform == Windows
         env:
           LLVM_SYS_130_PREFIX: "C:\LLVM"
         if: ${{ runner.os == 'Windows' }}
