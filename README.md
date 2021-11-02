@@ -2,7 +2,7 @@
 
 <img src="./rock.svg" width="100" height="100">
 
-Simple, interpreted, functional programming language.
+Simple JIT-compiled functional programming language.
 
 ## Example
 
@@ -51,4 +51,5 @@ sieve(7)
 ```
 
 ## License
+
 This project is licensed under the terms of the MIT license.
