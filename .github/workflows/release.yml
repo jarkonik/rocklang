@@ -41,9 +41,19 @@ jobs:
         if: ${{ runner.os != 'Windows' }}
         uses: ./.github/actions/install_llvm
 
+      - name: Install llvm
+        if: ${{ runner.os == 'Windows' }}
+        run: Invoke-WebRequest -OutFile llvm.7z https://github.com/vovkos/llvm-package-windows/releases/download/llvm-master/llvm-13.0.0-windows-amd64-msvc15-libcmt.7z
+        shell: pwsh
+
+      - name: Extract llvm
+        if: ${{ runner.os == 'Windows' }}
+        run: 7z.exe llvm.7z -oC:\LLVM
+        shell: pwsh
+
       - name: Build project when platform == windows
         env:
-          LLVM_SYS_130_PREFIX: "C:\Program Files\LLVM"
+          LLVM_SYS_130_PREFIX: "C:\LLVM"
         if: ${{ runner.os == 'Windows' }}
         run: cargo build --release --locked
 
