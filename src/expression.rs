@@ -1,3 +1,5 @@
+use crate::parser::Param;
+use crate::parser::Type;
 use serde::Serialize;
 
 #[derive(Serialize, Debug, Clone)]
@@ -11,6 +13,7 @@ pub enum Operator {
     Equal,
     Mod,
     NotEqual,
+    Greater,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -53,8 +56,9 @@ pub struct FuncCall {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct FuncDecl {
-    pub params: Vec<String>,
+    pub params: Vec<Param>,
     pub body: Vec<Expression>,
+    pub return_type: Type,
 }
 
 #[derive(Serialize, Debug, Clone)]

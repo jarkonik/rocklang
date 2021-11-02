@@ -76,6 +76,7 @@ impl Visitor<Value> for Evaluator {
             Operator::Equal => Value::Boolean((l - r).abs() < f64::EPSILON),
             Operator::NotEqual => Value::Boolean((l - r).abs() > f64::EPSILON),
             Operator::Less => Value::Boolean(l < r),
+            Operator::Greater => Value::Boolean(l > r),
             Operator::LessOrEqual => Value::Boolean(l <= r),
         }
     }
@@ -120,7 +121,7 @@ impl Visitor<Value> for Evaluator {
                     line.pop();
                     Value::String(line)
                 }
-                "itoa" => {
+                "string" => {
                     if expr.args.len() != 1 {
                         panic!("arity 1 expected");
                     }
@@ -208,7 +209,8 @@ impl Visitor<Value> for Evaluator {
                         Value::Function(f) => {
                             let mut frame: HashMap<String, Value> = HashMap::new();
                             for i in 0..f.params.len() {
-                                frame.insert(f.params[i].to_string(), self.walk(&expr.args[i]));
+                                frame
+                                    .insert(f.params[i].name.to_string(), self.walk(&expr.args[i]));
                             }
 
                             self.locals.push(frame);
