@@ -43,10 +43,16 @@ jobs:
 
       - name: Set LLVM path
         if: ${{ runner.os == 'Windows' }}
-        run: $env:LLVM_SYS_130_PREFIX = 'C:/Program Files/LLVM'
         shell: pwsh
 
-      - name: Build project
+      - name: Build project when platform == windows
+        env:
+          LLVM_SYS_130_PREFIX: "C:/Program Files/LLVM"
+        if: ${{ runner.os == 'Windows' }}
+        run: cargo build --release --locked
+
+      - name: Build project when platform != windows
+        if: ${{ runner.os != 'Windows' }}
         run: cargo build --release --locked
 
       - name: Upload release assets
