@@ -41,6 +41,11 @@ jobs:
         if: ${{ runner.os != 'Windows' }}
         uses: ./.github/actions/install_llvm
 
+      - name: Set LLVM path
+        if: ${{ runner.os == 'Windows' }}
+        run: $env:LLVM_SYS_130_PREFIX = 'C:/Program Files/LLVM'
+        shell: pwsh
+
       - name: Build project
         run: cargo build --release --locked
 
