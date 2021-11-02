@@ -48,12 +48,12 @@ jobs:
 
       - name: Extract llvm when platform == Windows
         if: ${{ runner.os == 'Windows' }}
-        run: 7z.exe e .\llvm.7z -oC:\LLVM -y
+        run: 7z.exe x .\llvm.7z -oC:\ -y
         shell: pwsh
 
       - name: Build project when platform == Windows
         env:
-          LLVM_SYS_130_PREFIX: "C:\LLVM"
+          LLVM_SYS_130_PREFIX: "C:\llvm-13.0.0-windows-amd64-msvc15-libcmt"
         if: ${{ runner.os == 'Windows' }}
         run: cargo build --release --locked
 
