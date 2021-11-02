@@ -3,4 +3,7 @@ runs:
   using: "composite"
   steps:
     - run: apt-get update -qq && apt-get install -qq -y lsb-release software-properties-common
+      shell: bash
+
     - run: bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+      shell: bash
