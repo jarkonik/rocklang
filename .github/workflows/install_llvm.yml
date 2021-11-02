@@ -2,7 +2,7 @@ name: "Install llvm"
 runs:
   using: "composite"
   steps:
-    - run:
+    - run: |
       apt-get update -qq && apt-get install -qq -y lsb-release software-properties-common
-    - run:
+    - run: |
       bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
