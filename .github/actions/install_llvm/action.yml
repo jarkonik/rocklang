@@ -3,7 +3,7 @@ runs:
   using: "composite"
   steps:
     - name: Install LLVM
-      - if: matrix.os != ‘windows-latest’
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: "13.0"
+      if: matrix.os != ‘windows-latest’
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: "13.0"
