@@ -1,10 +1,16 @@
-test = (vec: vec, n: number, val: number) => {
-	print(string(vecget(vec, n)))
-	print("\n")
+sum = (v: vec): number => {
+	acc = 0
+	i = 0
+	while i < len(v) {
+		acc = acc + vecget(v, i)
+		i = i + 1
+	}
+	acc
 }
 
-vec = vecnew()
-vec = vecset(vec, 5, 666)
-print(string(vecget(vec, 5)))
-print("\n")
-test(vec, 5, 5)
+v = vecnew()
+v = vecset(v, 0, 1)
+v = vecset(v, 1, 2)
+v = vecset(v, 2, 3)
+
+print(string(sum(v)))

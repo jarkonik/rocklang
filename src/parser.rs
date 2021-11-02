@@ -373,6 +373,28 @@ impl Parser {
                 } {}
 
                 match self.advance() {
+                    Token::Colon => (),
+                    _ => {
+                        return Err(SyntaxError {
+                            token: self.previous().clone(),
+                        })
+                    }
+                }
+
+                let return_type = match self.advance() {
+                    Token::Identifier(type_literal) => match type_literal.as_str() {
+                        "number" => Type::Numeric,
+                        "vec" => Type::Vector,
+                        _ => panic!("unkown type {}", type_literal),
+                    },
+                    _ => {
+                        return Err(SyntaxError {
+                            token: self.previous().clone(),
+                        })
+                    }
+                };
+
+                match self.advance() {
                     Token::Arrow => (),
                     _ => {
                         return Err(SyntaxError {
@@ -402,7 +424,12 @@ impl Parser {
                         true
                     }
                 } {}
-                Ok(Expression::FuncDecl(expression::FuncDecl { body, params }))
+                Ok(Expression::FuncDecl(expression::FuncDecl {
+                    body,
+                    params,
+
+                    return_type,
+                }))
             }
             _ => self.func_call(),
         }

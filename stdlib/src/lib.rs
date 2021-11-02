@@ -21,6 +21,13 @@ pub extern "C" fn vecget(vec: *mut Vec<f64>, idx: f64) -> f64 {
     val
 }
 
+pub extern "C" fn len(vec: *mut Vec<f64>) -> f64 {
+    let v = unsafe { Box::from_raw(vec as *mut Vec<f64>) };
+    let length = v.len() as f64;
+    Box::into_raw(Box::new(v));
+    length
+}
+
 pub extern "C" fn vecfree(vec: *mut Vec<f64>) {
     unsafe {
         Box::from_raw(vec);

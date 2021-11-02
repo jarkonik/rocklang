@@ -386,6 +386,32 @@ impl Visitor<Value> for Compiler {
                         _ => panic!("type error, not a string"),
                     }
                 }
+                "len" => {
+                    let args: Vec<llvm::Value> = expr
+                        .args
+                        .iter()
+                        .map(|arg| match self.walk(arg) {
+                            Value::Vec(n) => self.builder.build_load(&n, ""),
+                            Value::Numeric(n) => n.clone(),
+                            _ => panic!("{:?}", self.walk(arg)),
+                        })
+                        .collect();
+
+                    let fun_type = self.context.function_type(
+                        self.context.double_type(),
+                        &[self.context.double_type().pointer_type(0)],
+                        false,
+                    );
+
+                    let fun_addr =
+                        unsafe { std::mem::transmute::<*const (), u64>(stdlib::len as *const ()) };
+                    let ptr = self.context.const_u64_to_ptr(
+                        self.context.const_u64(fun_addr),
+                        fun_type.pointer_type(0),
+                    );
+
+                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
+                }
                 "vecnew" => {
                     let fun_type = self.context.function_type(
                         self.context.double_type().pointer_type(0),
@@ -471,7 +497,7 @@ impl Visitor<Value> for Compiler {
                             .map(|arg| match self.walk(arg) {
                                 Value::Numeric(n) => n,
                                 Value::Vec(v) => v,
-                                _ => todo!(),
+                                _ => todo!("{:?}", self.walk(arg)),
                             })
                             .collect();
 
@@ -590,8 +616,6 @@ impl Visitor<Value> for Compiler {
     }
 
     fn visit_func_decl(&mut self, expr: &expression::FuncDecl) -> Value {
-        let void_t = self.context.void_type();
-
         let types: Vec<llvm::Type> = expr
             .params
             .iter()
@@ -601,7 +625,14 @@ impl Visitor<Value> for Compiler {
             })
             .collect();
 
-        let fun_type = self.context.function_type(void_t, &types, false);
+        let fun_type = self.context.function_type(
+            match expr.return_type {
+                parser::Type::Vector => self.context.double_type().pointer_type(0),
+                parser::Type::Numeric => self.context.double_type(),
+            },
+            &types,
+            false,
+        );
 
         let curr = self.builder.get_insert_block();
 
@@ -621,8 +652,9 @@ impl Visitor<Value> for Compiler {
             )
         }
 
+        let mut last_val = Value::Null;
         for stmt in expr.body.clone() {
-            self.walk(&stmt);
+            last_val = self.walk(&stmt);
         }
 
         // for (_, val) in &self.stack.last().unwrap().env {
@@ -650,7 +682,11 @@ impl Visitor<Value> for Compiler {
 
         self.stack.pop();
 
-        self.builder.build_ret_void();
+        match last_val {
+            Value::Null => self.builder.build_ret_void(),
+            Value::Numeric(n) => self.builder.build_ret(n),
+            _ => todo!("{:?}", last_val),
+        };
 
         self.builder.position_builder_at_end(&curr);
 
