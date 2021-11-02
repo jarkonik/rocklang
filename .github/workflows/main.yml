@@ -2,10 +2,6 @@ on: [push, pull_request]
 
 name: Continuous integration
 
-before_script:
-  - apt-get update -qq && apt-get install -qq -y lsb-release software-properties-common
-  - bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-
 jobs:
   check:
     name: Check
@@ -55,6 +51,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
+      - uses: ./install_llvm
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
