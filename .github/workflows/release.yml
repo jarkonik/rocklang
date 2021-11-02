@@ -48,7 +48,7 @@ jobs:
 
       - name: Extract llvm
         if: ${{ runner.os == 'Windows' }}
-        run: 7z.exe llvm.7z -oC:\LLVM
+        run: 7z.exe .\llvm.7z -oC:\LLVM
         shell: pwsh
 
       - name: Build project when platform == windows
