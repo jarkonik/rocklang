@@ -1,7 +1,7 @@
 # Rock
 
 [![Continuous integration](https://github.com/jarkonik/rocklang/actions/workflows/main.yml/badge.svg)](https://github.com/jarkonik/rocklang/actions/workflows/main.yml)
-[![Rocklang Discord](https://badgen.net/discord/members/csharp)](https://discord.gg/NK3baHRTve)
+[![Rocklang Discord](https://badgen.net/discord/members/NK3baHRTve)](https://discord.gg/NK3baHRTve)
 
 <img src="./rock.svg" width="100" height="100">
 
