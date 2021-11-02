@@ -61,7 +61,8 @@ jobs:
         if: ${{ runner.os != 'Windows' }}
         run: cargo build --release --locked
 
-      - name: Upload release assets
+      - name: Upload release assets when platform != Windows
+        if: ${{ runner.os != 'Windows' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,4 +70,15 @@ jobs:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_name: rocklang-${{ matrix.config.os }}
           asset_path: target/release/rocklang
+          asset_content_type: application/octet-stream
+
+      - name: Upload release assets when platform == Windows
+        if: ${{ runner.os == 'Windows' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_name: rocklang-${{ matrix.config.os }}
+          asset_path: target/release/rocklang.exe
           asset_content_type: application/octet-stream
