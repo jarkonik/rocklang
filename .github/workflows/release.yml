@@ -53,7 +53,7 @@ jobs:
 
       - name: Build project when platform == Windows
         env:
-          LLVM_SYS_130_PREFIX: "C:\llvm-13.0.0-windows-amd64-msvc15-libcmt"
+          LLVM_SYS_130_PREFIX: 'C:\llvm-13.0.0-windows-amd64-msvc15-libcmt'
         if: ${{ runner.os == 'Windows' }}
         run: cargo build --release --locked
 
