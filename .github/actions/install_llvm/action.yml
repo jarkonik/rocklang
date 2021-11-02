@@ -3,7 +3,6 @@ runs:
   using: "composite"
   steps:
     - name: Install LLVM
-      if: ${{ runner.os != ‘Windows’ }}
       uses: KyleMayes/install-llvm-action@v1
       with:
         version: "13.0"
