@@ -22,10 +22,9 @@ jobs:
       - name: Build project
         run: cargo build --release --locked
       - name: Bump version and push tag/create release point
-        uses: anothrNick/github-tag-action@1.17.2
+        uses: mathieudutour/github-tag-action@v5.6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
         id: bump_version
       - name: Upload binary to release
         uses: svenstaro/upload-release-action@v1-release
