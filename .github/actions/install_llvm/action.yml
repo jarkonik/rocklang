@@ -2,5 +2,9 @@ name: "Install llvm"
 runs:
   using: "composite"
   steps:
-    - run: sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+    - run: wget https://apt.llvm.org/llvm.sh
+      shell: bash
+    - run: chmod +x llvm.sh
+      shell: bash
+    - run: sudo ./llvm.sh 10
       shell: bash
