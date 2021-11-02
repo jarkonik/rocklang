@@ -59,7 +59,11 @@ enum Value {
     Numeric(llvm::Value),
     Ptr(llvm::Value),
     Bool(llvm::Value),
-    Function { val: llvm::Value, typ: llvm::Type },
+    Function {
+        val: llvm::Value,
+        typ: llvm::Type,
+        return_type: parser::Type,
+    },
     Vec(llvm::Value),
     Pending,
 }
@@ -269,7 +273,11 @@ impl Visitor<Value> for Compiler {
 
                 Value::Null
             }
-            Value::Function { typ, val } => {
+            Value::Function {
+                typ,
+                val,
+                return_type,
+            } => {
                 let var = self.get_var(literal);
 
                 match var {
@@ -282,7 +290,14 @@ impl Visitor<Value> for Compiler {
                     _ => {
                         let alloca = self.builder.build_alloca(typ.pointer_type(0), "");
                         self.builder.create_store(val.clone(), &alloca);
-                        self.set_var(literal, Value::Function { typ, val });
+                        self.set_var(
+                            literal,
+                            Value::Function {
+                                typ,
+                                val,
+                                return_type,
+                            },
+                        );
                     }
                 };
 
@@ -490,7 +505,11 @@ impl Visitor<Value> for Compiler {
                     Value::Numeric(self.builder.build_call(&ptr, &args, "vecget"))
                 }
                 _ => match &self.get_var(literal) {
-                    Some(Value::Function { typ: _, val }) => {
+                    Some(Value::Function {
+                        typ: _,
+                        val,
+                        return_type,
+                    }) => {
                         let args: Vec<llvm::Value> = expr
                             .args
                             .iter()
@@ -501,7 +520,19 @@ impl Visitor<Value> for Compiler {
                             })
                             .collect();
 
-                        Value::Numeric(self.builder.build_call(val, &args, ""))
+                        match return_type {
+                            parser::Type::Vector => Value::Vec(
+                                self.builder
+                                    .build_load(&self.builder.build_call(val, &args, ""), ""),
+                            ),
+                            parser::Type::Numeric => {
+                                Value::Numeric(self.builder.build_call(val, &args, ""))
+                            }
+                            parser::Type::Null => {
+                                self.builder.build_call(val, &args, "");
+                                Value::Null
+                            }
+                        }
                     }
                     Some(Value::Pending) => {
                         let args: Vec<llvm::Value> = expr
@@ -566,9 +597,14 @@ impl Visitor<Value> for Compiler {
         match &self.get_var(expr) {
             Some(Value::Ptr(n)) => Value::Numeric(self.builder.build_load(n, "")),
             Some(Value::Numeric(n)) => Value::Numeric(n.clone()),
-            Some(Value::Function { typ, val }) => Value::Function {
+            Some(Value::Function {
+                typ,
+                val,
+                return_type,
+            }) => Value::Function {
                 typ: typ.clone(),
                 val: val.clone(),
+                return_type: return_type.clone(),
             },
             Some(Value::Vec(n)) => Value::Vec(n.clone()),
             Some(Value::Pending) | None => panic!("undefined identifier {}", expr),
@@ -622,17 +658,17 @@ impl Visitor<Value> for Compiler {
             .map(|arg| match arg.typ {
                 parser::Type::Vector => self.context.double_type().pointer_type(0).pointer_type(0),
                 parser::Type::Numeric => self.context.double_type(),
+                parser::Type::Null => self.context.void_type(),
             })
             .collect();
 
-        let fun_type = self.context.function_type(
-            match expr.return_type {
-                parser::Type::Vector => self.context.double_type().pointer_type(0),
-                parser::Type::Numeric => self.context.double_type(),
-            },
-            &types,
-            false,
-        );
+        let return_type = match expr.return_type {
+            parser::Type::Vector => self.context.double_type().pointer_type(0).pointer_type(0),
+            parser::Type::Numeric => self.context.double_type(),
+            parser::Type::Null => self.context.void_type(),
+        };
+
+        let fun_type = self.context.function_type(return_type, &types, false);
 
         let curr = self.builder.get_insert_block();
 
@@ -648,6 +684,7 @@ impl Visitor<Value> for Compiler {
                 match param.typ {
                     parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
                     parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Null => Value::Null,
                 },
             )
         }
@@ -685,6 +722,7 @@ impl Visitor<Value> for Compiler {
         match last_val {
             Value::Null => self.builder.build_ret_void(),
             Value::Numeric(n) => self.builder.build_ret(n),
+            Value::Vec(n) => self.builder.build_ret(n),
             _ => todo!("{:?}", last_val),
         };
 
@@ -695,6 +733,7 @@ impl Visitor<Value> for Compiler {
         }
 
         Value::Function {
+            return_type: expr.return_type.clone(),
             typ: fun_type,
             val: fun,
         }

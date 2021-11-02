@@ -30,6 +30,7 @@ type Result<T> = std::result::Result<T, SyntaxError>;
 pub enum Type {
     Numeric,
     Vector,
+    Null,
 }
 
 #[derive(Clone, Serialize, Debug)]
@@ -385,6 +386,7 @@ impl Parser {
                     Token::Identifier(type_literal) => match type_literal.as_str() {
                         "number" => Type::Numeric,
                         "vec" => Type::Vector,
+                        "void" => Type::Null,
                         _ => panic!("unkown type {}", type_literal),
                     },
                     _ => {

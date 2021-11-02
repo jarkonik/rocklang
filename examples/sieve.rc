@@ -1,16 +1,40 @@
-sum = (v: vec): number => {
-	acc = 0
+memset = (vec: vec, val: number, n: number): vec => {
 	i = 0
-	while i < len(v) {
-		acc = acc + vecget(v, i)
+	while i < n {
+		vec = vecset(vec, i, val)
 		i = i + 1
 	}
-	acc
+	vec
 }
 
-v = vecnew()
-v = vecset(v, 0, 1)
-v = vecset(v, 1, 2)
-v = vecset(v, 2, 3)
+sieve = (n: number): void => {
+	v = vecnew()
+	prime = memset(v, 1, n + 1)
 
-print(string(sum(v)))
+	p = 2
+
+	while p * p <= n {
+		if vecget(prime, p) == 1 {
+			i = p * p
+			while i <= n {
+				prime = vecset(prime, i, 0)
+				i = i + p
+			}
+		}
+
+		p = p + 1
+	}
+
+	p = 2
+
+	while p <= n {
+		if vecget(prime, p) == 1 {
+			print(string(p))
+			print("\n")
+		}
+
+		p = p + 1
+	}
+}
+
+sieve(100)
