@@ -51,6 +51,9 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
+      - uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: "13.0"
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
