@@ -3,8 +3,12 @@ pub extern "C" fn vecnew() -> *mut std::vec::Vec<f64> {
     Box::into_raw(Box::new(vec))
 }
 
-pub extern "C" fn vecset(vec: *mut Vec<f64>, idx: f64, value: f64) -> *mut std::vec::Vec<f64> {
-    let mut v = unsafe { Box::from_raw(vec) };
+pub unsafe extern "C" fn vecset(
+    vec: *mut Vec<f64>,
+    idx: f64,
+    value: f64,
+) -> *mut std::vec::Vec<f64> {
+    let mut v = Box::from_raw(vec);
 
     while v.len() <= idx as usize {
         v.push(0.0);
@@ -21,15 +25,13 @@ pub extern "C" fn vecget(vec: *mut Vec<f64>, idx: f64) -> f64 {
     val
 }
 
-pub extern "C" fn len(vec: *mut Vec<f64>) -> f64 {
-    let v = unsafe { Box::from_raw(vec as *mut Vec<f64>) };
+pub unsafe extern "C" fn len(vec: *mut Vec<f64>) -> f64 {
+    let v = Box::from_raw(vec as *mut Vec<f64>);
     let length = v.len() as f64;
     Box::into_raw(Box::new(v));
     length
 }
 
-pub extern "C" fn vecfree(vec: *mut Vec<f64>) {
-    unsafe {
-        Box::from_raw(vec);
-    }
+pub unsafe extern "C" fn vecfree(vec: *mut Vec<f64>) {
+    Box::from_raw(vec);
 }

@@ -336,7 +336,7 @@ impl Visitor<Value> for Compiler {
                             let printf_func = self
                                 .module
                                 .get_function("printf")
-                                .unwrap_or(self.module.add_function("printf", func_type));
+                                .unwrap_or_else(|| self.module.add_function("printf", func_type));
                             let p = self.builder.build_bitcast(&s, i8_pointer_type, "");
                             self.builder.build_call(&printf_func, &[p], "");
                         }
@@ -349,7 +349,7 @@ impl Visitor<Value> for Compiler {
                             let printf_func = self
                                 .module
                                 .get_function("printf")
-                                .unwrap_or(self.module.add_function("printf", func_type));
+                                .unwrap_or_else(|| self.module.add_function("printf", func_type));
                             let p = self.builder.build_bitcast(&s, i8_pointer_type, "");
                             self.builder.build_call(&printf_func, &[p], "");
                             self.builder.build_free(s);
@@ -377,7 +377,7 @@ impl Visitor<Value> for Compiler {
                             let sprintf = self
                                 .module
                                 .get_function("sprintf")
-                                .unwrap_or(self.module.add_function("sprintf", func_type));
+                                .unwrap_or_else(|| self.module.add_function("sprintf", func_type));
 
                             let arr_type = self.context.array_type(self.context.i8_type(), 100);
 
@@ -407,7 +407,7 @@ impl Visitor<Value> for Compiler {
                         .iter()
                         .map(|arg| match self.walk(arg) {
                             Value::Vec(n) => self.builder.build_load(&n, ""),
-                            Value::Numeric(n) => n.clone(),
+                            Value::Numeric(n) => n,
                             _ => panic!("{:?}", self.walk(arg)),
                         })
                         .collect();
@@ -418,10 +418,9 @@ impl Visitor<Value> for Compiler {
                         false,
                     );
 
-                    let fun_addr =
-                        unsafe { std::mem::transmute::<*const (), u64>(stdlib::len as *const ()) };
+                    let fun_addr = stdlib::len as usize;
                     let ptr = self.context.const_u64_to_ptr(
-                        self.context.const_u64(fun_addr),
+                        self.context.const_u64(fun_addr.try_into().unwrap()),
                         fun_type.pointer_type(0),
                     );
 
@@ -434,11 +433,9 @@ impl Visitor<Value> for Compiler {
                         false,
                     );
 
-                    let fun_addr = unsafe {
-                        std::mem::transmute::<*const (), u64>(stdlib::vecnew as *const ())
-                    };
+                    let fun_addr = stdlib::vecnew as usize;
                     let ptr = self.context.const_u64_to_ptr(
-                        self.context.const_u64(fun_addr),
+                        self.context.const_u64(fun_addr.try_into().unwrap()),
                         fun_type.pointer_type(0),
                     );
                     Value::Vec(self.builder.build_call(&ptr, &[], "vecnew"))
@@ -449,7 +446,7 @@ impl Visitor<Value> for Compiler {
                         .iter()
                         .map(|arg| match self.walk(arg) {
                             Value::Vec(n) => self.builder.build_load(&n, ""),
-                            Value::Numeric(n) => n.clone(),
+                            Value::Numeric(n) => n,
                             _ => todo!("{:?}", self.walk(arg)),
                         })
                         .collect();
@@ -464,11 +461,9 @@ impl Visitor<Value> for Compiler {
                         false,
                     );
 
-                    let fun_addr = unsafe {
-                        std::mem::transmute::<*const (), u64>(stdlib::vecset as *const ())
-                    };
+                    let fun_addr = stdlib::vecset as usize;
                     let ptr = self.context.const_u64_to_ptr(
-                        self.context.const_u64(fun_addr),
+                        self.context.const_u64(fun_addr.try_into().unwrap()),
                         fun_type.pointer_type(0),
                     );
 
@@ -480,7 +475,7 @@ impl Visitor<Value> for Compiler {
                         .iter()
                         .map(|arg| match self.walk(arg) {
                             Value::Vec(n) => self.builder.build_load(&n, ""),
-                            Value::Numeric(n) => n.clone(),
+                            Value::Numeric(n) => n,
                             _ => panic!("{:?}", self.walk(arg)),
                         })
                         .collect();
@@ -494,11 +489,9 @@ impl Visitor<Value> for Compiler {
                         false,
                     );
 
-                    let fun_addr = unsafe {
-                        std::mem::transmute::<*const (), u64>(stdlib::vecget as *const ())
-                    };
+                    let fun_addr = stdlib::vecget as usize;
                     let ptr = self.context.const_u64_to_ptr(
-                        self.context.const_u64(fun_addr),
+                        self.context.const_u64(fun_addr.try_into().unwrap()),
                         fun_type.pointer_type(0),
                     );
 
@@ -602,7 +595,7 @@ impl Visitor<Value> for Compiler {
                 val,
                 return_type,
             }) => Value::Function {
-                typ: typ.clone(),
+                typ: *typ,
                 val: val.clone(),
                 return_type: return_type.clone(),
             },
@@ -762,9 +755,8 @@ impl Compiler {
 
     fn get_var(&mut self, literal: &str) -> Option<Value> {
         for frame in self.stack.iter().rev() {
-            match frame.get(literal) {
-                Some(v) => return Some((*v).clone()),
-                _ => (),
+            if let Some(v) = frame.get(literal) {
+                return Some((*v).clone());
             };
         }
         None

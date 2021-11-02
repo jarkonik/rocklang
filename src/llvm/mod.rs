@@ -357,7 +357,7 @@ impl Context {
     }
 
     pub fn const_double(&self, value: f64) -> Value {
-        Value(unsafe { LLVMConstReal(self.double_type().0, value.into()) })
+        Value(unsafe { LLVMConstReal(self.double_type().0, value) })
     }
 
     pub fn const_i32(&self, value: i32) -> Value {
