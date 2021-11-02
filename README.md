@@ -9,25 +9,26 @@ Simple JIT-compiled functional programming language.
 Example implementation of Sieve of Eratosthenes written in Rock
 
 ```
-memset = (arr, val, n) => {
+memset = (vec: vec, val: number, n: number): vec => {
 	i = 0
 	while i < n {
-		arr = arrset(arr, i, val)
+		vec = vecset(vec, i, val)
 		i = i + 1
 	}
-	arr
+	vec
 }
 
-sieve = (n) => {
-	prime = memset(arrnew(), true, n + 1)
+sieve = (n: number): void => {
+	v = vecnew()
+	prime = memset(v, 1, n + 1)
 
 	p = 2
 
 	while p * p <= n {
-		if arrget(prime, p) {
+		if vecget(prime, p) == 1 {
 			i = p * p
 			while i <= n {
-				prime = arrset(prime, i, false)
+				prime = vecset(prime, i, 0)
 				i = i + p
 			}
 		}
@@ -38,8 +39,8 @@ sieve = (n) => {
 	p = 2
 
 	while p <= n {
-		if arrget(prime, p) {
-			print(p)
+		if vecget(prime, p) == 1 {
+			print(string(p))
 			print("\n")
 		}
 
@@ -47,7 +48,7 @@ sieve = (n) => {
 	}
 }
 
-sieve(7)
+sieve(100)
 ```
 
 ## License
