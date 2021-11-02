@@ -43,7 +43,7 @@ jobs:
 
       - name: Build project when platform == windows
         env:
-          LLVM_SYS_130_PREFIX: "C:/Program Files/LLVM"
+          LLVM_SYS_130_PREFIX: "C:\Program Files\LLVM"
         if: ${{ runner.os == 'Windows' }}
         run: cargo build --release --locked
 
