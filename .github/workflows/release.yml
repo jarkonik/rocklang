@@ -8,7 +8,12 @@ on:
 jobs:
   release:
     name: Build and Release
-    runs-on: ubuntu-18.04
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -27,6 +32,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/rocklang
-          asset_name: rocklang-linux-amd64
+          asset_name: rocklang-${{ matrix.os }}-amd64
           tag: ${{ steps.bump_version.outputs.new_tag }}
           overwrite: true
