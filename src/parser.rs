@@ -5,18 +5,12 @@ use serde::Serialize;
 use std::error::Error;
 use std::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SyntaxError {
-    token: Token,
+    pub token: Token,
 }
 
 impl fmt::Display for SyntaxError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "TOKEN[{}]", self.token)
-    }
-}
-
-impl fmt::Debug for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Syntax error: unexpected token {}", self.token)
     }
