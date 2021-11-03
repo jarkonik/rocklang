@@ -9,6 +9,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - uses: ./.github/actions/install_llvm
+
       - name: Install tarpaulin
         run: cargo install cargo-tarpaulin
         shell: bash
