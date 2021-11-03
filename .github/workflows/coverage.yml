@@ -15,11 +15,17 @@ jobs:
 
       - uses: ./.github/actions/install_llvm
 
-      - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
+      - uses: actions-rs/cargo@v1
         with:
-          version: "0.15.0"
-          args: "-- --test-threads 1"
+          command: test
+          args: --all-features --no-fail-fast # Customize args for your own needs
+        env:
+          CARGO_INCREMENTAL: "0"
+          RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests"
+          RUSTDOCFLAGS: "-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests"
+
+      - id: coverage
+        uses: actions-rs/grcov@v0.1
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
