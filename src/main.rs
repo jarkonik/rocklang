@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let source = fs::read_to_string(filename).expect("Error reading input file");
 
     let mut tokenizer = Tokenizer::new(source);
-    let tokens = tokenizer.tokenize();
+    let tokens = tokenizer.tokenize()?;
 
     let mut parser = Parser::new(tokens);
     let ast = parser.parse()?;
