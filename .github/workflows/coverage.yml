@@ -9,7 +9,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Checkout repository
+      - name: Install tarpaulin
         run: cargo install cargo-tarpaulin
         shell: bash
 
