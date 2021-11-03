@@ -1,0 +1,4 @@
+{
+  "coverage-gutters.coverageBaseDir": "target/tarpaulin",
+  "coverage-gutters.showLineCoverage": true
+}
