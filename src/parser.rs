@@ -31,6 +31,7 @@ pub enum Type {
     Numeric,
     Vector,
     Null,
+    Function,
 }
 
 #[derive(Clone, Serialize, Debug)]
@@ -347,6 +348,7 @@ impl Parser {
                                         typ: match type_literal.as_str() {
                                             "number" => Type::Numeric,
                                             "vec" => Type::Vector,
+                                            "fun" => Type::Function,
                                             _ => panic!("unkown type {}", type_literal),
                                         },
                                     });

@@ -509,6 +509,7 @@ impl Visitor<Value> for Compiler {
                             .map(|arg| match self.walk(arg) {
                                 Value::Numeric(n) => n,
                                 Value::Vec(v) => v,
+                                Value::Function { val, .. } => val,
                                 _ => todo!("{:?}", self.walk(arg)),
                             })
                             .collect();
@@ -521,6 +522,14 @@ impl Visitor<Value> for Compiler {
                             parser::Type::Numeric => {
                                 Value::Numeric(self.builder.build_call(val, &args, ""))
                             }
+                            parser::Type::Function => Value::Function {
+                                val: self.builder.build_call(val, &args, ""),
+                                typ: self
+                                    .context
+                                    .function_type(self.context.void_type(), &[], false)
+                                    .pointer_type(0),
+                                return_type: parser::Type::Null,
+                            },
                             parser::Type::Null => {
                                 self.builder.build_call(val, &args, "");
                                 Value::Null
@@ -651,6 +660,10 @@ impl Visitor<Value> for Compiler {
             .map(|arg| match arg.typ {
                 parser::Type::Vector => self.context.double_type().pointer_type(0).pointer_type(0),
                 parser::Type::Numeric => self.context.double_type(),
+                parser::Type::Function => self
+                    .context
+                    .function_type(self.context.void_type(), &[], false)
+                    .pointer_type(0),
                 parser::Type::Null => self.context.void_type(),
             })
             .collect();
@@ -658,6 +671,10 @@ impl Visitor<Value> for Compiler {
         let return_type = match expr.return_type {
             parser::Type::Vector => self.context.double_type().pointer_type(0).pointer_type(0),
             parser::Type::Numeric => self.context.double_type(),
+            parser::Type::Function => self
+                .context
+                .function_type(self.context.void_type(), &[], false)
+                .pointer_type(0),
             parser::Type::Null => self.context.void_type(),
         };
 
@@ -678,6 +695,14 @@ impl Visitor<Value> for Compiler {
                     parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
                     parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
                     parser::Type::Null => Value::Null,
+                    parser::Type::Function => Value::Function {
+                        val: fun.get_param(i.try_into().unwrap()),
+                        typ: self
+                            .context
+                            .function_type(self.context.void_type(), &[], false)
+                            .pointer_type(0),
+                        return_type: parser::Type::Null,
+                    },
                 },
             )
         }
