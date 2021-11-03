@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Checkout repository
-        run: cargo install tarpaulin
+        run: cargo install cargo-tarpaulin
         shell: bash
 
       - name: Generate code coverage
