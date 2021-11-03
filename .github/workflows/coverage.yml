@@ -13,6 +13,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - uses: ./.github/actions/install_llvm
+
       - name: Generate code coverage
         run: |
           cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
