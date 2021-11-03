@@ -15,7 +15,7 @@ Simple JIT-compiled functional programming language.
 
 Example implementation of Sieve of Eratosthenes written in Rock
 
-```
+```typescript
 memset = (vec: vec, val: number, n: number): vec => {
 	i = 0
 	while i < n {
