@@ -1,4 +1,3 @@
-// use rocklang::evaluator::{Evaluate, Evaluator};
 use rocklang::compiler::{Compile, Compiler};
 use rocklang::parser::{Parse, Parser};
 use rocklang::tokenizer::{Tokenize, Tokenizer};
@@ -17,6 +16,7 @@ impl fmt::Display for InputError {
 
 impl Error for InputError {}
 
+#[cfg(not(tarpaulin_include))]
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
