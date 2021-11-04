@@ -361,3 +361,34 @@ fn syntax_error_display() {
         format!("{}", error)
     );
 }
+
+#[test]
+fn it_parses_assignments() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("x".to_string()),
+        Token::Equal,
+        Token::Numeric(10.0),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Assignment": {
+                        "left": {
+                            "Identifier": "x"
+                        },
+                        "right": {
+                            "Numeric": 10.0
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
