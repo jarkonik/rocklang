@@ -586,7 +586,7 @@ fn it_parses_greater_or_equal() {
 }
 
 #[test]
-fn it_parses_binary_minus() {
+fn it_parses_subtraction() {
     let mut parser = Parser::new(&vec![
         Token::Numeric(10.0),
         Token::Minus,
@@ -640,6 +640,94 @@ fn it_parses_modulo() {
                         "operator": "Mod",
                         "right": {
                             "Identifier": "x"
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_multiplication() {
+    let mut parser = Parser::new(&vec![
+        Token::Numeric(10.0),
+        Token::Asterisk,
+        Token::Identifier("x".to_string()),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Binary": {
+                        "left": {
+                            "Numeric": 10.0
+                        },
+                        "operator": "Asterisk",
+                        "right": {
+                            "Identifier": "x"
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_division() {
+    let mut parser = Parser::new(&vec![
+        Token::Numeric(10.0),
+        Token::Slash,
+        Token::Identifier("x".to_string()),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Binary": {
+                        "left": {
+                            "Numeric": 10.0
+                        },
+                        "operator": "Slash",
+                        "right": {
+                            "Identifier": "x"
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_unary_minus() {
+    let mut parser = Parser::new(&vec![Token::Minus, Token::Numeric(10.0), Token::Eof]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Unary": {
+                        "operator": "Minus",
+                        "right": {
+                            "Numeric": 10.0
                         }
                     }
                 }
