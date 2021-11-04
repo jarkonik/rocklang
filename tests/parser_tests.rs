@@ -140,9 +140,198 @@ fn parses_while_loop() {
 }
 
 #[test]
-fn return_error_when_no_curly_after_while_predicate() {
+fn it_returns_error_when_no_curly_after_while_predicate_in_while() {
     let mut parser = Parser::new(&vec![
         Token::While,
+        Token::Identifier("x".to_string()),
+        Token::Less,
+        Token::Numeric(10.0),
+        Token::String("hello".to_string()),
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::String("hello".to_string())
+                },
+                e
+            );
+        }
+    };
+}
+
+#[test]
+fn parses_conditionals() {
+    let mut parser = Parser::new(&vec![
+        Token::If,
+        Token::Identifier("x".to_string()),
+        Token::Less,
+        Token::Numeric(10.0),
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Conditional": {
+                        "predicate": {
+                            "Binary": {
+                                "left":{
+                                    "Identifier": "x"
+                                },
+                                "operator": "Less",
+                                "right":{
+                                    "Numeric": 10.0
+                                }
+                            }
+                        },
+                        "body": [
+                            {
+                                "FuncCall": {
+                                    "args": [
+                                        {
+                                        "String": "hello"
+                                        }
+                                    ],
+                                    "calee": {
+                                        "Identifier": "print"
+                                    }
+                                }
+                            }
+                        ],
+                        "else_body": []
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn parses_conditionals_with_else() {
+    let mut parser = Parser::new(&vec![
+        Token::If,
+        Token::Identifier("x".to_string()),
+        Token::Less,
+        Token::Numeric(10.0),
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Else,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("else".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Conditional": {
+                        "predicate": {
+                            "Binary": {
+                                "left":{
+                                    "Identifier": "x"
+                                },
+                                "operator": "Less",
+                                "right":{
+                                    "Numeric": 10.0
+                                }
+                            }
+                        },
+                        "body": [
+                            {
+                                "FuncCall": {
+                                    "args": [
+                                        {
+                                        "String": "hello"
+                                        }
+                                    ],
+                                    "calee": {
+                                        "Identifier": "print"
+                                    }
+                                }
+                            }
+                        ],
+                        "else_body": [
+                            {
+                                "FuncCall": {
+                                    "args": [
+                                        {
+                                        "String": "else"
+                                        }
+                                    ],
+                                    "calee": {
+                                        "Identifier": "print"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_returns_error_when_no_curly_after_while_predicate_in_if() {
+    let mut parser = Parser::new(&vec![
+        Token::If,
+        Token::Identifier("x".to_string()),
+        Token::Less,
+        Token::Numeric(10.0),
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Else,
+        Token::String("hello".to_string()),
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::String("hello".to_string())
+                },
+                e
+            );
+        }
+    };
+}
+
+#[test]
+fn it_returns_error_when_no_curly_after_while_predicate_in_else() {
+    let mut parser = Parser::new(&vec![
+        Token::If,
         Token::Identifier("x".to_string()),
         Token::Less,
         Token::Numeric(10.0),

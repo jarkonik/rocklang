@@ -189,7 +189,7 @@ impl Builder {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Value(*mut llvm::LLVMValue);
 
 impl Value {
