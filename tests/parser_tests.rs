@@ -1422,3 +1422,98 @@ fn it_returns_error_for_call_syntax_on_non_identifiers() {
         }
     };
 }
+
+#[test]
+fn it_parses_grouping_expression() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Grouping": {
+                        "String": "hello"
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_returns_error_for_unterminated_grouping_expresions() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::Eof,
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::String("hello".to_string())
+                },
+                e
+            );
+        }
+    };
+}
+
+#[test]
+fn it_parses_true_bool_literal() {
+    let mut parser = Parser::new(&vec![Token::True, Token::Eof]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Bool": true
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_false_bool_literal() {
+    let mut parser = Parser::new(&vec![Token::False, Token::Eof]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Bool": false
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_break_expression() {
+    let mut parser = Parser::new(&vec![Token::Break, Token::Eof]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(json!(["Break"]), json)
+}

@@ -516,11 +516,7 @@ impl Parser {
             Token::True => Ok(Expression::Bool(true)),
             Token::False => Ok(Expression::Bool(false)),
             Token::Break => Ok(Expression::Break),
-            _ => {
-                return Err(SyntaxError {
-                    token: self.previous().clone(),
-                })
-            }
+            _ => unreachable!(),
         }
     }
 
