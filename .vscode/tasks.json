@@ -7,7 +7,7 @@
       "label": "Watch coverage",
       "type": "shell",
       "group": "test",
-      "command": "cargo watch -w src -w tests -x 'tarpaulin --ignore-tests --output-dir target/tarpaulin -o Lcov'",
+      "command": "cargo watch -w src -w tests -x 'tarpaulin --skip-clean --ignore-tests --output-dir target/tarpaulin -o Lcov'",
       "isBackground": true
     }
   ]
