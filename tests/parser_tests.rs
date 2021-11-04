@@ -1292,3 +1292,133 @@ fn it_returns_error_when_func_decl_has_no_body() {
         }
     };
 }
+
+#[test]
+fn it_parses_func_call() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::RightParen,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "FuncCall": {
+                        "args": [],
+                        "calee": {
+                            "Identifier": "print"
+                        }
+
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_func_call_with_one_arg() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "FuncCall": {
+                        "args": [
+                            {
+                                "String": "hello"
+                            }
+                        ],
+                        "calee": {
+                            "Identifier": "print"
+                        }
+
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_func_call_with_two_args() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::Comma,
+        Token::Numeric(10.0),
+        Token::RightParen,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "FuncCall": {
+                        "args": [
+                            {
+                                "String": "hello"
+                            },
+                            {
+                                "Numeric": 10.0
+                            }
+                        ],
+                        "calee": {
+                            "Identifier": "print"
+                        }
+
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_returns_error_for_call_syntax_on_non_identifiers() {
+    let mut parser = Parser::new(&vec![
+        Token::String("hello".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::Comma,
+        Token::Numeric(10.0),
+        Token::RightParen,
+        Token::Eof,
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::LeftParen
+                },
+                e
+            );
+        }
+    };
+}
