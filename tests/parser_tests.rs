@@ -392,3 +392,195 @@ fn it_parses_assignments() {
         json
     )
 }
+
+#[test]
+fn it_parses_binary_equal() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("x".to_string()),
+        Token::DoubleEqual,
+        Token::Numeric(10.0),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Binary": {
+                        "left": {
+                            "Identifier": "x"
+                        },
+                        "operator": "Equal",
+                        "right": {
+                            "Numeric": 10.0
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_binary_not_equal() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("x".to_string()),
+        Token::NotEqual,
+        Token::Numeric(10.0),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Binary": {
+                        "left": {
+                            "Identifier": "x"
+                        },
+                        "operator": "NotEqual",
+                        "right": {
+                            "Numeric": 10.0
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_less_or_equal() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("x".to_string()),
+        Token::LessOrEqual,
+        Token::Numeric(10.0),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Binary": {
+                        "left": {
+                            "Identifier": "x"
+                        },
+                        "operator": "LessOrEqual",
+                        "right": {
+                            "Numeric": 10.0
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_less() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("x".to_string()),
+        Token::Less,
+        Token::Numeric(10.0),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Binary": {
+                        "left": {
+                            "Identifier": "x"
+                        },
+                        "operator": "Less",
+                        "right": {
+                            "Numeric": 10.0
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_greater() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("x".to_string()),
+        Token::Greater,
+        Token::Numeric(10.0),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Binary": {
+                        "left": {
+                            "Identifier": "x"
+                        },
+                        "operator": "Greater",
+                        "right": {
+                            "Numeric": 10.0
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_greater_or_equal() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("x".to_string()),
+        Token::GreaterOrEqual,
+        Token::Numeric(10.0),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Binary": {
+                        "left": {
+                            "Identifier": "x"
+                        },
+                        "operator": "GreaterOrEqual",
+                        "right": {
+                            "Numeric": 10.0
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
