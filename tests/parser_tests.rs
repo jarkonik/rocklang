@@ -584,3 +584,67 @@ fn it_parses_greater_or_equal() {
         json
     )
 }
+
+#[test]
+fn it_parses_binary_minus() {
+    let mut parser = Parser::new(&vec![
+        Token::Numeric(10.0),
+        Token::Minus,
+        Token::Identifier("x".to_string()),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Binary": {
+                        "left": {
+                            "Numeric": 10.0
+                        },
+                        "operator": "Minus",
+                        "right": {
+                            "Identifier": "x"
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_modulo() {
+    let mut parser = Parser::new(&vec![
+        Token::Numeric(10.0),
+        Token::Percent,
+        Token::Identifier("x".to_string()),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "Binary": {
+                        "left": {
+                            "Numeric": 10.0
+                        },
+                        "operator": "Mod",
+                        "right": {
+                            "Identifier": "x"
+                        }
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
