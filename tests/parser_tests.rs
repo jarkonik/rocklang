@@ -83,7 +83,7 @@ fn it_parses_parentheses() {
 }
 
 #[test]
-fn parses_while_loop() {
+fn it_parses_while_loop() {
     let mut parser = Parser::new(&vec![
         Token::While,
         Token::Identifier("x".to_string()),
@@ -163,7 +163,7 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_while() {
 }
 
 #[test]
-fn parses_conditionals() {
+fn it_parses_conditionals() {
     let mut parser = Parser::new(&vec![
         Token::If,
         Token::Identifier("x".to_string()),
@@ -221,7 +221,7 @@ fn parses_conditionals() {
 }
 
 #[test]
-fn parses_conditionals_with_else() {
+fn it_parses_conditionals_with_else() {
     let mut parser = Parser::new(&vec![
         Token::If,
         Token::Identifier("x".to_string()),
@@ -352,7 +352,7 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_else() {
 }
 
 #[test]
-fn syntax_error_display() {
+fn it_displays_correct_syntax_error() {
     let error = SyntaxError {
         token: Token::DoubleEqual,
     };
@@ -1025,4 +1025,270 @@ fn it_parses_func_declaration_with_multiple_params() {
         ),
         json
     )
+}
+
+#[test]
+fn it_returns_an_error_when_func_has_unknown_arg_type() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("fun".to_string()),
+        Token::Comma,
+        Token::Identifier("b".to_string()),
+        Token::Colon,
+        Token::Identifier("wrongtype".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("void".to_string()),
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::Identifier("wrongtype".to_string())
+                },
+                e
+            );
+        }
+    };
+}
+
+#[test]
+fn it_returns_an_error_when_func_has_non_type_expression_as_arg_type() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("fun".to_string()),
+        Token::Comma,
+        Token::Identifier("b".to_string()),
+        Token::Colon,
+        Token::String("string".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("void".to_string()),
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::String("string".to_string())
+                },
+                e
+            );
+        }
+    };
+}
+
+#[test]
+fn it_returns_an_error_when_func_has_no_arg_type_after_arg_name() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("fun".to_string()),
+        Token::Comma,
+        Token::Identifier("b".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("void".to_string()),
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::RightParen
+                },
+                e
+            );
+        }
+    };
+}
+
+#[test]
+fn it_returns_an_error_when_func_has_no_return_type() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("fun".to_string()),
+        Token::RightParen,
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::Arrow
+                },
+                e
+            );
+        }
+    };
+}
+
+#[test]
+fn it_returns_an_error_when_func_has_unknown_return_type() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("fun".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("wrongtype".to_string()),
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::Identifier("wrongtype".to_string())
+                },
+                e
+            );
+        }
+    };
+}
+
+#[test]
+fn it_returns_an_error_when_func_has_non_type_expression_as_return_type() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("fun".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::String("string".to_string()),
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::String("string".to_string())
+                },
+                e
+            );
+        }
+    };
+}
+
+#[test]
+fn it_returns_error_when_func_decl_has_no_arrow() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("fun".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("void".to_string()),
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::LCurly
+                },
+                e
+            );
+        }
+    };
+}
+
+#[test]
+fn it_returns_error_when_func_decl_has_no_body() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("fun".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("void".to_string()),
+        Token::Arrow,
+        Token::String("hello".to_string()),
+        Token::Eof,
+    ]);
+
+    match parser.parse() {
+        Ok(_) => assert!(false, "should return an error"),
+        Err(e) => {
+            assert_eq!(
+                SyntaxError {
+                    token: Token::String("hello".to_string())
+                },
+                e
+            );
+        }
+    };
 }
