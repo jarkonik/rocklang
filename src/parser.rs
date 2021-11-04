@@ -5,18 +5,12 @@ use serde::Serialize;
 use std::error::Error;
 use std::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SyntaxError {
-    token: Token,
+    pub token: Token,
 }
 
 impl fmt::Display for SyntaxError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "TOKEN[{}]", self.token)
-    }
-}
-
-impl fmt::Debug for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Syntax error: unexpected token {}", self.token)
     }
@@ -31,6 +25,7 @@ pub enum Type {
     Numeric,
     Vector,
     Null,
+    Function,
 }
 
 #[derive(Clone, Serialize, Debug)]
@@ -244,6 +239,15 @@ impl Parser {
                 });
                 true
             }
+            Token::GreaterOrEqual => {
+                self.advance();
+                expr = Expression::Binary(expression::Binary {
+                    left: Box::new(expr),
+                    operator: Operator::GreaterOrEqual,
+                    right: Box::new(self.term()?),
+                });
+                true
+            }
             _ => false,
         } {}
 
@@ -347,7 +351,12 @@ impl Parser {
                                         typ: match type_literal.as_str() {
                                             "number" => Type::Numeric,
                                             "vec" => Type::Vector,
-                                            _ => panic!("unkown type {}", type_literal),
+                                            "fun" => Type::Function,
+                                            _ => {
+                                                return Err(SyntaxError {
+                                                    token: self.previous().clone(),
+                                                })
+                                            }
                                         },
                                     });
                                 }
@@ -387,7 +396,11 @@ impl Parser {
                         "number" => Type::Numeric,
                         "vec" => Type::Vector,
                         "void" => Type::Null,
-                        _ => panic!("unkown type {}", type_literal),
+                        _ => {
+                            return Err(SyntaxError {
+                                token: self.previous().clone(),
+                            })
+                        }
                     },
                     _ => {
                         return Err(SyntaxError {
@@ -503,11 +516,7 @@ impl Parser {
             Token::True => Ok(Expression::Bool(true)),
             Token::False => Ok(Expression::Bool(false)),
             Token::Break => Ok(Expression::Break),
-            _ => {
-                return Err(SyntaxError {
-                    token: self.previous().clone(),
-                })
-            }
+            _ => unreachable!(),
         }
     }
 

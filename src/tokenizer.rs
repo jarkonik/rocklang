@@ -1,7 +1,9 @@
 use crate::token::Token;
+use std::error::Error;
+use std::fmt;
 
 pub trait Tokenize {
-    fn tokenize(&mut self) -> &Vec<Token>;
+    fn tokenize(&mut self) -> Result<&Vec<Token>>;
 }
 
 pub struct Tokenizer {
@@ -13,7 +15,7 @@ pub struct Tokenizer {
 }
 
 impl Tokenize for Tokenizer {
-    fn tokenize(&mut self) -> &Vec<Token> {
+    fn tokenize(&mut self) -> Result<&Vec<Token>> {
         self.current = 0;
         self.start = 0;
         self.line = 1;
@@ -21,14 +23,30 @@ impl Tokenize for Tokenizer {
 
         while !self.at_end() {
             self.start = self.current;
-            self.scan_token();
+            self.scan_token()?;
         }
 
         self.tokens.push(Token::Eof);
 
-        &self.tokens
+        Ok(&self.tokens)
     }
 }
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct TokenizerError {
+    pub chr: char,
+    pub line: usize,
+}
+
+impl Error for TokenizerError {}
+
+impl fmt::Display for TokenizerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unexpected character '{}'", self.chr)
+    }
+}
+
+type Result<T> = std::result::Result<T, TokenizerError>;
 
 impl Tokenizer {
     pub fn new(source: String) -> Self {
@@ -41,93 +59,87 @@ impl Tokenizer {
         }
     }
 
-    fn scan_token(&mut self) {
+    fn scan_token(&mut self) -> Result<()> {
         let chr = self.advance();
         match chr {
-            Some(' ' | '\r' | '\t') => (),
-            Some('\n') => self.line += 1,
-            Some('<') => {
-                if let Some('=') = self.advance() {
+            ' ' | '\r' | '\t' => (),
+            '\n' => self.line += 1,
+            '<' => {
+                if '=' == self.advance() {
                     self.add_token(Token::LessOrEqual)
                 } else {
                     self.add_token(Token::Less)
                 }
             }
-            Some('>') => {
-                if let Some('=') = self.advance() {
+            '>' => {
+                if '=' == self.advance() {
                     self.add_token(Token::GreaterOrEqual)
                 } else {
                     self.add_token(Token::Greater)
                 }
             }
-            Some('(') => self.add_token(Token::LeftParen),
-            Some(')') => self.add_token(Token::RightParen),
-            Some('+') => self.add_token(Token::Plus),
-            Some('-') => self.add_token(Token::Minus),
-            Some('*') => self.add_token(Token::Asterisk),
-            Some('%') => self.add_token(Token::Percent),
-            Some('"') => self.string(),
-            Some('!') => {
-                if let Some('=') = self.advance() {
+            '(' => self.add_token(Token::LeftParen),
+            ')' => self.add_token(Token::RightParen),
+            '+' => self.add_token(Token::Plus),
+            '-' => self.add_token(Token::Minus),
+            '*' => self.add_token(Token::Asterisk),
+            '%' => self.add_token(Token::Percent),
+            '"' => self.string(),
+            '!' => {
+                if '=' == self.advance() {
                     self.add_token(Token::NotEqual);
                 } else {
                     self.add_token(Token::Exclamation);
                 }
             }
-            Some('|') => {
-                if let Some('|') = self.advance() {
-                    self.add_token(Token::Or);
-                } else {
-                    panic!("unexpected character {}", self.previous())
-                }
+            '|' if self.advance() == '|' => {
+                self.add_token(Token::Or);
             }
-            Some('&') => {
-                if let Some('&') = self.advance() {
-                    self.add_token(Token::And);
-                } else {
-                    panic!("unexpected character {}", self.previous())
-                }
+            '&' if self.advance() == '&' => {
+                self.add_token(Token::And);
             }
-            Some('=') => match self.peek() {
-                Some('=') => {
+            '=' => match self.peek() {
+                '=' => {
                     self.add_token(Token::DoubleEqual);
                     self.advance();
                 }
-                Some('>') => {
+                '>' => {
                     self.add_token(Token::Arrow);
                     self.advance();
                 }
                 _ => self.add_token(Token::Equal),
             },
-            Some('{') => self.add_token(Token::LCurly),
-            Some('}') => self.add_token(Token::RCurly),
-            Some(',') => self.add_token(Token::Comma),
-            Some(':') => self.add_token(Token::Colon),
-            Some('/') => {
-                if let Some('/') = self.peek() {
-                    while !matches!(self.peek(), Some('\n')) && !self.at_end() {
+            '{' => self.add_token(Token::LCurly),
+            '}' => self.add_token(Token::RCurly),
+            ',' => self.add_token(Token::Comma),
+            ':' => self.add_token(Token::Colon),
+            '/' => {
+                if '/' == self.peek() {
+                    while self.peek() != '\n' && !self.at_end() {
                         self.advance();
                     }
                 } else {
                     self.add_token(Token::Slash);
                 }
             }
-            Some(c) if c.is_alphabetic() => self.identifier(),
-            Some(c) if c.is_numeric() => self.numeric(),
-            Some(c) => panic!("Unexpected character '{}'", c),
-            _ => panic!("End of stream"),
+            c if c.is_alphabetic() => self.identifier(),
+            c if c.is_numeric() => self.numeric(),
+            chr => {
+                return Err(TokenizerError {
+                    chr,
+                    line: self.line,
+                })
+            }
         };
+        Ok(())
     }
 
     fn string(&mut self) {
         let mut literal = String::new();
 
-        while !matches!(self.peek(), Some('"')) {
-            if let Some(chr) = self.advance() {
-                literal.push(chr);
-            } else {
-                break;
-            }
+        while self.peek() != '"' {
+            let chr = self.advance();
+            literal.push(chr);
         }
         self.advance();
         self.add_token(Token::String(literal));
@@ -137,7 +149,9 @@ impl Tokenizer {
         let mut literal = String::new();
         literal.push(self.previous());
 
-        while let Some(chr) = self.peek() {
+        loop {
+            let chr = self.peek();
+
             if chr.is_numeric() || chr == '.' {
                 literal.push(chr);
                 self.advance();
@@ -155,7 +169,9 @@ impl Tokenizer {
         let mut literal = String::new();
         literal.push(self.previous());
 
-        while let Some(chr) = self.peek() {
+        loop {
+            let chr = self.peek();
+
             if chr.is_alphanumeric() {
                 literal.push(chr);
                 self.advance();
@@ -179,7 +195,7 @@ impl Tokenizer {
         self.tokens.push(token);
     }
 
-    fn advance(&mut self) -> Option<char> {
+    fn advance(&mut self) -> char {
         let chr = self.peek();
         self.current += 1;
         chr
@@ -190,8 +206,8 @@ impl Tokenizer {
         chr
     }
 
-    fn peek(&mut self) -> Option<char> {
-        self.source.chars().nth(self.current)
+    fn peek(&mut self) -> char {
+        self.source.chars().nth(self.current).unwrap()
     }
 
     fn at_end(&self) -> bool {
