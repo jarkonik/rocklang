@@ -11,6 +11,8 @@ jobs:
 
       - uses: ./.github/actions/install_llvm
 
+      - uses: ./.github/actions/cargo_cache
+
       - name: Install tarpaulin
         run: cargo install cargo-tarpaulin
         shell: bash
