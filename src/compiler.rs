@@ -289,7 +289,7 @@ impl Visitor<Value> for Compiler {
                     },
                     _ => {
                         let alloca = self.builder.build_alloca(typ.pointer_type(0), "");
-                        self.builder.create_store(val.clone(), &alloca);
+                        self.builder.create_store(val, &alloca);
                         self.set_var(
                             literal,
                             Value::Function {
@@ -598,17 +598,17 @@ impl Visitor<Value> for Compiler {
     fn visit_identifier(&mut self, expr: &str) -> Value {
         match &self.get_var(expr) {
             Some(Value::Ptr(n)) => Value::Numeric(self.builder.build_load(n, "")),
-            Some(Value::Numeric(n)) => Value::Numeric(n.clone()),
+            Some(Value::Numeric(n)) => Value::Numeric(*n),
             Some(Value::Function {
                 typ,
                 val,
                 return_type,
             }) => Value::Function {
                 typ: *typ,
-                val: val.clone(),
+                val: *val,
                 return_type: return_type.clone(),
             },
-            Some(Value::Vec(n)) => Value::Vec(n.clone()),
+            Some(Value::Vec(n)) => Value::Vec(*n),
             Some(Value::Pending) | None => panic!("undefined identifier {}", expr),
             _ => todo!("{:?}", &self.get_var(expr)),
         }
@@ -634,7 +634,7 @@ impl Visitor<Value> for Compiler {
         let void_t = self.context.void_type();
         let sum_type = self.context.function_type(void_t, &[], false);
         let sum_fun = self.module.add_function(MAIN_FUNCTION, sum_type);
-        self.stack.push(Frame::new(sum_fun.clone()));
+        self.stack.push(Frame::new(sum_fun));
         let block = self.context.append_basic_block(&sum_fun, "entry");
         self.builder.position_builder_at_end(&block);
 
@@ -686,7 +686,7 @@ impl Visitor<Value> for Compiler {
         let block = self.context.append_basic_block(&fun, "entry");
         self.builder.position_builder_at_end(&block);
 
-        self.stack.push(Frame::new(fun.clone()));
+        self.stack.push(Frame::new(fun));
 
         for (i, param) in expr.params.iter().enumerate() {
             self.set_var(
