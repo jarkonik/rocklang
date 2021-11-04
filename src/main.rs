@@ -3,12 +3,24 @@ use rocklang::compiler::{Compile, Compiler};
 use rocklang::parser::{Parse, Parser};
 use rocklang::tokenizer::{Tokenize, Tokenizer};
 use std::error::Error;
+use std::fmt;
 use std::{env, fs};
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct InputError {}
+
+impl fmt::Display for InputError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Input error")
+    }
+}
+
+impl Error for InputError {}
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        panic!("No input file provided");
+        return Err(Box::new(InputError {}));
     }
     let filename = &args[1];
 

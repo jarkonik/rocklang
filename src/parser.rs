@@ -352,7 +352,11 @@ impl Parser {
                                             "number" => Type::Numeric,
                                             "vec" => Type::Vector,
                                             "fun" => Type::Function,
-                                            _ => panic!("unkown type {}", type_literal),
+                                            _ => {
+                                                return Err(SyntaxError {
+                                                    token: self.previous().clone(),
+                                                })
+                                            }
                                         },
                                     });
                                 }
@@ -392,7 +396,11 @@ impl Parser {
                         "number" => Type::Numeric,
                         "vec" => Type::Vector,
                         "void" => Type::Null,
-                        _ => panic!("unkown type {}", type_literal),
+                        _ => {
+                            return Err(SyntaxError {
+                                token: self.previous().clone(),
+                            })
+                        }
                     },
                     _ => {
                         return Err(SyntaxError {

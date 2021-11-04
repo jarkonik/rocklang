@@ -736,3 +736,293 @@ fn it_parses_unary_minus() {
         json
     )
 }
+
+#[test]
+fn it_parses_func_declaration_with_no_params() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("void".to_string()),
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "FuncDecl": {
+                        "return_type": "Null",
+                        "params": [],
+                        "body": [
+                            {
+                                "FuncCall": {
+                                    "args": [
+                                        {
+                                            "String": "hello"
+                                        }
+                                    ],
+                                    "calee": {
+                                        "Identifier": "print"
+                                    }
+
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_func_declaration_with_one_number_param() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("number".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("void".to_string()),
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "FuncDecl": {
+                        "return_type": "Null",
+                        "params": [
+                            {
+                                "typ": "Numeric",
+                                "name": "a"
+                            }
+                        ],
+                        "body": [
+                            {
+                                "FuncCall": {
+                                    "args": [
+                                        {
+                                            "String": "hello"
+                                        }
+                                    ],
+                                    "calee": {
+                                        "Identifier": "print"
+                                    }
+
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_func_declaration_with_one_vec_param() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("vec".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("void".to_string()),
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "FuncDecl": {
+                        "return_type": "Null",
+                        "params": [
+                            {
+                                "typ": "Vector",
+                                "name": "a"
+                            }
+                        ],
+                        "body": [
+                            {
+                                "FuncCall": {
+                                    "args": [
+                                        {
+                                            "String": "hello"
+                                        }
+                                    ],
+                                    "calee": {
+                                        "Identifier": "print"
+                                    }
+
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_func_declaration_with_one_fun_param() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("fun".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("void".to_string()),
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "FuncDecl": {
+                        "return_type": "Null",
+                        "params": [
+                            {
+                                "typ": "Function",
+                                "name": "a"
+                            }
+                        ],
+                        "body": [
+                            {
+                                "FuncCall": {
+                                    "args": [
+                                        {
+                                            "String": "hello"
+                                        }
+                                    ],
+                                    "calee": {
+                                        "Identifier": "print"
+                                    }
+
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
+
+#[test]
+fn it_parses_func_declaration_with_multiple_params() {
+    let mut parser = Parser::new(&vec![
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Colon,
+        Token::Identifier("fun".to_string()),
+        Token::Comma,
+        Token::Identifier("b".to_string()),
+        Token::Colon,
+        Token::Identifier("number".to_string()),
+        Token::RightParen,
+        Token::Colon,
+        Token::Identifier("void".to_string()),
+        Token::Arrow,
+        Token::LCurly,
+        Token::Identifier("print".to_string()),
+        Token::LeftParen,
+        Token::String("hello".to_string()),
+        Token::RightParen,
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!(
+            [
+                {
+                    "FuncDecl": {
+                        "return_type": "Null",
+                        "params": [
+                            {
+                                "typ": "Function",
+                                "name": "a"
+                            },
+                            {
+                                "typ": "Numeric",
+                                "name": "b"
+                            }
+                        ],
+                        "body": [
+                            {
+                                "FuncCall": {
+                                    "args": [
+                                        {
+                                            "String": "hello"
+                                        }
+                                    ],
+                                    "calee": {
+                                        "Identifier": "print"
+                                    }
+
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        ),
+        json
+    )
+}
