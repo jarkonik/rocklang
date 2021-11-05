@@ -4,6 +4,7 @@ use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
 use crate::visitor::Visitor;
+use core::fmt::Display;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::error::Error;
@@ -393,8 +394,7 @@ impl Visitor<Value> for Compiler {
                             //                            VarName.c_str());
                             let arr = self.builder.build_malloc(arr_type, "");
                             let p = self.builder.build_bitcast(&arr, i8_pointer_type, "");
-                            self.builder
-                                .build_call(&sprintf, &[p, format_str, f], "string");
+                            self.builder.build_call(&sprintf, &[p, format_str, f], "");
 
                             Value::String(arr)
                         }
@@ -438,7 +438,7 @@ impl Visitor<Value> for Compiler {
                         self.context.const_u64(fun_addr.try_into().unwrap()),
                         fun_type.pointer_type(0),
                     );
-                    Value::Vec(self.builder.build_call(&ptr, &[], "vecnew"))
+                    Value::Vec(self.builder.build_call(&ptr, &[], ""))
                 }
                 "vecset" => {
                     let args: Vec<llvm::Value> = expr
@@ -519,7 +519,7 @@ impl Visitor<Value> for Compiler {
                         fun_type.pointer_type(0),
                     );
 
-                    Value::Numeric(self.builder.build_call(&ptr, &args, "vecget"))
+                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
                 }
                 _ => match &self.get_var(literal) {
                     Some(Value::Function {
@@ -668,6 +668,8 @@ impl Visitor<Value> for Compiler {
 
         self.builder.build_ret_void();
 
+        sum_fun.verify_function();
+
         if self.opt {
             self.fpm.run(&sum_fun);
         }
@@ -770,6 +772,8 @@ impl Visitor<Value> for Compiler {
 
         self.builder.position_builder_at_end(&curr);
 
+        fun.verify_function();
+
         if self.opt {
             self.fpm.run(&fun);
         }
@@ -792,6 +796,10 @@ impl Compile for Compiler {
 impl Compiler {
     pub fn dump_ir(&self) {
         self.module.dump();
+    }
+
+    pub fn ir_string(&self) -> String {
+        format!("{}", self.module)
     }
 
     fn set_var(&mut self, literal: &str, val: Value) {

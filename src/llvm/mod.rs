@@ -1,5 +1,6 @@
 extern crate llvm_sys as llvm;
 
+use core::fmt::Display;
 use llvm_sys::analysis::*;
 use llvm_sys::transforms::util::LLVMAddPromoteMemoryToRegisterPass;
 use std::borrow::Cow;
@@ -196,6 +197,10 @@ impl Value {
     pub fn get_param(&self, idx: u32) -> Value {
         Value(unsafe { LLVMGetParam(self.0, idx) })
     }
+
+    pub fn verify_function(&self) {
+        unsafe { LLVMVerifyFunction(self.0, LLVMVerifierFailureAction::LLVMAbortProcessAction) };
+    }
 }
 
 pub struct Module(*mut llvm::LLVMModule);
@@ -225,6 +230,14 @@ impl Module {
 
     pub fn dump(&self) {
         unsafe { LLVMDumpModule(self.0) }
+    }
+}
+
+impl Display for Module {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        let str = unsafe { CStr::from_ptr(LLVMPrintModuleToString(self.0)).to_str() };
+        fmt.write_str(str.unwrap())?;
+        Ok(())
     }
 }
 
@@ -269,7 +282,6 @@ impl PassManager {
 
     pub fn run(&self, fun: &Value) {
         unsafe {
-            LLVMVerifyFunction(fun.0, LLVMVerifierFailureAction::LLVMAbortProcessAction);
             LLVMRunFunctionPassManager(self.0, fun.0);
         }
     }
