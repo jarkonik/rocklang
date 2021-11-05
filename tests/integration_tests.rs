@@ -3,6 +3,7 @@ use predicates::prelude::*;
 use std::process::Command;
 
 #[test]
+#[cfg_attr(tarpaulin, ignore)]
 fn prime_sieve() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("rocklang")?;
 
