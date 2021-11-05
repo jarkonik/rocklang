@@ -3,6 +3,10 @@ pub extern "C" fn vecnew() -> *mut std::vec::Vec<f64> {
     Box::into_raw(Box::new(vec))
 }
 
+pub extern "C" fn sqrt(x: f64) -> f64 {
+    x.sqrt()
+}
+
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn vecset(
     vec: *mut Vec<f64>,
