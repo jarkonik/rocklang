@@ -469,6 +469,30 @@ impl Visitor<Value> for Compiler {
 
                     Value::Vec(self.builder.build_call(&ptr, &args, "vecset"))
                 }
+                "sqrt" => {
+                    let args: Vec<llvm::Value> = expr
+                        .args
+                        .iter()
+                        .map(|arg| match self.walk(arg) {
+                            Value::Numeric(n) => n,
+                            _ => panic!("{:?}", self.walk(arg)),
+                        })
+                        .collect();
+
+                    let fun_type = self.context.function_type(
+                        self.context.double_type(),
+                        &[self.context.double_type()],
+                        false,
+                    );
+
+                    let fun_addr = stdlib::sqrt as usize;
+                    let ptr = self.context.const_u64_to_ptr(
+                        self.context.const_u64(fun_addr.try_into().unwrap()),
+                        fun_type.pointer_type(0),
+                    );
+
+                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
+                }
                 "vecget" => {
                     let args: Vec<llvm::Value> = expr
                         .args

@@ -1,6 +1,13 @@
-WIDTH = 50
-HEIGHT = 50
-ITERATIONS = 50
+WIDTH = 30
+HEIGHT = 30
+
+complexprint = (c: vec): void => {
+	print(string(vecget(c, 0)))
+	print("+")
+	print(string(vecget(c, 1)))
+	print("i")
+	print("\n")
+}
 
 complexadd = (a: vec, b: vec): vec => {
 	r = vecget(a, 0) + vecget(b, 0)
@@ -25,38 +32,47 @@ complexmul = (a: vec, b: vec): vec => {
 	res
 }
 
-mandelbrot = (c: vec): number => {
-	i = 0
-
-	acc = vecnew()
-	acc = vecset(acc, 0, 0)
-	acc = vecset(acc, 1, 0)
-
-	while i < ITERATIONS {
-		acc = complexadd(complexmul(acc, acc), c)
-		i = i + 1
-	}
-
-	res = vecget(acc, 0) * vecget(acc, 0) + vecget(acc, 1) * vecget(acc, 1)
-	res
-}
-
-x = 0
-while x < WIDTH {
-	y = 0
-	while y < HEIGHT {
+y = 0
+while y < HEIGHT {
+	x = 0
+	while x < WIDTH {
 		c = vecnew()
-		c = vecset(c, 0, x)
-		c = vecset(c, 1, y)
+		halfwidth = WIDTH * 0.5
+		halfheight = HEIGHT * 0.5
 
-		if mandelbrot(c) < 2 {
-			print("*")
-		} else {
-			print(" ")
+		rx = y - halfwidth
+		ry = x - halfheight
+		c = vecset(c, 0, rx * 0.1)
+		c = vecset(c, 1, ry * 0.1)
+
+		i = 0
+
+		acc = vecnew()
+		acc = vecset(acc, 0, 0)
+		acc = vecset(acc, 1, 0)
+
+		isstable = 1
+
+		while i < 50 {
+			mulres = complexmul(acc, acc)
+			acc = complexadd(mulres, c)
+			if sqrt(vecget(acc, 0) * vecget(acc, 0) + vecget(acc, 1) * vecget(acc, 1)) > 2 {
+				isstable = 0
+			}
+			if sqrt(vecget(acc, 0) * vecget(acc, 0) + vecget(acc, 1) * vecget(acc, 1)) < 0-2 {
+				isstable = 0
+			}
+			i = i + 1
 		}
 
-		y = y + 1
-		print("\n")
+		if isstable == 1 {
+			print("*")
+		} else {
+			print(".")
+		}
+
+		x = x + 1
 	}
-	x = x + 1
+	y = y + 1
+	print("\n")
 }
