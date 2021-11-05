@@ -1,0 +1,62 @@
+WIDTH = 50
+HEIGHT = 50
+ITERATIONS = 50
+
+complexadd = (a: vec, b: vec): vec => {
+	r = vecget(a, 0) + vecget(b, 0)
+	img = vecget(a, 1) + vecget(b, 1)
+
+	res = vecnew()
+	res = vecset(res, 0, r)
+	res = vecset(res, 1, img)
+
+	res
+}
+
+
+complexmul = (a: vec, b: vec): vec => {
+	r = vecget(a, 0) * vecget(b, 0) - vecget(a, 1) * vecget(b, 1)
+	img = vecget(a, 0) * vecget(b, 1) + vecget(a, 1) * vecget(b, 0)
+
+	res = vecnew()
+	res = vecset(res, 0, r)
+	res = vecset(res, 1, img)
+
+	res
+}
+
+mandelbrot = (c: vec): number => {
+	i = 0
+
+	acc = vecnew()
+	acc = vecset(acc, 0, 0)
+	acc = vecset(acc, 1, 0)
+
+	while i < ITERATIONS {
+		acc = complexadd(complexmul(acc, acc), c)
+		i = i + 1
+	}
+
+	res = vecget(acc, 0) * vecget(acc, 0) + vecget(acc, 1) * vecget(acc, 1)
+	res
+}
+
+x = 0
+while x < WIDTH {
+	y = 0
+	while y < HEIGHT {
+		c = vecnew()
+		c = vecset(c, 0, x)
+		c = vecset(c, 1, y)
+
+		if mandelbrot(c) < 2 {
+			print("*")
+		} else {
+			print(" ")
+		}
+
+		y = y + 1
+		print("\n")
+	}
+	x = x + 1
+}
