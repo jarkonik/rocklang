@@ -4,7 +4,6 @@ use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
 use crate::visitor::Visitor;
-use core::fmt::Display;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::error::Error;
@@ -428,7 +427,7 @@ impl Visitor<Value> for Compiler {
                 }
                 "vecnew" => {
                     let fun_type = self.context.function_type(
-                        self.context.double_type().pointer_type(0),
+                        self.context.double_type().pointer_type(0).pointer_type(0),
                         &[],
                         false,
                     );
