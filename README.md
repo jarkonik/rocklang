@@ -1,5 +1,7 @@
 # Rock
 
+⚠️The project is at a very early stage, lots of things will not work.
+
 [![Github all releases](https://img.shields.io/github/downloads/jarkonik/rocklang/total.svg)](https://GitHub.com/jarkonik/rocklang/releases/)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?hosted_button_id=Y25KDXY4LJYQ2)
 [![Continuous integration](https://github.com/jarkonik/rocklang/actions/workflows/main.yml/badge.svg)](https://github.com/jarkonik/rocklang/actions/workflows/main.yml)
