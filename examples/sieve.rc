@@ -37,4 +37,4 @@ sieve = (n: number): void => {
 	}
 }
 
-sieve(100)
+sieve(10)
