@@ -1,9 +1,9 @@
-use crate::compiler::value::Value;
+use crate::compiler::value::Ptr;
 use crate::llvm;
 use std::collections::HashMap;
 
 pub struct Frame {
-	env: HashMap<String, Value>,
+	env: HashMap<String, Ptr>,
 	pub fun: llvm::Value,
 }
 
@@ -15,11 +15,11 @@ impl Frame {
 		}
 	}
 
-	pub fn get(&self, literal: &str) -> Option<&Value> {
+	pub fn get(&self, literal: &str) -> Option<&Ptr> {
 		self.env.get(literal)
 	}
 
-	pub fn set(&mut self, literal: &str, val: Value) {
+	pub fn set(&mut self, literal: &str, val: Ptr) {
 		self.env.insert(literal.to_string(), val);
 	}
 

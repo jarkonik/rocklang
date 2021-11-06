@@ -2,6 +2,7 @@ mod frame;
 mod value;
 
 use crate::compiler::frame::Frame;
+use crate::compiler::value::Ptr;
 use crate::compiler::value::Value;
 use crate::expression;
 use crate::expression::Expression;
@@ -56,11 +57,11 @@ impl Visitor<Value> for Compiler {
 
                 self.builder.create_store(n, &ptr);
 
-                let val = Value::NumericPtr(ptr);
+                let val = Ptr::Numeric(ptr);
                 self.set_var(&name, val);
-                val
+
+                right
             }
-            _ => panic!(),
         }
     }
 
@@ -86,7 +87,7 @@ impl Visitor<Value> for Compiler {
             .unwrap_or_else(|| panic!("undefined variable {}", name));
 
         match val {
-            Value::NumericPtr(n) => Value::Numeric(self.builder.build_load(&n, "")),
+            Ptr::Numeric(n) => Value::Numeric(self.builder.build_load(&n, "")),
             _ => panic!(),
         }
     }
@@ -153,7 +154,7 @@ impl Compiler {
         format!("{}", self.module)
     }
 
-    fn set_var(&mut self, literal: &str, val: Value) {
+    fn set_var(&mut self, literal: &str, val: Ptr) {
         self.stack.last_mut().unwrap().set(literal, val);
     }
 
@@ -161,7 +162,7 @@ impl Compiler {
         self.stack.last_mut().unwrap().remove(literal);
     }
 
-    fn get_var(&mut self, literal: &str) -> Option<Value> {
+    fn get_var(&mut self, literal: &str) -> Option<Ptr> {
         for frame in self.stack.iter().rev() {
             if let Some(v) = frame.get(literal) {
                 return Some((*v).clone());
