@@ -4,12 +4,12 @@ mod value;
 use crate::compiler::frame::Frame;
 use crate::compiler::value::Value;
 use crate::expression;
+use crate::expression::Expression;
 use crate::llvm;
 use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
 use crate::visitor::Visitor;
-use std::convert::TryInto;
 use std::error::Error;
 
 const MAIN_FUNCTION: &str = "__main__";
@@ -30,47 +30,72 @@ pub struct Compiler {
 }
 
 impl Visitor<Value> for Compiler {
-    fn visit_binary(&mut self, expr: &expression::Binary) -> Value {
+    fn visit_binary(&mut self, expr: expression::Binary) -> Value {
         todo!()
     }
 
-    fn visit_numeric(&mut self, f: &f64) -> Value {
+    fn visit_numeric(&mut self, f: f64) -> Value {
+        Value::Numeric(self.context.const_double(f))
+    }
+
+    fn visit_conditional(&mut self, expr: expression::Conditional) -> Value {
         todo!()
     }
 
-    fn visit_conditional(&mut self, expr: &expression::Conditional) -> Value {
+    fn visit_assignment(&mut self, expr: expression::Assignment) -> Value {
+        let name = match *expr.left {
+            Expression::Identifier(lit) => lit,
+            _ => unreachable!(),
+        };
+
+        let right = self.walk(*expr.right);
+
+        match right {
+            Value::Numeric(n) => {
+                let ptr = self.builder.build_alloca(self.context.double_type(), &name);
+
+                self.builder.create_store(n, &ptr);
+
+                let val = Value::NumericPtr(ptr);
+                self.set_var(&name, val);
+                val
+            }
+            _ => panic!(),
+        }
+    }
+
+    fn visit_unary(&mut self, _: expression::Unary) -> Value {
         todo!()
     }
 
-    fn visit_assignment(&mut self, expr: &expression::Assignment) -> Value {
+    fn visit_grouping(&mut self, _: expression::Expression) -> Value {
         todo!()
     }
 
-    fn visit_unary(&mut self, _: &expression::Unary) -> Value {
+    fn visit_func_call(&mut self, expr: expression::FuncCall) -> Value {
         todo!()
     }
 
-    fn visit_grouping(&mut self, _: &expression::Expression) -> Value {
+    fn visit_while(&mut self, _: expression::While) -> Value {
         todo!()
     }
 
-    fn visit_func_call(&mut self, expr: &expression::FuncCall) -> Value {
-        todo!()
-    }
+    fn visit_identifier(&mut self, name: &str) -> Value {
+        let val = self
+            .get_var(name)
+            .unwrap_or_else(|| panic!("undefined variable {}", name));
 
-    fn visit_while(&mut self, _: &expression::While) -> Value {
-        todo!()
-    }
-
-    fn visit_identifier(&mut self, _: &str) -> Value {
-        todo!()
+        match val {
+            Value::NumericPtr(n) => Value::Numeric(self.builder.build_load(&n, "")),
+            _ => panic!(),
+        }
     }
 
     fn visit_string(&mut self, _: &str) -> Value {
         todo!()
     }
 
-    fn visit_bool(&mut self, _: &bool) -> Value {
+    fn visit_bool(&mut self, _: bool) -> Value {
         todo!()
     }
 
@@ -78,11 +103,36 @@ impl Visitor<Value> for Compiler {
         todo!()
     }
 
-    fn visit_program(&mut self, _: parser::Program) -> Value {
-        todo!()
+    fn visit_program(&mut self, program: parser::Program) -> Option<Value> {
+        let main_fun_type = self
+            .context
+            .function_type(self.context.void_type(), &[], false);
+        let main_fun = self.module.add_function(MAIN_FUNCTION, main_fun_type);
+
+        self.stack.push(Frame::new(main_fun));
+        let block = self.context.append_basic_block(&main_fun, "entry");
+        self.builder.position_builder_at_end(&block);
+
+        let mut return_value: Option<Value> = None;
+
+        for stmt in program.body {
+            return_value = Some(self.walk(stmt));
+        }
+
+        self.builder.build_ret_void();
+
+        main_fun.verify_function();
+
+        if self.opt {
+            self.fpm.run(&main_fun);
+        }
+
+        self.stack.pop();
+
+        return_value
     }
 
-    fn visit_func_decl(&mut self, _: &expression::FuncDecl) -> Value {
+    fn visit_func_decl(&mut self, _: expression::FuncDecl) -> Value {
         todo!()
     }
 }
