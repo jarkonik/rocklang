@@ -56,8 +56,8 @@ enum Value {
     Null,
     String(llvm::Value),
     GlobalString(llvm::Value),
+    ConstNumeric(llvm::Value),
     Numeric(llvm::Value),
-    Ptr(llvm::Value),
     Bool(llvm::Value),
     Function {
         val: llvm::Value,
@@ -73,44 +73,44 @@ impl Visitor<Value> for Compiler {
         match expr.operator {
             expression::Operator::Plus => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
-                Value::Numeric(self.builder.build_fadd(l, r, ""))
+                Value::ConstNumeric(self.builder.build_fadd(l, r, ""))
             }
             expression::Operator::Asterisk => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
-                Value::Numeric(self.builder.build_fmul(l, r, ""))
+                Value::ConstNumeric(self.builder.build_fmul(l, r, ""))
             }
             expression::Operator::LessOrEqual => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
@@ -118,14 +118,14 @@ impl Visitor<Value> for Compiler {
             }
             expression::Operator::Less => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
@@ -133,14 +133,14 @@ impl Visitor<Value> for Compiler {
             }
             expression::Operator::Greater => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
@@ -148,14 +148,14 @@ impl Visitor<Value> for Compiler {
             }
             expression::Operator::Equal => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
@@ -163,25 +163,25 @@ impl Visitor<Value> for Compiler {
             }
             expression::Operator::Minus => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
+                    Value::ConstNumeric(n) => n,
                     _ => panic!("panic"),
                 };
 
-                Value::Numeric(self.builder.build_fsub(l, r, ""))
+                Value::ConstNumeric(self.builder.build_fsub(l, r, ""))
             }
             _ => todo!("{:?}", expr.operator),
         }
     }
 
     fn visit_numeric(&mut self, f: &f64) -> Value {
-        Value::Numeric(self.context.const_double(*f))
+        Value::ConstNumeric(self.context.const_double(*f))
     }
 
     fn visit_conditional(&mut self, expr: &expression::Conditional) -> Value {
@@ -234,12 +234,12 @@ impl Visitor<Value> for Compiler {
         }
 
         let result = match val {
-            Value::Numeric(n) => {
+            Value::ConstNumeric(n) => {
                 let var = self.get_var(literal);
 
                 match var {
                     Some(v) => match v {
-                        Value::Ptr(p) => {
+                        Value::Numeric(p) => {
                             self.builder.create_store(n, &p);
                         }
                         _ => panic!("panic"),
@@ -247,7 +247,7 @@ impl Visitor<Value> for Compiler {
                     _ => {
                         let alloca = self.builder.build_alloca(self.context.double_type(), "");
                         self.builder.create_store(n, &alloca);
-                        self.set_var(literal, Value::Ptr(alloca));
+                        self.set_var(literal, Value::Numeric(alloca));
                     }
                 };
                 Value::Null
@@ -282,7 +282,7 @@ impl Visitor<Value> for Compiler {
 
                 match var {
                     Some(v) => match v {
-                        Value::Ptr(p) => {
+                        Value::Numeric(p) => {
                             self.builder.create_store(val, &p);
                         }
                         _ => panic!("panic {:?}", v),
@@ -366,7 +366,7 @@ impl Visitor<Value> for Compiler {
                     let res = self.walk(&expr.args[0]);
 
                     match res {
-                        Value::Numeric(f) => {
+                        Value::ConstNumeric(f) => {
                             let i8_pointer_type = self.context.i8_type().pointer_type(0);
 
                             let func_type = self.context.function_type(
@@ -406,7 +406,7 @@ impl Visitor<Value> for Compiler {
                         .iter()
                         .map(|arg| match self.walk(arg) {
                             Value::Vec(n) => self.builder.build_load(&n, ""),
-                            Value::Numeric(n) => n,
+                            Value::ConstNumeric(n) => n,
                             _ => panic!("{:?}", self.walk(arg)),
                         })
                         .collect();
@@ -423,7 +423,7 @@ impl Visitor<Value> for Compiler {
                         fun_type.pointer_type(0),
                     );
 
-                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
+                    Value::ConstNumeric(self.builder.build_call(&ptr, &args, ""))
                 }
                 "vecnew" => {
                     let fun_type = self.context.function_type(
@@ -445,7 +445,7 @@ impl Visitor<Value> for Compiler {
                         .iter()
                         .map(|arg| match self.walk(arg) {
                             Value::Vec(n) => self.builder.build_load(&n, ""),
-                            Value::Numeric(n) => n,
+                            Value::ConstNumeric(n) => n,
                             _ => todo!("{:?}", self.walk(arg)),
                         })
                         .collect();
@@ -473,7 +473,7 @@ impl Visitor<Value> for Compiler {
                         .args
                         .iter()
                         .map(|arg| match self.walk(arg) {
-                            Value::Numeric(n) => n,
+                            Value::ConstNumeric(n) => n,
                             _ => panic!("{:?}", self.walk(arg)),
                         })
                         .collect();
@@ -490,7 +490,7 @@ impl Visitor<Value> for Compiler {
                         fun_type.pointer_type(0),
                     );
 
-                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
+                    Value::ConstNumeric(self.builder.build_call(&ptr, &args, ""))
                 }
                 "vecget" => {
                     let args: Vec<llvm::Value> = expr
@@ -498,7 +498,7 @@ impl Visitor<Value> for Compiler {
                         .iter()
                         .map(|arg| match self.walk(arg) {
                             Value::Vec(n) => self.builder.build_load(&n, ""),
-                            Value::Numeric(n) => n,
+                            Value::ConstNumeric(n) => n,
                             _ => panic!("{:?}", self.walk(arg)),
                         })
                         .collect();
@@ -518,7 +518,7 @@ impl Visitor<Value> for Compiler {
                         fun_type.pointer_type(0),
                     );
 
-                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
+                    Value::ConstNumeric(self.builder.build_call(&ptr, &args, ""))
                 }
                 _ => match &self.get_var(literal) {
                     Some(Value::Function {
@@ -530,7 +530,7 @@ impl Visitor<Value> for Compiler {
                             .args
                             .iter()
                             .map(|arg| match self.walk(arg) {
-                                Value::Numeric(n) => n,
+                                Value::ConstNumeric(n) => n,
                                 Value::Vec(v) => v,
                                 Value::Function { val, .. } => val,
                                 _ => todo!("{:?}", self.walk(arg)),
@@ -543,7 +543,7 @@ impl Visitor<Value> for Compiler {
                                     .build_load(&self.builder.build_call(val, &args, ""), ""),
                             ),
                             parser::Type::Numeric => {
-                                Value::Numeric(self.builder.build_call(val, &args, ""))
+                                Value::ConstNumeric(self.builder.build_call(val, &args, ""))
                             }
                             parser::Type::Function => Value::Function {
                                 val: self.builder.build_call(val, &args, ""),
@@ -564,12 +564,12 @@ impl Visitor<Value> for Compiler {
                             .args
                             .iter()
                             .map(|arg| match self.walk(arg) {
-                                Value::Numeric(n) => n,
+                                Value::ConstNumeric(n) => n,
                                 _ => todo!("{:?}", self.walk(arg)),
                             })
                             .collect();
 
-                        Value::Numeric(self.builder.build_call(
+                        Value::ConstNumeric(self.builder.build_call(
                             &self.stack.last().unwrap().fun,
                             &args,
                             literal,
@@ -620,8 +620,8 @@ impl Visitor<Value> for Compiler {
 
     fn visit_identifier(&mut self, expr: &str) -> Value {
         match &self.get_var(expr) {
-            Some(Value::Ptr(n)) => Value::Numeric(self.builder.build_load(n, "")),
-            Some(Value::Numeric(n)) => Value::Numeric(*n),
+            Some(Value::Numeric(n)) => Value::ConstNumeric(self.builder.build_load(n, "")),
+            Some(Value::ConstNumeric(n)) => Value::ConstNumeric(*n),
             Some(Value::Function {
                 typ,
                 val,
@@ -718,7 +718,9 @@ impl Visitor<Value> for Compiler {
                 param.name.as_str(),
                 match param.typ {
                     parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Numeric => {
+                        Value::ConstNumeric(fun.get_param(i.try_into().unwrap()))
+                    }
                     parser::Type::Null => Value::Null,
                     parser::Type::Function => Value::Function {
                         val: fun.get_param(i.try_into().unwrap()),
@@ -764,7 +766,7 @@ impl Visitor<Value> for Compiler {
 
         match last_val {
             Value::Null => self.builder.build_ret_void(),
-            Value::Numeric(n) => self.builder.build_ret(n),
+            Value::ConstNumeric(n) => self.builder.build_ret(n),
             Value::Vec(n) => self.builder.build_ret(n),
             _ => todo!("{:?}", last_val),
         };
