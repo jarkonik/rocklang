@@ -1,4 +1,3 @@
-use predicates::prelude::*;
 use rocklang::compiler::{Compile, Compiler};
 use rocklang::expression::{Assignment, Expression, FuncCall, FuncDecl};
 use rocklang::parser::{Param, Program, Type};

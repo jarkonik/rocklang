@@ -1,40 +1,18 @@
+mod frame;
+mod value;
+
+use crate::compiler::frame::Frame;
+use crate::compiler::value::Value;
 use crate::expression;
 use crate::llvm;
 use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
 use crate::visitor::Visitor;
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::error::Error;
 
 const MAIN_FUNCTION: &str = "__main__";
-
-struct Frame {
-    env: HashMap<String, Value>,
-    fun: llvm::Value,
-}
-
-impl Frame {
-    pub fn new(fun: llvm::Value) -> Self {
-        Frame {
-            env: HashMap::new(),
-            fun,
-        }
-    }
-
-    pub fn get(&self, literal: &str) -> Option<&Value> {
-        self.env.get(literal)
-    }
-
-    pub fn set(&mut self, literal: &str, val: Value) {
-        self.env.insert(literal.to_string(), val);
-    }
-
-    pub fn remove(&mut self, literal: &str) {
-        self.env.remove(&literal.to_string());
-    }
-}
 
 pub trait Compile {
     fn compile(&mut self) -> Result<(), Box<dyn Error>>;
@@ -49,23 +27,6 @@ pub struct Compiler {
     fpm: PassManager,
     opt: bool,
     stack: Vec<Frame>,
-}
-
-#[derive(Debug, Clone)]
-enum Value {
-    Null,
-    String(llvm::Value),
-    GlobalString(llvm::Value),
-    ConstNumeric(llvm::Value),
-    Numeric(llvm::Value),
-    Bool(llvm::Value),
-    Function {
-        val: llvm::Value,
-        typ: llvm::Type,
-        return_type: parser::Type,
-    },
-    Vec(llvm::Value),
-    Pending,
 }
 
 impl Visitor<Value> for Compiler {
