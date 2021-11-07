@@ -1,12 +1,11 @@
 use crate::llvm;
 use crate::parser;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Value {
 	Null,
 	String(llvm::Value),
 	GlobalString(llvm::Value),
-	ConstNumeric(llvm::Value),
 	Numeric(llvm::Value),
 	Bool(llvm::Value),
 	Function {
