@@ -695,7 +695,7 @@ impl Compiler {
                 | Var::GlobalString(v)
                 | Var::Vec(v)
                 | Var::Bool(v)
-                | Var::Function(v) => Some(v),
+                | Var::Function { val: v, .. } => Some(v),
                 _ => todo!(),
             },
             None => None,
@@ -711,7 +711,13 @@ impl Compiler {
             Value::GlobalString(_) => Var::GlobalString(ptr),
             Value::Vec(_) => Var::Vec(ptr),
             Value::Bool(_) => Var::Bool(ptr),
-            Value::Function { .. } => Var::Function(ptr),
+            Value::Function {
+                typ, return_type, ..
+            } => Var::Function {
+                val: ptr,
+                typ,
+                return_type,
+            },
         };
 
         match val {
@@ -745,15 +751,33 @@ impl Compiler {
     fn get_var(&mut self, literal: &str) -> Option<Value> {
         match self.get_var_ptr(literal) {
             Some(v) => {
-                return match v {
-                    Var::Numeric(v)
-                    | Var::String(v)
-                    | Var::GlobalString(v)
-                    | Var::Vec(v)
-                    | Var::Bool(v)
-                    | Var::Function(v) => Some(Value::Numeric(self.builder.build_load(&v, ""))),
+                let val: llvm::Value = match v {
+                    Var::Numeric(p)
+                    | Var::String(p)
+                    | Var::GlobalString(p)
+                    | Var::Vec(p)
+                    | Var::Bool(p)
+                    | Var::Function { val: p, .. } => self.builder.build_load(&p, ""),
                     _ => todo!(),
-                }
+                };
+
+                return Some(match v {
+                    Var::Numeric(v) => Value::Numeric(val),
+                    Var::String(v) => Value::String(val),
+                    Var::GlobalString(v) => Value::GlobalString(val),
+                    Var::Vec(v) => Value::Vec(val),
+                    Var::Bool(v) => Value::Bool(val),
+                    Var::Function {
+                        val,
+                        return_type,
+                        typ,
+                    } => Value::Function {
+                        val,
+                        return_type,
+                        typ,
+                    },
+                    _ => todo!(),
+                });
             }
             None => None,
         }

@@ -77,7 +77,6 @@ fn it_compiles_numeric_to_numeric_asignment() {
 }
 
 #[test]
-#[ignore]
 fn it_compiles_new_vec_being_passed_as_fun_arg() {
 	let program = Program {
 		body: vec![
@@ -107,7 +106,6 @@ fn it_compiles_new_vec_being_passed_as_fun_arg() {
 }
 
 #[test]
-#[ignore]
 fn it_compiles_new_vec_being_passed_as_variable() {
 	let program = Program {
 		body: vec![

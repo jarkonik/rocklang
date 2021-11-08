@@ -1,4 +1,5 @@
 use crate::llvm;
+use crate::parser;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Var {
@@ -9,5 +10,9 @@ pub enum Var {
 	Vec(llvm::Value),
 	GlobalString(llvm::Value),
 	Bool(llvm::Value),
-	Function(llvm::Value),
+	Function {
+		val: llvm::Value,
+		typ: llvm::Type,
+		return_type: parser::Type,
+	},
 }
