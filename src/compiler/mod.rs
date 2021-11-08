@@ -534,7 +534,11 @@ impl Visitor<Value> for Compiler {
 
         self.builder.build_ret_void();
 
-        sum_fun.verify_function();
+        sum_fun.verify_function().unwrap_or_else(|_x| {
+            println!("IR Dump:");
+            self.dump_ir();
+            panic!()
+        });
 
         if self.opt {
             self.fpm.run(&sum_fun);
