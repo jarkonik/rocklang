@@ -762,13 +762,13 @@ impl Compiler {
                 };
 
                 return Some(match v {
-                    Var::Numeric(v) => Value::Numeric(val),
-                    Var::String(v) => Value::String(val),
-                    Var::GlobalString(v) => Value::GlobalString(val),
-                    Var::Vec(v) => Value::Vec(val),
-                    Var::Bool(v) => Value::Bool(val),
+                    Var::Numeric(_) => Value::Numeric(val),
+                    Var::String(_) => Value::String(val),
+                    Var::GlobalString(_) => Value::GlobalString(val),
+                    Var::Vec(_) => Value::Vec(val),
+                    Var::Bool(_) => Value::Bool(val),
                     Var::Function {
-                        val,
+                        val: _v,
                         return_type,
                         typ,
                     } => Value::Function {
