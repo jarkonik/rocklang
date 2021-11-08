@@ -271,7 +271,7 @@ impl Visitor<Value> for Compiler {
                         .args
                         .iter()
                         .map(|arg| match self.walk(arg) {
-                            Value::Vec(n) => self.builder.build_load(&n, ""),
+                            Value::Vec(n) => n,
                             Value::Numeric(n) => n,
                             _ => panic!("{:?}", self.walk(arg)),
                         })
@@ -310,7 +310,7 @@ impl Visitor<Value> for Compiler {
                         .args
                         .iter()
                         .map(|arg| match self.walk(arg) {
-                            Value::Vec(n) => self.builder.build_load(&n, ""),
+                            Value::Vec(n) => n,
                             Value::Numeric(n) => n,
                             _ => todo!("{:?}", self.walk(arg)),
                         })
@@ -363,7 +363,7 @@ impl Visitor<Value> for Compiler {
                         .args
                         .iter()
                         .map(|arg| match self.walk(arg) {
-                            Value::Vec(n) => self.builder.build_load(&n, ""),
+                            Value::Vec(n) => n,
                             Value::Numeric(n) => n,
                             _ => panic!("{:?}", self.walk(arg)),
                         })
@@ -404,10 +404,9 @@ impl Visitor<Value> for Compiler {
                             .collect();
 
                         match return_type {
-                            parser::Type::Vector => Value::Vec(
-                                self.builder
-                                    .build_load(&self.builder.build_call(val, &args, ""), ""),
-                            ),
+                            parser::Type::Vector => {
+                                Value::Vec(self.builder.build_call(val, &args, ""))
+                            }
                             parser::Type::Numeric => {
                                 Value::Numeric(self.builder.build_call(val, &args, ""))
                             }
