@@ -688,7 +688,20 @@ impl Compiler {
             Value::Function { typ, .. } => typ,
         };
 
-        let ptr = self.builder.build_alloca(typ, literal);
+        let existing_ptr: Option<llvm::Value> = match self.get_var_ptr(literal) {
+            Some(v) => match v {
+                Var::Numeric(v)
+                | Var::String(v)
+                | Var::GlobalString(v)
+                | Var::Vec(v)
+                | Var::Bool(v)
+                | Var::Function(v) => Some(v),
+                _ => todo!(),
+            },
+            None => None,
+        };
+
+        let ptr = existing_ptr.unwrap_or_else(|| self.builder.build_alloca(typ, literal));
 
         let var = match val {
             Value::Numeric(_) => Var::Numeric(ptr),
@@ -720,21 +733,30 @@ impl Compiler {
         self.stack.last_mut().unwrap().remove(literal);
     }
 
-    fn get_var(&mut self, literal: &str) -> Option<Value> {
+    fn get_var_ptr(&mut self, literal: &str) -> Option<Var> {
         for frame in self.stack.iter().rev() {
             if let Some(v) = frame.get(literal) {
+                return Some(*v);
+            };
+        }
+        None
+    }
+
+    fn get_var(&mut self, literal: &str) -> Option<Value> {
+        match self.get_var_ptr(literal) {
+            Some(v) => {
                 return match v {
                     Var::Numeric(v)
                     | Var::String(v)
                     | Var::GlobalString(v)
                     | Var::Vec(v)
                     | Var::Bool(v)
-                    | Var::Function(v) => Some(Value::Numeric(self.builder.build_load(v, ""))),
+                    | Var::Function(v) => Some(Value::Numeric(self.builder.build_load(&v, ""))),
                     _ => todo!(),
-                };
-            };
+                }
+            }
+            None => None,
         }
-        None
     }
 
     pub fn run(&self) {
