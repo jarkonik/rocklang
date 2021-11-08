@@ -685,7 +685,7 @@ impl Compiler {
             Value::String(_) => self.context.i8_type().pointer_type(0),
             Value::GlobalString(_) => self.context.i8_type().pointer_type(0),
             Value::Bool(_) => self.context.i1_type(),
-            Value::Function { typ, .. } => typ,
+            Value::Function { typ, .. } => typ.pointer_type(0),
         };
 
         let existing_ptr: Option<llvm::Value> = match self.get_var_ptr(literal) {
