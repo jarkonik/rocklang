@@ -4,6 +4,7 @@ use core::fmt::Display;
 use llvm_sys::analysis::*;
 use llvm_sys::transforms::util::LLVMAddPromoteMemoryToRegisterPass;
 use std::borrow::Cow;
+use std::error::Error;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::mem;
@@ -13,6 +14,18 @@ use llvm::execution_engine::*;
 use llvm::target::*;
 use llvm::transforms::scalar::*;
 use std::convert::TryInto;
+use std::fmt;
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct LLVMError {}
+
+impl fmt::Display for LLVMError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "LLVMError")
+    }
+}
+
+impl Error for LLVMError {}
 
 pub(crate) fn c_str(mut s: &str) -> Cow<CStr> {
     if s.is_empty() {
@@ -198,8 +211,15 @@ impl Value {
         Value(unsafe { LLVMGetParam(self.0, idx) })
     }
 
-    pub fn verify_function(&self) {
-        unsafe { LLVMVerifyFunction(self.0, LLVMVerifierFailureAction::LLVMAbortProcessAction) };
+    pub fn verify_function(&self) -> Result<(), Box<dyn Error>> {
+        let result = unsafe {
+            LLVMVerifyFunction(self.0, LLVMVerifierFailureAction::LLVMPrintMessageAction)
+        };
+        if result == 0 {
+            Ok(())
+        } else {
+            Err(Box::new(LLVMError {}))
+        }
     }
 }
 

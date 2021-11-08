@@ -293,7 +293,7 @@ impl Visitor<Value> for Compiler {
                 }
                 "vecnew" => {
                     let fun_type = self.context.function_type(
-                        self.context.double_type().pointer_type(0).pointer_type(0),
+                        self.context.double_type().pointer_type(0),
                         &[],
                         false,
                     );
@@ -550,7 +550,7 @@ impl Visitor<Value> for Compiler {
             .params
             .iter()
             .map(|arg| match arg.typ {
-                parser::Type::Vector => self.context.double_type().pointer_type(0).pointer_type(0),
+                parser::Type::Vector => self.context.double_type().pointer_type(0),
                 parser::Type::Numeric => self.context.double_type(),
                 parser::Type::Function => self
                     .context
@@ -561,7 +561,7 @@ impl Visitor<Value> for Compiler {
             .collect();
 
         let return_type = match expr.return_type {
-            parser::Type::Vector => self.context.double_type().pointer_type(0).pointer_type(0),
+            parser::Type::Vector => self.context.double_type().pointer_type(0),
             parser::Type::Numeric => self.context.double_type(),
             parser::Type::Function => self
                 .context
@@ -638,7 +638,11 @@ impl Visitor<Value> for Compiler {
 
         self.builder.position_builder_at_end(&curr);
 
-        fun.verify_function();
+        fun.verify_function().unwrap_or_else(|_x| {
+            println!("IR Dump:");
+            self.dump_ir();
+            panic!()
+        });
 
         if self.opt {
             self.fpm.run(&fun);
@@ -661,7 +665,7 @@ impl Compile for Compiler {
 
 impl Compiler {
     pub fn dump_ir(&self) {
-        self.module.dump();
+        println!("{}", self.module);
     }
 
     pub fn ir_string(&self) -> String {
@@ -672,17 +676,34 @@ impl Compiler {
         let typ = match val {
             Value::Numeric(_) => self.context.double_type(),
             Value::Pending => self.context.void_type(),
-            _ => todo!("{:?}", val),
+            Value::Vec(_) => self.context.double_type().pointer_type(0),
+            Value::Null => self.context.void_type(),
+            Value::String(_) => self.context.i8_type().pointer_type(0),
+            Value::GlobalString(_) => self.context.i8_type().pointer_type(0),
+            Value::Bool(_) => self.context.i1_type(),
+            Value::Function { typ, .. } => typ,
         };
+
         let ptr = self.builder.build_alloca(typ, literal);
+
         let var = match val {
             Value::Numeric(_) => Var::Numeric(ptr),
             Value::Pending => Var::Pending,
-            _ => todo!(),
+            Value::Null => Var::Null,
+            Value::String(_) => Var::String(ptr),
+            Value::GlobalString(_) => Var::GlobalString(ptr),
+            Value::Vec(_) => Var::Vec(ptr),
+            Value::Bool(_) => Var::Bool(ptr),
+            Value::Function { .. } => Var::Function(ptr),
         };
 
         match val {
-            Value::Numeric(v) => {
+            Value::Numeric(v)
+            | Value::String(v)
+            | Value::GlobalString(v)
+            | Value::Vec(v)
+            | Value::Bool(v)
+            | Value::Function { val: v, .. } => {
                 self.builder.create_store(v, &ptr);
             }
             _ => todo!(),
@@ -699,7 +720,12 @@ impl Compiler {
         for frame in self.stack.iter().rev() {
             if let Some(v) = frame.get(literal) {
                 return match v {
-                    Var::Numeric(n) => Some(Value::Numeric(self.builder.build_load(n, ""))),
+                    Var::Numeric(v)
+                    | Var::String(v)
+                    | Var::GlobalString(v)
+                    | Var::Vec(v)
+                    | Var::Bool(v)
+                    | Var::Function(v) => Some(Value::Numeric(self.builder.build_load(v, ""))),
                     _ => todo!(),
                 };
             };

@@ -4,4 +4,10 @@ use crate::llvm;
 pub enum Var {
 	Numeric(llvm::Value),
 	Pending,
+	Null,
+	String(llvm::Value),
+	Vec(llvm::Value),
+	GlobalString(llvm::Value),
+	Bool(llvm::Value),
+	Function(llvm::Value),
 }
