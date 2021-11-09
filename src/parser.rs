@@ -20,7 +20,7 @@ impl Error for SyntaxError {}
 
 type Result<T> = std::result::Result<T, SyntaxError>;
 
-#[derive(Clone, Serialize, Debug)]
+#[derive(Copy, Clone, Serialize, Debug)]
 pub enum Type {
     Numeric,
     Vector,

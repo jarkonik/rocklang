@@ -54,8 +54,7 @@ while y < HEIGHT {
 		isstable = 1
 
 		while i < 50 {
-			mulres = complexmul(acc, acc)
-			acc = complexadd(mulres, c)
+			acc = complexadd(complexmul(acc, acc), c)
 			if sqrt(vecget(acc, 0) * vecget(acc, 0) + vecget(acc, 1) * vecget(acc, 1)) > 2 {
 				isstable = 0
 			}

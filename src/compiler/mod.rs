@@ -1,40 +1,20 @@
+mod frame;
+mod value;
+mod var;
+
+use crate::compiler::frame::Frame;
+use crate::compiler::value::Value;
+use crate::compiler::var::Var;
 use crate::expression;
 use crate::llvm;
 use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
 use crate::visitor::Visitor;
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::error::Error;
 
 const MAIN_FUNCTION: &str = "__main__";
-
-struct Frame {
-    env: HashMap<String, Value>,
-    fun: llvm::Value,
-}
-
-impl Frame {
-    pub fn new(fun: llvm::Value) -> Self {
-        Frame {
-            env: HashMap::new(),
-            fun,
-        }
-    }
-
-    pub fn get(&self, literal: &str) -> Option<&Value> {
-        self.env.get(literal)
-    }
-
-    pub fn set(&mut self, literal: &str, val: Value) {
-        self.env.insert(literal.to_string(), val);
-    }
-
-    pub fn remove(&mut self, literal: &str) {
-        self.env.remove(&literal.to_string());
-    }
-}
 
 pub trait Compile {
     fn compile(&mut self) -> Result<(), Box<dyn Error>>;
@@ -51,36 +31,17 @@ pub struct Compiler {
     stack: Vec<Frame>,
 }
 
-#[derive(Debug, Clone)]
-enum Value {
-    Null,
-    String(llvm::Value),
-    GlobalString(llvm::Value),
-    Numeric(llvm::Value),
-    Ptr(llvm::Value),
-    Bool(llvm::Value),
-    Function {
-        val: llvm::Value,
-        typ: llvm::Type,
-        return_type: parser::Type,
-    },
-    Vec(llvm::Value),
-    Pending,
-}
-
 impl Visitor<Value> for Compiler {
     fn visit_binary(&mut self, expr: &expression::Binary) -> Value {
         match expr.operator {
             expression::Operator::Plus => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
@@ -88,14 +49,12 @@ impl Visitor<Value> for Compiler {
             }
             expression::Operator::Asterisk => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
@@ -103,14 +62,12 @@ impl Visitor<Value> for Compiler {
             }
             expression::Operator::LessOrEqual => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
@@ -118,14 +75,12 @@ impl Visitor<Value> for Compiler {
             }
             expression::Operator::Less => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
@@ -133,14 +88,12 @@ impl Visitor<Value> for Compiler {
             }
             expression::Operator::Greater => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
@@ -148,14 +101,12 @@ impl Visitor<Value> for Compiler {
             }
             expression::Operator::Equal => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
@@ -163,14 +114,12 @@ impl Visitor<Value> for Compiler {
             }
             expression::Operator::Minus => {
                 let l = match self.walk(&expr.left) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
                 let r = match self.walk(&expr.right) {
-                    Value::Ptr(p) => p,
-                    Value::Numeric(n) => n,
+                    Value::Numeric(p) => p,
                     _ => panic!("panic"),
                 };
 
@@ -220,93 +169,10 @@ impl Visitor<Value> for Compiler {
             expression::Expression::Identifier(literal) => literal,
             _ => panic!("panic"),
         };
-        let mut pending_set = false;
-
-        if matches!(self.get_var(literal), None) {
-            self.set_var(literal, Value::Pending);
-            pending_set = true;
-        }
 
         let val = self.walk(&expr.right);
-
-        if pending_set {
-            self.remove_var(literal);
-        }
-
-        let result = match val {
-            Value::Numeric(n) => {
-                let var = self.get_var(literal);
-
-                match var {
-                    Some(v) => match v {
-                        Value::Ptr(p) => {
-                            self.builder.create_store(n, &p);
-                        }
-                        _ => panic!("panic"),
-                    },
-                    _ => {
-                        let alloca = self.builder.build_alloca(self.context.double_type(), "");
-                        self.builder.create_store(n, &alloca);
-                        self.set_var(literal, Value::Ptr(alloca));
-                    }
-                };
-                Value::Null
-            }
-            Value::Vec(ptr) => {
-                let var = self.get_var(literal);
-
-                match var {
-                    Some(v) => match v {
-                        Value::Vec(p) => {
-                            self.builder.create_store(ptr, &p);
-                        }
-                        _ => todo!("{:?}", v),
-                    },
-                    _ => {
-                        let alloca = self
-                            .builder
-                            .build_alloca(self.context.double_type().pointer_type(0), "");
-                        self.builder.create_store(ptr, &alloca);
-                        self.set_var(literal, Value::Vec(alloca));
-                    }
-                };
-
-                Value::Null
-            }
-            Value::Function {
-                typ,
-                val,
-                return_type,
-            } => {
-                let var = self.get_var(literal);
-
-                match var {
-                    Some(v) => match v {
-                        Value::Ptr(p) => {
-                            self.builder.create_store(val, &p);
-                        }
-                        _ => panic!("panic {:?}", v),
-                    },
-                    _ => {
-                        let alloca = self.builder.build_alloca(typ.pointer_type(0), "");
-                        self.builder.create_store(val, &alloca);
-                        self.set_var(
-                            literal,
-                            Value::Function {
-                                typ,
-                                val,
-                                return_type,
-                            },
-                        );
-                    }
-                };
-
-                Value::Null
-            }
-            _ => panic!("type error"),
-        };
-
-        result
+        self.set_var(literal, val);
+        val
     }
 
     fn visit_unary(&mut self, _: &expression::Unary) -> Value {
@@ -393,8 +259,7 @@ impl Visitor<Value> for Compiler {
                             //                            VarName.c_str());
                             let arr = self.builder.build_malloc(arr_type, "");
                             let p = self.builder.build_bitcast(&arr, i8_pointer_type, "");
-                            self.builder
-                                .build_call(&sprintf, &[p, format_str, f], "string");
+                            self.builder.build_call(&sprintf, &[p, format_str, f], "");
 
                             Value::String(arr)
                         }
@@ -406,7 +271,7 @@ impl Visitor<Value> for Compiler {
                         .args
                         .iter()
                         .map(|arg| match self.walk(arg) {
-                            Value::Vec(n) => self.builder.build_load(&n, ""),
+                            Value::Vec(n) => n,
                             Value::Numeric(n) => n,
                             _ => panic!("{:?}", self.walk(arg)),
                         })
@@ -438,14 +303,14 @@ impl Visitor<Value> for Compiler {
                         self.context.const_u64(fun_addr.try_into().unwrap()),
                         fun_type.pointer_type(0),
                     );
-                    Value::Vec(self.builder.build_call(&ptr, &[], "vecnew"))
+                    Value::Vec(self.builder.build_call(&ptr, &[], ""))
                 }
                 "vecset" => {
                     let args: Vec<llvm::Value> = expr
                         .args
                         .iter()
                         .map(|arg| match self.walk(arg) {
-                            Value::Vec(n) => self.builder.build_load(&n, ""),
+                            Value::Vec(n) => n,
                             Value::Numeric(n) => n,
                             _ => todo!("{:?}", self.walk(arg)),
                         })
@@ -498,7 +363,7 @@ impl Visitor<Value> for Compiler {
                         .args
                         .iter()
                         .map(|arg| match self.walk(arg) {
-                            Value::Vec(n) => self.builder.build_load(&n, ""),
+                            Value::Vec(n) => n,
                             Value::Numeric(n) => n,
                             _ => panic!("{:?}", self.walk(arg)),
                         })
@@ -519,7 +384,7 @@ impl Visitor<Value> for Compiler {
                         fun_type.pointer_type(0),
                     );
 
-                    Value::Numeric(self.builder.build_call(&ptr, &args, "vecget"))
+                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
                 }
                 _ => match &self.get_var(literal) {
                     Some(Value::Function {
@@ -539,10 +404,9 @@ impl Visitor<Value> for Compiler {
                             .collect();
 
                         match return_type {
-                            parser::Type::Vector => Value::Vec(
-                                self.builder
-                                    .build_load(&self.builder.build_call(val, &args, ""), ""),
-                            ),
+                            parser::Type::Vector => {
+                                Value::Vec(self.builder.build_call(val, &args, ""))
+                            }
                             parser::Type::Numeric => {
                                 Value::Numeric(self.builder.build_call(val, &args, ""))
                             }
@@ -620,22 +484,23 @@ impl Visitor<Value> for Compiler {
     }
 
     fn visit_identifier(&mut self, expr: &str) -> Value {
-        match &self.get_var(expr) {
-            Some(Value::Ptr(n)) => Value::Numeric(self.builder.build_load(n, "")),
-            Some(Value::Numeric(n)) => Value::Numeric(*n),
-            Some(Value::Function {
-                typ,
-                val,
-                return_type,
-            }) => Value::Function {
-                typ: *typ,
-                val: *val,
-                return_type: return_type.clone(),
-            },
-            Some(Value::Vec(n)) => Value::Vec(*n),
-            Some(Value::Pending) | None => panic!("undefined identifier {}", expr),
-            _ => todo!("{:?}", &self.get_var(expr)),
-        }
+        self.get_var(expr)
+            .unwrap_or_else(|| panic!("undefined variable {}", expr))
+        // match &self.get_var(expr) {
+        //     Some(Value::Numeric(n)) => Value::Numeric(self.builder.build_load(n, expr)),
+        //     Some(Value::Function {
+        //         typ,
+        //         val,
+        //         return_type,
+        //     }) => Value::Function {
+        //         typ: *typ,
+        //         val: *val,
+        //         return_type: return_type.clone(),
+        //     },
+        //     Some(Value::Vec(n)) => Value::Vec(*n),
+        //     Some(Value::Pending) | None => panic!("undefined identifier {}", expr),
+        //     _ => todo!("{:?}", &self.get_var(expr)),
+        // }
     }
 
     fn visit_string(&mut self, expr: &str) -> Value {
@@ -668,6 +533,12 @@ impl Visitor<Value> for Compiler {
 
         self.builder.build_ret_void();
 
+        sum_fun.verify_function().unwrap_or_else(|_x| {
+            println!("IR Dump:");
+            self.dump_ir();
+            panic!()
+        });
+
         if self.opt {
             self.fpm.run(&sum_fun);
         }
@@ -682,7 +553,7 @@ impl Visitor<Value> for Compiler {
             .params
             .iter()
             .map(|arg| match arg.typ {
-                parser::Type::Vector => self.context.double_type().pointer_type(0).pointer_type(0),
+                parser::Type::Vector => self.context.double_type().pointer_type(0),
                 parser::Type::Numeric => self.context.double_type(),
                 parser::Type::Function => self
                     .context
@@ -693,7 +564,7 @@ impl Visitor<Value> for Compiler {
             .collect();
 
         let return_type = match expr.return_type {
-            parser::Type::Vector => self.context.double_type().pointer_type(0).pointer_type(0),
+            parser::Type::Vector => self.context.double_type().pointer_type(0),
             parser::Type::Numeric => self.context.double_type(),
             parser::Type::Function => self
                 .context
@@ -770,12 +641,18 @@ impl Visitor<Value> for Compiler {
 
         self.builder.position_builder_at_end(&curr);
 
+        fun.verify_function().unwrap_or_else(|_x| {
+            println!("IR Dump:");
+            self.dump_ir();
+            panic!()
+        });
+
         if self.opt {
             self.fpm.run(&fun);
         }
 
         Value::Function {
-            return_type: expr.return_type.clone(),
+            return_type: expr.return_type,
             typ: fun_type,
             val: fun,
         }
@@ -791,24 +668,120 @@ impl Compile for Compiler {
 
 impl Compiler {
     pub fn dump_ir(&self) {
-        self.module.dump();
+        println!("{}", self.module);
+    }
+
+    pub fn ir_string(&self) -> String {
+        format!("{}", self.module)
     }
 
     fn set_var(&mut self, literal: &str, val: Value) {
-        self.stack.last_mut().unwrap().set(literal, val);
+        let typ = match val {
+            Value::Numeric(_) => self.context.double_type(),
+            Value::Pending => self.context.void_type(),
+            Value::Vec(_) => self.context.double_type().pointer_type(0),
+            Value::Null => self.context.void_type(),
+            Value::String(_) => self.context.i8_type().pointer_type(0),
+            Value::GlobalString(_) => self.context.i8_type().pointer_type(0),
+            Value::Bool(_) => self.context.i1_type(),
+            Value::Function { typ, .. } => typ.pointer_type(0),
+        };
+
+        let existing_ptr: Option<llvm::Value> = match self.get_var_ptr(literal) {
+            Some(v) => match v {
+                Var::Numeric(v)
+                | Var::String(v)
+                | Var::GlobalString(v)
+                | Var::Vec(v)
+                | Var::Bool(v)
+                | Var::Function { val: v, .. } => Some(v),
+                _ => todo!(),
+            },
+            None => None,
+        };
+
+        let ptr = existing_ptr.unwrap_or_else(|| self.builder.build_alloca(typ, literal));
+
+        let var = match val {
+            Value::Numeric(_) => Var::Numeric(ptr),
+            Value::Pending => Var::Pending,
+            Value::Null => Var::Null,
+            Value::String(_) => Var::String(ptr),
+            Value::GlobalString(_) => Var::GlobalString(ptr),
+            Value::Vec(_) => Var::Vec(ptr),
+            Value::Bool(_) => Var::Bool(ptr),
+            Value::Function {
+                typ,
+                return_type,
+                val,
+                ..
+            } => Var::Function {
+                val,
+                typ,
+                return_type,
+            },
+        };
+
+        match val {
+            Value::Numeric(v)
+            | Value::String(v)
+            | Value::GlobalString(v)
+            | Value::Vec(v)
+            | Value::Bool(v) => self.builder.create_store(v, &ptr),
+            Value::Function { val: v, .. } => v,
+            _ => todo!(),
+        };
+
+        self.stack.last_mut().unwrap().set(literal, var);
     }
 
+    #[allow(dead_code)]
     fn remove_var(&mut self, literal: &str) {
         self.stack.last_mut().unwrap().remove(literal);
     }
 
-    fn get_var(&mut self, literal: &str) -> Option<Value> {
+    fn get_var_ptr(&mut self, literal: &str) -> Option<Var> {
         for frame in self.stack.iter().rev() {
             if let Some(v) = frame.get(literal) {
-                return Some((*v).clone());
+                return Some(*v);
             };
         }
         None
+    }
+
+    fn get_var(&mut self, literal: &str) -> Option<Value> {
+        match self.get_var_ptr(literal) {
+            Some(v) => {
+                let val: llvm::Value = match v {
+                    Var::Numeric(p)
+                    | Var::String(p)
+                    | Var::GlobalString(p)
+                    | Var::Vec(p)
+                    | Var::Bool(p) => self.builder.build_load(&p, ""),
+                    Var::Function { val: p, .. } => p,
+                    _ => todo!(),
+                };
+
+                Some(match v {
+                    Var::Numeric(_) => Value::Numeric(val),
+                    Var::String(_) => Value::String(val),
+                    Var::GlobalString(_) => Value::GlobalString(val),
+                    Var::Vec(_) => Value::Vec(val),
+                    Var::Bool(_) => Value::Bool(val),
+                    Var::Function {
+                        val,
+                        return_type,
+                        typ,
+                    } => Value::Function {
+                        val,
+                        return_type,
+                        typ,
+                    },
+                    _ => todo!(),
+                })
+            }
+            None => None,
+        }
     }
 
     pub fn run(&self) {
