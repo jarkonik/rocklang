@@ -652,7 +652,7 @@ impl Visitor<Value> for Compiler {
         }
 
         Value::Function {
-            return_type: expr.return_type.clone(),
+            return_type: expr.return_type,
             typ: fun_type,
             val: fun,
         }
@@ -711,9 +711,12 @@ impl Compiler {
             Value::Vec(_) => Var::Vec(ptr),
             Value::Bool(_) => Var::Bool(ptr),
             Value::Function {
-                typ, return_type, ..
+                typ,
+                return_type,
+                val,
+                ..
             } => Var::Function {
-                val: ptr,
+                val,
                 typ,
                 return_type,
             },
@@ -724,16 +727,15 @@ impl Compiler {
             | Value::String(v)
             | Value::GlobalString(v)
             | Value::Vec(v)
-            | Value::Bool(v)
-            | Value::Function { val: v, .. } => {
-                self.builder.create_store(v, &ptr);
-            }
+            | Value::Bool(v) => self.builder.create_store(v, &ptr),
+            Value::Function { val: v, .. } => v,
             _ => todo!(),
         };
 
         self.stack.last_mut().unwrap().set(literal, var);
     }
 
+    #[allow(dead_code)]
     fn remove_var(&mut self, literal: &str) {
         self.stack.last_mut().unwrap().remove(literal);
     }
@@ -755,19 +757,19 @@ impl Compiler {
                     | Var::String(p)
                     | Var::GlobalString(p)
                     | Var::Vec(p)
-                    | Var::Bool(p)
-                    | Var::Function { val: p, .. } => self.builder.build_load(&p, ""),
+                    | Var::Bool(p) => self.builder.build_load(&p, ""),
+                    Var::Function { val: p, .. } => p,
                     _ => todo!(),
                 };
 
-                return Some(match v {
+                Some(match v {
                     Var::Numeric(_) => Value::Numeric(val),
                     Var::String(_) => Value::String(val),
                     Var::GlobalString(_) => Value::GlobalString(val),
                     Var::Vec(_) => Value::Vec(val),
                     Var::Bool(_) => Value::Bool(val),
                     Var::Function {
-                        val: _v,
+                        val,
                         return_type,
                         typ,
                     } => Value::Function {
@@ -776,7 +778,7 @@ impl Compiler {
                         typ,
                     },
                     _ => todo!(),
-                });
+                })
             }
             None => None,
         }
