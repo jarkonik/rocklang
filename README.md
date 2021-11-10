@@ -12,7 +12,7 @@ Discord](https://badgen.net/discord/members/NK3baHRTve)](https://discord.gg/NK3b
 
 <img src="./rock.svg" width="100" height="100">
 
-Simple JIT-compiled functional programming language.
+JIT-compiled functional programming language.
 
 ## Example
 
