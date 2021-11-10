@@ -172,6 +172,11 @@ impl Visitor<Value> for Compiler {
 
         let val = self.walk(&expr.right);
         self.set_var(literal, val);
+
+        if let expression::Expression::FuncDecl(e) = &*expr.right {
+            self.build_function(val, &*e)
+        }
+
         val
     }
 
@@ -574,82 +579,7 @@ impl Visitor<Value> for Compiler {
         };
 
         let fun_type = self.context.function_type(return_type, &types, false);
-
-        let curr = self.builder.get_insert_block();
-
         let fun = self.module.add_function("fun", fun_type);
-        let block = self.context.append_basic_block(&fun, "entry");
-        self.builder.position_builder_at_end(&block);
-
-        self.stack.push(Frame::new(fun));
-
-        for (i, param) in expr.params.iter().enumerate() {
-            self.set_var(
-                param.name.as_str(),
-                match param.typ {
-                    parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Null => Value::Null,
-                    parser::Type::Function => Value::Function {
-                        val: fun.get_param(i.try_into().unwrap()),
-                        typ: self
-                            .context
-                            .function_type(self.context.void_type(), &[], false)
-                            .pointer_type(0),
-                        return_type: parser::Type::Null,
-                    },
-                },
-            )
-        }
-
-        let mut last_val = Value::Null;
-        for stmt in expr.body.clone() {
-            last_val = self.walk(&stmt);
-        }
-
-        // for (_, val) in &self.stack.last().unwrap().env {
-        //     match val {
-        //         Value::Vec(v) => {
-        //             let fun_type = self.context.function_type(
-        //                 self.context.void_type(),
-        //                 &[self.context.void_type().pointer_type(0)],
-        //                 false,
-        //             );
-
-        //             let fun_addr = unsafe {
-        //                 std::mem::transmute::<*const (), u64>(stdlib::vecfree as *const ())
-        //             };
-        //             let ptr = self.context.const_u64_to_ptr(
-        //                 self.context.const_u64(fun_addr),
-        //                 fun_type.pointer_type(0),
-        //             );
-        //             self.builder
-        //                 .build_call(&ptr, &[self.builder.build_load(v, "")], "");
-        //         }
-        //         _ => (),
-        //     }
-        // }
-
-        self.stack.pop();
-
-        match last_val {
-            Value::Null => self.builder.build_ret_void(),
-            Value::Numeric(n) => self.builder.build_ret(n),
-            Value::Vec(n) => self.builder.build_ret(n),
-            _ => todo!("{:?}", last_val),
-        };
-
-        self.builder.position_builder_at_end(&curr);
-
-        fun.verify_function().unwrap_or_else(|_x| {
-            println!("IR Dump:");
-            self.dump_ir();
-            panic!()
-        });
-
-        if self.opt {
-            self.fpm.run(&fun);
-        }
 
         Value::Function {
             return_type: expr.return_type,
@@ -790,6 +720,88 @@ impl Compiler {
 
     pub fn no_opt(&mut self) {
         self.opt = false;
+    }
+
+    fn build_function(&mut self, fun_compiler_val: Value, expr: &expression::FuncDecl) {
+        let fun = match fun_compiler_val {
+            Value::Function { val, .. } => val,
+            _ => panic!(),
+        };
+
+        let curr = self.builder.get_insert_block();
+
+        let block = self.context.append_basic_block(&fun, "entry");
+        self.builder.position_builder_at_end(&block);
+
+        self.stack.push(Frame::new(fun));
+
+        for (i, param) in expr.params.iter().enumerate() {
+            self.set_var(
+                param.name.as_str(),
+                match param.typ {
+                    parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Null => Value::Null,
+                    parser::Type::Function => Value::Function {
+                        val: fun.get_param(i.try_into().unwrap()),
+                        typ: self
+                            .context
+                            .function_type(self.context.void_type(), &[], false)
+                            .pointer_type(0),
+                        return_type: parser::Type::Null,
+                    },
+                },
+            )
+        }
+
+        let mut last_val = Value::Null;
+        for stmt in expr.body.clone() {
+            last_val = self.walk(&stmt);
+        }
+
+        // for (_, val) in &self.stack.last().unwrap().env {
+        //     match val {
+        //         Value::Vec(v) => {
+        //             let fun_type = self.context.function_type(
+        //                 self.context.void_type(),
+        //                 &[self.context.void_type().pointer_type(0)],
+        //                 false,
+        //             );
+
+        //             let fun_addr = unsafe {
+        //                 std::mem::transmute::<*const (), u64>(stdlib::vecfree as *const ())
+        //             };
+        //             let ptr = self.context.const_u64_to_ptr(
+        //                 self.context.const_u64(fun_addr),
+        //                 fun_type.pointer_type(0),
+        //             );
+        //             self.builder
+        //                 .build_call(&ptr, &[self.builder.build_load(v, "")], "");
+        //         }
+        //         _ => (),
+        //     }
+        // }
+
+        self.stack.pop();
+
+        match last_val {
+            Value::Null => self.builder.build_ret_void(),
+            Value::Numeric(n) => self.builder.build_ret(n),
+            Value::Vec(n) => self.builder.build_ret(n),
+            _ => todo!("{:?}", last_val),
+        };
+
+        self.builder.position_builder_at_end(&curr);
+
+        fun.verify_function().unwrap_or_else(|_x| {
+            println!("IR Dump:");
+            self.dump_ir();
+            panic!()
+        });
+
+        if self.opt {
+            self.fpm.run(&fun);
+        }
     }
 
     pub fn new(program: Program) -> Self {
