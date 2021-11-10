@@ -137,3 +137,23 @@ fn it_compiles_new_vec_being_passed_as_variable() {
     let mut compiler = Compiler::new(program);
     compiler.compile().unwrap();
 }
+
+#[test]
+fn it_compiles_recursive_fun() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("f".to_string())),
+            right: Box::new(Expression::FuncDecl(FuncDecl {
+                return_type: Type::Null,
+                params: vec![],
+                body: vec![Expression::FuncCall(FuncCall {
+                    calee: Box::new(Expression::Identifier("f".to_string())),
+                    args: vec![],
+                })],
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
