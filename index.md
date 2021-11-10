@@ -1,37 +1,45 @@
-## Welcome to GitHub Pages
+## Examples
 
-You can use the [editor on GitHub](https://github.com/jarkonik/rocklang/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+### Sieve of Eratosthenes
+```c
+memset = (vec: vec, val: number, n: number): vec => {
+	i = 0
+	while i < n {
+		vec = vecset(vec, i, val)
+		i = i + 1
+	}
+	vec
+}
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+sieve = (n: number): void => {
+	v = vecnew()
+	prime = memset(v, 1, n + 1)
 
-### Markdown
+	p = 2
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+	while p * p <= n {
+		if vecget(prime, p) == 1 {
+			i = p * p
+			while i <= n {
+				prime = vecset(prime, i, 0)
+				i = i + p
+			}
+		}
 
-```markdown
-Syntax highlighted code block
+		p = p + 1
+	}
 
-# Header 1
-## Header 2
-### Header 3
+	p = 2
 
-- Bulleted
-- List
+	while p <= n {
+		if vecget(prime, p) == 1 {
+			print(string(p))
+			print("\n")
+		}
 
-1. Numbered
-2. List
+		p = p + 1
+	}
+}
 
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+sieve(10)
 ```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/jarkonik/rocklang/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
