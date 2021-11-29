@@ -131,6 +131,10 @@ impl Builder {
         Value(unsafe { LLVMBuildFSub(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
     }
 
+    pub fn build_fdiv(&self, lhs: Value, rhs: Value, name: &str) -> Value {
+        Value(unsafe { LLVMBuildFDiv(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
+    }
+
     pub fn build_fmul(&self, lhs: Value, rhs: Value, name: &str) -> Value {
         Value(unsafe { LLVMBuildFMul(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
     }

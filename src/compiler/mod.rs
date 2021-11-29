@@ -125,6 +125,19 @@ impl Visitor<Value> for Compiler {
 
                 Value::Numeric(self.builder.build_fsub(l, r, ""))
             }
+            expression::Operator::Slash => {
+                let l = match self.walk(&expr.left) {
+                    Value::Numeric(p) => p,
+                    _ => panic!("panic"),
+                };
+
+                let r = match self.walk(&expr.right) {
+                    Value::Numeric(p) => p,
+                    _ => panic!("panic"),
+                };
+
+                Value::Numeric(self.builder.build_fdiv(l, r, ""))
+            }
             _ => todo!("{:?}", expr.operator),
         }
     }
