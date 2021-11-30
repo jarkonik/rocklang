@@ -1,5 +1,5 @@
 use rocklang::compiler::{Compile, Compiler};
-use rocklang::expression::{Assignment, Expression, FuncCall, FuncDecl};
+use rocklang::expression::{Assignment, Binary, Expression, FuncCall, FuncDecl, Operator};
 use rocklang::parser::{Param, Program, Type};
 
 fn remove_whitespace(s: &str) -> String {
@@ -156,4 +156,174 @@ fn it_compiles_recursive_fun() {
 
     let mut compiler = Compiler::new(program);
     compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compiles_plus_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Plus,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+fn it_compiles_asterisk_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Asterisk,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+fn it_compiles_less_or_equal_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::LessOrEqual,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+fn it_compiles_less_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Less,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+fn it_compiles_greater_or_equal_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::GreaterOrEqual,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+fn it_compiles_greater_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Greater,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+fn it_compiles_equal_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Equal,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+fn it_compiles_slash_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Slash,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+fn it_compiles_minus_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Minus,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+fn it_compiles_not_equal_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::NotEqual,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
 }
