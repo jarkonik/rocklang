@@ -176,6 +176,24 @@ fn it_compiles_plus_operator() {
 }
 
 #[test]
+#[should_panic]
+fn it_not_compile_plus_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Plus,
+                right: Box::new(Expression::String("test".to_string())),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
 fn it_compiles_asterisk_operator() {
     let program = Program {
         body: vec![Expression::Assignment(Assignment {
@@ -184,6 +202,24 @@ fn it_compiles_asterisk_operator() {
                 left: Box::new(Expression::Numeric(10.0)),
                 operator: Operator::Asterisk,
                 right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+#[should_panic]
+fn it_not_compiles_asterisk_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Asterisk,
+                right: Box::new(Expression::String("foo".to_string())),
             })),
         })],
     };
@@ -210,6 +246,24 @@ fn it_compiles_less_or_equal_operator() {
 }
 
 #[test]
+#[should_panic]
+fn it_not_compiles_less_or_equal_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::LessOrEqual,
+                right: Box::new(Expression::String("foo".to_string())),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
 fn it_compiles_less_operator() {
     let program = Program {
         body: vec![Expression::Assignment(Assignment {
@@ -218,6 +272,24 @@ fn it_compiles_less_operator() {
                 left: Box::new(Expression::Numeric(10.0)),
                 operator: Operator::Less,
                 right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+#[should_panic]
+fn it_not_compiles_less_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Less,
+                right: Box::new(Expression::String("foo".to_string())),
             })),
         })],
     };
@@ -244,6 +316,24 @@ fn it_compiles_greater_or_equal_operator() {
 }
 
 #[test]
+#[should_panic]
+fn it_not_compiles_greater_or_equal_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::GreaterOrEqual,
+                right: Box::new(Expression::String("foo".to_string())),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
 fn it_compiles_greater_operator() {
     let program = Program {
         body: vec![Expression::Assignment(Assignment {
@@ -252,6 +342,24 @@ fn it_compiles_greater_operator() {
                 left: Box::new(Expression::Numeric(10.0)),
                 operator: Operator::Greater,
                 right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+#[should_panic]
+fn it_not_compiles_greater_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Greater,
+                right: Box::new(Expression::String("foo".to_string())),
             })),
         })],
     };
@@ -278,6 +386,24 @@ fn it_compiles_equal_operator() {
 }
 
 #[test]
+#[should_panic]
+fn it_not_compiles_equal_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Equal,
+                right: Box::new(Expression::String("foo".to_string())),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
 fn it_compiles_slash_operator() {
     let program = Program {
         body: vec![Expression::Assignment(Assignment {
@@ -286,6 +412,24 @@ fn it_compiles_slash_operator() {
                 left: Box::new(Expression::Numeric(10.0)),
                 operator: Operator::Slash,
                 right: Box::new(Expression::Numeric(2.0)),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
+#[should_panic]
+fn it_not_compiles_slash_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Slash,
+                right: Box::new(Expression::String("foo".to_string())),
             })),
         })],
     };
@@ -312,6 +456,24 @@ fn it_compiles_minus_operator() {
 }
 
 #[test]
+#[should_panic]
+fn it_not_compiles_minus_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::Minus,
+                right: Box::new(Expression::String("foo".to_string())),
+            })),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap()
+}
+
+#[test]
 fn it_compiles_not_equal_operator() {
     let program = Program {
         body: vec![Expression::Assignment(Assignment {
@@ -329,6 +491,7 @@ fn it_compiles_not_equal_operator() {
 }
 
 #[test]
+#[should_panic]
 fn it_compiles_grouping_expressions() {
     let program = Program {
         body: vec![Expression::Assignment(Assignment {
@@ -338,6 +501,22 @@ fn it_compiles_grouping_expressions() {
                 operator: Operator::NotEqual,
                 right: Box::new(Expression::Numeric(2.0)),
             })))),
+        })],
+    };
+            
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+fn it_not_compiles_not_equal_operator() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("b".to_string())),
+            right: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::NotEqual,
+                right: Box::new(Expression::String("foo".to_string())),
+            })),
         })],
     };
 
