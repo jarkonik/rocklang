@@ -138,6 +138,32 @@ impl Visitor<Value> for Compiler {
 
                 Value::Numeric(self.builder.build_fdiv(l, r, ""))
             }
+            expression::Operator::GreaterOrEqual => {
+                let l = match self.walk(&expr.left) {
+                    Value::Numeric(p) => p,
+                    _ => panic!("panic"),
+                };
+
+                let r = match self.walk(&expr.right) {
+                    Value::Numeric(p) => p,
+                    _ => panic!("panic"),
+                };
+
+                Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::GreaterOrEqual, ""))
+            }
+            expression::Operator::NotEqual => {
+                let l = match self.walk(&expr.left) {
+                    Value::Numeric(p) => p,
+                    _ => panic!("panic"),
+                };
+
+                let r = match self.walk(&expr.right) {
+                    Value::Numeric(p) => p,
+                    _ => panic!("panic"),
+                };
+
+                Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::NotEqual, ""))
+            }
             _ => todo!("{:?}", expr.operator),
         }
     }
