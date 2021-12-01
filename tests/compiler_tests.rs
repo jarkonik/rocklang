@@ -237,57 +237,97 @@ fn it_compiles_operators() {
 
 #[test]
 #[should_panic]
-fn it_panics_when_compile_operators() {
+fn it_panics_when_adding_numeric_to_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Plus,
         Box::new(Expression::String("test".to_string()))
     );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_substract_string_from_numeric() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Minus,
         Box::new(Expression::String("test".to_string()))
     );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_multiple_numerci_by_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Asterisk,
         Box::new(Expression::String("test".to_string()))
     );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_less_or_equal_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::LessOrEqual,
         Box::new(Expression::String("test".to_string()))
     );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_less_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Less,
         Box::new(Expression::String("test".to_string()))
     );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_greater_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Greater,
         Box::new(Expression::String("test".to_string()))
     );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_greater_or_equal_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::GreaterOrEqual,
         Box::new(Expression::String("test".to_string()))
     );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_equal_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Equal,
         Box::new(Expression::String("test".to_string()))
     );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_slash_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Slash,
         Box::new(Expression::String("test".to_string()))
     );
-    compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
-        Operator::Minus,
-        Box::new(Expression::String("test".to_string()))
-    );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_not_equal_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::NotEqual,
