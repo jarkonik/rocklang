@@ -563,7 +563,7 @@ impl Visitor<Value> for Compiler {
         todo!()
     }
 
-    fn visit_program(&mut self, program: parser::Program) -> Value {
+    fn visit_program<'s>(&'s mut self, program: parser::Program) -> Value {
         let void_t = self.context.void_type();
         let sum_type = self.context.function_type(void_t, &[], false);
         let sum_fun = self.module.add_function(MAIN_FUNCTION, sum_type);
@@ -798,29 +798,10 @@ impl Compiler {
             last_val = self.walk(&stmt);
         }
 
-        // for (_, val) in &self.stack.last().unwrap().env {
-        //     match val {
-        //         Value::Vec(v) => {
-        //             let fun_type = self.context.function_type(
-        //                 self.context.void_type(),
-        //                 &[self.context.void_type().pointer_type(0)],
-        //                 false,
-        //             );
-
-        //             let fun_addr = unsafe {
-        //                 std::mem::transmute::<*const (), u64>(stdlib::vecfree as *const ())
-        //             };
-        //             let ptr = self.context.const_u64_to_ptr(
-        //                 self.context.const_u64(fun_addr),
-        //                 fun_type.pointer_type(0),
-        //             );
-        //             self.builder
-        //                 .build_call(&ptr, &[self.builder.build_load(v, "")], "");
-        //         }
-        //         _ => (),
-        //     }
-        // }
-
+        self.stack
+            .last()
+            .unwrap()
+            .dealloc(&self.context, &self.builder);
         self.stack.pop();
 
         match last_val {
