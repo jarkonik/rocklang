@@ -83,6 +83,9 @@ impl Display for Token {
             Token::Identifier(literal) => {
                 write!(f, "<{}({})>", token_name(self), literal)
             }
+            Token::String(literal) => {
+                write!(f, "<{}({})>", token_name(self), literal)
+            }
             _ => write!(f, "<{}>", token_name(self)),
         }
     }
