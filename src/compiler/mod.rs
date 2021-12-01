@@ -223,8 +223,8 @@ impl Visitor<Value> for Compiler {
         todo!()
     }
 
-    fn visit_grouping(&mut self, _: &expression::Expression) -> Value {
-        todo!()
+    fn visit_grouping(&mut self, expr: &expression::Expression) -> Value {
+        self.walk(expr)
     }
 
     fn visit_func_call(&mut self, expr: &expression::FuncCall) -> Value {

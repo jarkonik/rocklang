@@ -1,5 +1,6 @@
 use assert_json_diff::assert_json_eq;
-use rocklang::parser::SyntaxError;
+use backtrace::Backtrace;
+use rocklang::parser::ParserError;
 use rocklang::parser::{Parse, Parser};
 use rocklang::token::Token;
 use serde_json::json;
@@ -153,8 +154,9 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_while() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::String("hello".to_string())
+                ParserError::SyntaxError {
+                    token: Token::String("hello".to_string()),
+                    backtrace: Backtrace::new(),
                 },
                 e
             );
@@ -319,8 +321,9 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_if() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::String("hello".to_string())
+                ParserError::SyntaxError {
+                    token: Token::String("hello".to_string()),
+                    backtrace: Backtrace::new(),
                 },
                 e
             );
@@ -342,8 +345,9 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_else() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::String("hello".to_string())
+                ParserError::SyntaxError {
+                    token: Token::String("hello".to_string()),
+                    backtrace: Backtrace::new(),
                 },
                 e
             );
@@ -353,8 +357,9 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_else() {
 
 #[test]
 fn it_displays_correct_syntax_error() {
-    let error = SyntaxError {
+    let error = ParserError::SyntaxError {
         token: Token::DoubleEqual,
+        backtrace: Backtrace::new(),
     };
     assert_eq!(
         format!("Syntax error: unexpected token {}", Token::DoubleEqual),
@@ -1055,8 +1060,9 @@ fn it_returns_an_error_when_func_has_unknown_arg_type() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::Identifier("wrongtype".to_string())
+                ParserError::SyntaxError {
+                    token: Token::Identifier("wrongtype".to_string()),
+                    backtrace: Backtrace::new(),
                 },
                 e
             );
@@ -1092,8 +1098,9 @@ fn it_returns_an_error_when_func_has_non_type_expression_as_arg_type() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::String("string".to_string())
+                ParserError::SyntaxError {
+                    token: Token::String("string".to_string()),
+                    backtrace: Backtrace::new(),
                 },
                 e
             );
@@ -1127,8 +1134,9 @@ fn it_returns_an_error_when_func_has_no_arg_type_after_arg_name() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::RightParen
+                ParserError::SyntaxError {
+                    token: Token::Colon,
+                    backtrace: Backtrace::new()
                 },
                 e
             );
@@ -1158,8 +1166,9 @@ fn it_returns_an_error_when_func_has_no_return_type() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::Arrow
+                ParserError::SyntaxError {
+                    token: Token::Arrow,
+                    backtrace: Backtrace::new()
                 },
                 e
             );
@@ -1191,8 +1200,9 @@ fn it_returns_an_error_when_func_has_unknown_return_type() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::Identifier("wrongtype".to_string())
+                ParserError::SyntaxError {
+                    token: Token::Identifier("wrongtype".to_string()),
+                    backtrace: Backtrace::new()
                 },
                 e
             );
@@ -1224,8 +1234,9 @@ fn it_returns_an_error_when_func_has_non_type_expression_as_return_type() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::String("string".to_string())
+                ParserError::SyntaxError {
+                    token: Token::String("string".to_string()),
+                    backtrace: Backtrace::new()
                 },
                 e
             );
@@ -1256,8 +1267,9 @@ fn it_returns_error_when_func_decl_has_no_arrow() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::LCurly
+                ParserError::SyntaxError {
+                    token: Token::LCurly,
+                    backtrace: Backtrace::new()
                 },
                 e
             );
@@ -1284,8 +1296,9 @@ fn it_returns_error_when_func_decl_has_no_body() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::String("hello".to_string())
+                ParserError::SyntaxError {
+                    token: Token::String("hello".to_string()),
+                    backtrace: Backtrace::new()
                 },
                 e
             );
@@ -1414,8 +1427,9 @@ fn it_returns_error_for_call_syntax_on_non_identifiers() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::LeftParen
+                ParserError::SyntaxError {
+                    token: Token::LeftParen,
+                    backtrace: Backtrace::new()
                 },
                 e
             );
@@ -1461,8 +1475,9 @@ fn it_returns_error_for_unterminated_grouping_expresions() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
             assert_eq!(
-                SyntaxError {
-                    token: Token::String("hello".to_string())
+                ParserError::SyntaxError {
+                    token: Token::String("hello".to_string()),
+                    backtrace: Backtrace::new()
                 },
                 e
             );
@@ -1516,4 +1531,55 @@ fn it_parses_break_expression() {
     let json = serde_json::to_value(&ast).unwrap();
 
     assert_json_eq!(json!(["Break"]), json)
+}
+
+#[test]
+fn it_parses_grouping_expression_with_identifiers() {
+    let mut parser = Parser::new(&vec![
+        Token::Identifier("b".to_string()),
+        Token::Equal,
+        Token::LeftParen,
+        Token::Identifier("a".to_string()),
+        Token::Plus,
+        Token::Numeric(1.0),
+        Token::RightParen,
+        Token::Asterisk,
+        Token::Numeric(2.0),
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!([{
+            "Assignment": {
+                "left": {
+                    "Identifier": "b"
+                },
+                "right": {
+                    "Binary": {
+                        "left": {
+                            "Grouping": {
+                                "Binary": {
+                                    "left": {
+                                        "Identifier": "a"
+                                    },
+                                    "operator": "Plus",
+                                    "right": {
+                                        "Numeric": 1.0,
+                                    }
+                                }
+                            }
+                        },
+                        "operator": "Asterisk",
+                        "right": {
+                            "Numeric": 2.0
+                        }
+                    }
+                }
+            }
+        }]),
+        json
+    )
 }

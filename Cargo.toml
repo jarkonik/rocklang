@@ -17,6 +17,7 @@ serde_json = "1.0.59"
 assert-json-diff = "2.0.1"
 stdlib = { path = "./stdlib" }
 llvm-sys = "130"
+backtrace = "0.3"
 
 [dev-dependencies]
 assert_cmd = "0.10"
