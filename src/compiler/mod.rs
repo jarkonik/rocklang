@@ -698,7 +698,7 @@ impl Compiler {
             | Value::Vec(v)
             | Value::Bool(v) => self.builder.create_store(v, &ptr),
             Value::Function { val: v, .. } => v,
-            _ => todo!(),
+            _ => todo!("{:?}", val),
         };
 
         self.stack.last_mut().unwrap().set(literal, var);
@@ -798,17 +798,34 @@ impl Compiler {
             last_val = self.walk(&stmt);
         }
 
-        self.stack
-            .last()
-            .unwrap()
-            .dealloc(&self.context, &self.builder);
-        self.stack.pop();
+        let frame = self.stack.pop().unwrap();
 
-        match last_val {
-            Value::Null => self.builder.build_ret_void(),
-            Value::Numeric(n) => self.builder.build_ret(n),
-            Value::Vec(n) => self.builder.build_ret(n),
+        let ret_val = match last_val {
+            Value::Null => None,
+            Value::Numeric(n) => Some(n),
+            Value::Vec(n) => {
+                let fun_type = self.context.function_type(
+                    self.context.double_type().pointer_type(0),
+                    &[self.context.double_type().pointer_type(0)],
+                    false,
+                );
+
+                let fun_addr = stdlib::veccopy as usize;
+                let ptr = self.context.const_u64_to_ptr(
+                    self.context.const_u64(fun_addr.try_into().unwrap()),
+                    fun_type.pointer_type(0),
+                );
+
+                Some(self.builder.build_call(&ptr, &[n], ""))
+            }
             _ => todo!("{:?}", last_val),
+        };
+
+        frame.dealloc(&self.context, &self.builder);
+
+        match ret_val {
+            Some(v) => self.builder.build_ret(v),
+            None => self.builder.build_ret_void(),
         };
 
         self.builder.position_builder_at_end(&curr);

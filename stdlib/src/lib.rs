@@ -13,14 +13,16 @@ pub unsafe extern "C" fn vecset(
     idx: f64,
     value: f64,
 ) -> *mut std::vec::Vec<f64> {
-    let mut v = Box::from_raw(vec);
+    let v = Box::from_raw(vec);
+    let mut new_vec = v.clone().to_vec();
+    Box::into_raw(v);
 
-    while v.len() <= idx as usize {
-        v.push(0.0);
+    while new_vec.len() <= idx as usize {
+        new_vec.push(0.0);
     }
-    v[idx as usize] = value;
+    new_vec[idx as usize] = value;
 
-    Box::into_raw(v)
+    Box::into_raw(Box::new(new_vec))
 }
 
 pub extern "C" fn vecget(vec: *mut Vec<f64>, idx: f64) -> f64 {
@@ -41,4 +43,11 @@ pub unsafe extern "C" fn len(vec: *mut Vec<f64>) -> f64 {
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn vecfree(vec: *mut Vec<f64>) {
     Box::from_raw(vec);
+}
+
+pub extern "C" fn veccopy(vec: *mut Vec<f64>) -> *mut std::vec::Vec<f64> {
+    let v = unsafe { Box::from_raw(vec as *mut Vec<f64>) };
+    let new_vec = v.clone().to_vec();
+    Box::into_raw(Box::new(v));
+    Box::into_raw(Box::new(new_vec))
 }
