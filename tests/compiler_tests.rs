@@ -327,3 +327,20 @@ fn it_compiles_not_equal_operator() {
     let mut compiler = Compiler::new(program);
     compiler.compile().unwrap()
 }
+
+#[test]
+fn it_compiles_grouping_expressions() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("x".to_string())),
+            right: Box::new(Expression::Grouping(Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::NotEqual,
+                right: Box::new(Expression::Numeric(2.0)),
+            })))),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
