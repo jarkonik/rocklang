@@ -14,7 +14,7 @@ pub unsafe extern "C" fn vecset(
     value: f64,
 ) -> *mut std::vec::Vec<f64> {
     let v = Box::from_raw(vec);
-    let mut new_vec = v.clone().to_vec();
+    let mut new_vec = v.to_vec();
     Box::into_raw(v);
 
     while new_vec.len() <= idx as usize {
@@ -47,7 +47,7 @@ pub unsafe extern "C" fn vecfree(vec: *mut Vec<f64>) {
 
 pub extern "C" fn veccopy(vec: *mut Vec<f64>) -> *mut std::vec::Vec<f64> {
     let v = unsafe { Box::from_raw(vec as *mut Vec<f64>) };
-    let new_vec = v.clone().to_vec();
+    let new_vec = v.to_vec();
     Box::into_raw(Box::new(v));
     Box::into_raw(Box::new(new_vec))
 }

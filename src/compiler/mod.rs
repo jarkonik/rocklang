@@ -577,7 +577,7 @@ impl Visitor<Value> for Compiler {
         todo!()
     }
 
-    fn visit_program<'s>(&'s mut self, program: parser::Program) -> Value {
+    fn visit_program(&mut self, program: parser::Program) -> Value {
         let void_t = self.context.void_type();
         let sum_type = self.context.function_type(void_t, &[], false);
         let sum_fun = self.module.add_function(MAIN_FUNCTION, sum_type);

@@ -30,23 +30,20 @@ impl Frame {
     }
 
     pub fn dealloc(&self, context: &llvm::Context, builder: &llvm::Builder) {
-        for (_, val) in &self.env {
-            match val {
-                Var::Vec(v) => {
-                    let fun_type = context.function_type(
-                        context.void_type(),
-                        &[context.double_type().pointer_type(0)],
-                        false,
-                    );
+        for val in self.env.values() {
+            if let Var::Vec(v) = val {
+                let fun_type = context.function_type(
+                    context.void_type(),
+                    &[context.double_type().pointer_type(0)],
+                    false,
+                );
 
-                    let fun_addr = stdlib::vecfree as usize;
-                    let ptr = context.const_u64_to_ptr(
-                        context.const_u64(fun_addr.try_into().unwrap()),
-                        fun_type.pointer_type(0),
-                    );
-                    builder.build_call(&ptr, &[builder.build_load(&v, "")], "");
-                }
-                _ => (),
+                let fun_addr = stdlib::vecfree as usize;
+                let ptr = context.const_u64_to_ptr(
+                    context.const_u64(fun_addr.try_into().unwrap()),
+                    fun_type.pointer_type(0),
+                );
+                builder.build_call(&ptr, &[builder.build_load(v, "")], "");
             }
         }
     }
