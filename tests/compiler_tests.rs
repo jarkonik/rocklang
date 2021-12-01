@@ -1,5 +1,7 @@
 use rocklang::compiler::{Compile, Compiler};
-use rocklang::expression::{Assignment, Binary, Expression, FuncCall, FuncDecl, Operator};
+use rocklang::expression::{
+    Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Operator,
+};
 use rocklang::parser::{Param, Program, Type};
 
 fn remove_whitespace(s: &str) -> String {
@@ -168,6 +170,24 @@ fn it_compiles_grouping_expressions() {
                 operator: Operator::NotEqual,
                 right: Box::new(Expression::Numeric(2.0)),
             })))),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compiles_coditional() {
+    let program = Program {
+        body: vec![Expression::Conditional(Conditional {
+            predicate: Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::NotEqual,
+                right: Box::new(Expression::Numeric(2.0)),
+            })),
+            body: vec![Expression::Numeric(10.0)],
+            else_body: vec![Expression::Numeric(20.0)],
         })],
     };
 
