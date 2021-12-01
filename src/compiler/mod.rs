@@ -441,7 +441,21 @@ impl Visitor<Value> for Compiler {
                             .iter()
                             .map(|arg| match self.walk(arg) {
                                 Value::Numeric(n) => n,
-                                Value::Vec(v) => v,
+                                Value::Vec(v) => {
+                                    let fun_type = self.context.function_type(
+                                        self.context.double_type().pointer_type(0),
+                                        &[self.context.double_type().pointer_type(0)],
+                                        false,
+                                    );
+
+                                    let fun_addr = stdlib::veccopy as usize;
+                                    let ptr = self.context.const_u64_to_ptr(
+                                        self.context.const_u64(fun_addr.try_into().unwrap()),
+                                        fun_type.pointer_type(0),
+                                    );
+
+                                    self.builder.build_call(&ptr, &[v], "")
+                                }
                                 Value::Function { val, .. } => val,
                                 _ => todo!("{:?}", self.walk(arg)),
                             })
