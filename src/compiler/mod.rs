@@ -441,7 +441,21 @@ impl Visitor<Value> for Compiler {
                             .iter()
                             .map(|arg| match self.walk(arg) {
                                 Value::Numeric(n) => n,
-                                Value::Vec(v) => v,
+                                Value::Vec(v) => {
+                                    let fun_type = self.context.function_type(
+                                        self.context.double_type().pointer_type(0),
+                                        &[self.context.double_type().pointer_type(0)],
+                                        false,
+                                    );
+
+                                    let fun_addr = stdlib::veccopy as usize;
+                                    let ptr = self.context.const_u64_to_ptr(
+                                        self.context.const_u64(fun_addr.try_into().unwrap()),
+                                        fun_type.pointer_type(0),
+                                    );
+
+                                    self.builder.build_call(&ptr, &[v], "")
+                                }
                                 Value::Function { val, .. } => val,
                                 _ => todo!("{:?}", self.walk(arg)),
                             })
@@ -698,7 +712,7 @@ impl Compiler {
             | Value::Vec(v)
             | Value::Bool(v) => self.builder.create_store(v, &ptr),
             Value::Function { val: v, .. } => v,
-            _ => todo!(),
+            _ => todo!("{:?}", val),
         };
 
         self.stack.last_mut().unwrap().set(literal, var);
@@ -798,36 +812,34 @@ impl Compiler {
             last_val = self.walk(&stmt);
         }
 
-        // for (_, val) in &self.stack.last().unwrap().env {
-        //     match val {
-        //         Value::Vec(v) => {
-        //             let fun_type = self.context.function_type(
-        //                 self.context.void_type(),
-        //                 &[self.context.void_type().pointer_type(0)],
-        //                 false,
-        //             );
+        let frame = self.stack.pop().unwrap();
 
-        //             let fun_addr = unsafe {
-        //                 std::mem::transmute::<*const (), u64>(stdlib::vecfree as *const ())
-        //             };
-        //             let ptr = self.context.const_u64_to_ptr(
-        //                 self.context.const_u64(fun_addr),
-        //                 fun_type.pointer_type(0),
-        //             );
-        //             self.builder
-        //                 .build_call(&ptr, &[self.builder.build_load(v, "")], "");
-        //         }
-        //         _ => (),
-        //     }
-        // }
+        let ret_val = match last_val {
+            Value::Null => None,
+            Value::Numeric(n) => Some(n),
+            Value::Vec(n) => {
+                let fun_type = self.context.function_type(
+                    self.context.double_type().pointer_type(0),
+                    &[self.context.double_type().pointer_type(0)],
+                    false,
+                );
 
-        self.stack.pop();
+                let fun_addr = stdlib::veccopy as usize;
+                let ptr = self.context.const_u64_to_ptr(
+                    self.context.const_u64(fun_addr.try_into().unwrap()),
+                    fun_type.pointer_type(0),
+                );
 
-        match last_val {
-            Value::Null => self.builder.build_ret_void(),
-            Value::Numeric(n) => self.builder.build_ret(n),
-            Value::Vec(n) => self.builder.build_ret(n),
+                Some(self.builder.build_call(&ptr, &[n], ""))
+            }
             _ => todo!("{:?}", last_val),
+        };
+
+        frame.dealloc(&self.context, &self.builder);
+
+        match ret_val {
+            Some(v) => self.builder.build_ret(v),
+            None => self.builder.build_ret_void(),
         };
 
         self.builder.position_builder_at_end(&curr);
