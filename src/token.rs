@@ -80,10 +80,7 @@ impl Display for Token {
             Token::Numeric(value) => {
                 write!(f, "<{}({})>", token_name(self), value)
             }
-            Token::Identifier(literal) => {
-                write!(f, "<{}({})>", token_name(self), literal)
-            }
-            Token::String(literal) => {
+            Token::Identifier(literal) | Token::String(literal) => {
                 write!(f, "<{}({})>", token_name(self), literal)
             }
             _ => write!(f, "<{}>", token_name(self)),

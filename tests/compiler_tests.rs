@@ -158,6 +158,23 @@ fn it_compiles_recursive_fun() {
     compiler.compile().unwrap();
 }
 
+#[test]
+fn it_compiles_grouping_expressions() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::Identifier("x".to_string())),
+            right: Box::new(Expression::Grouping(Box::new(Expression::Binary(Binary {
+                left: Box::new(Expression::Numeric(10.0)),
+                operator: Operator::NotEqual,
+                right: Box::new(Expression::Numeric(2.0)),
+            })))),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
 macro_rules! compile_operator {
     ($left_operator:expr, $operator:expr, $rigth_operator:expr) => {
         let program = Program {
@@ -247,6 +264,16 @@ fn it_panics_when_adding_numeric_to_string() {
 
 #[test]
 #[should_panic]
+fn it_panics_when_plus_string_to_numeric() {
+    compile_operator!(
+        Box::new(Expression::String("test".to_string())),
+        Operator::Plus,
+        Box::new(Expression::Numeric(10.0))
+    );
+}
+
+#[test]
+#[should_panic]
 fn it_panics_when_substract_string_from_numeric() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
@@ -257,11 +284,31 @@ fn it_panics_when_substract_string_from_numeric() {
 
 #[test]
 #[should_panic]
-fn it_panics_when_multiple_numerci_by_string() {
+fn it_panics_when_substract_numeric_from_string() {
+    compile_operator!(
+        Box::new(Expression::String("test".to_string())),
+        Operator::Minus,
+        Box::new(Expression::Numeric(10.0))
+    );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_multiple_numeric_by_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Asterisk,
         Box::new(Expression::String("test".to_string()))
+    );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_multiple_string_to_numeric() {
+    compile_operator!(
+        Box::new(Expression::String("test".to_string())),
+        Operator::Asterisk,
+        Box::new(Expression::Numeric(10.0))
     );
 }
 
@@ -277,11 +324,31 @@ fn it_panics_when_less_or_equal_numeric_and_string() {
 
 #[test]
 #[should_panic]
+fn it_panics_when_less_or_equal_string_to_numeric() {
+    compile_operator!(
+        Box::new(Expression::String("test".to_string())),
+        Operator::LessOrEqual,
+        Box::new(Expression::Numeric(10.0))
+    );
+}
+
+#[test]
+#[should_panic]
 fn it_panics_when_less_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Less,
         Box::new(Expression::String("test".to_string()))
+    );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_less_string_to_numeric() {
+    compile_operator!(
+        Box::new(Expression::String("test".to_string())),
+        Operator::Less,
+        Box::new(Expression::Numeric(10.0))
     );
 }
 
@@ -297,11 +364,31 @@ fn it_panics_when_greater_numeric_and_string() {
 
 #[test]
 #[should_panic]
+fn it_panics_when_greater_string_to_numeric() {
+    compile_operator!(
+        Box::new(Expression::String("test".to_string())),
+        Operator::Greater,
+        Box::new(Expression::Numeric(10.0))
+    );
+}
+
+#[test]
+#[should_panic]
 fn it_panics_when_greater_or_equal_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::GreaterOrEqual,
         Box::new(Expression::String("test".to_string()))
+    );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_greater_or_equal_string_to_numeric() {
+    compile_operator!(
+        Box::new(Expression::String("test".to_string())),
+        Operator::GreaterOrEqual,
+        Box::new(Expression::Numeric(10.0))
     );
 }
 
@@ -317,6 +404,16 @@ fn it_panics_when_equal_numeric_and_string() {
 
 #[test]
 #[should_panic]
+fn it_panics_when_equal_string_to_numeric() {
+    compile_operator!(
+        Box::new(Expression::String("test".to_string())),
+        Operator::Equal,
+        Box::new(Expression::Numeric(10.0))
+    );
+}
+
+#[test]
+#[should_panic]
 fn it_panics_when_slash_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
@@ -327,10 +424,30 @@ fn it_panics_when_slash_numeric_and_string() {
 
 #[test]
 #[should_panic]
+fn it_panics_when_slash_string_to_numeric() {
+    compile_operator!(
+        Box::new(Expression::String("test".to_string())),
+        Operator::Slash,
+        Box::new(Expression::Numeric(10.0))
+    );
+}
+
+#[test]
+#[should_panic]
 fn it_panics_when_not_equal_numeric_and_string() {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::NotEqual,
         Box::new(Expression::String("test".to_string()))
+    );
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_not_equal_string_to_numeric() {
+    compile_operator!(
+        Box::new(Expression::String("test".to_string())),
+        Operator::NotEqual,
+        Box::new(Expression::Numeric(10.0))
     );
 }
