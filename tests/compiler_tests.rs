@@ -79,6 +79,20 @@ fn it_compiles_numeric_to_numeric_asignment() {
 }
 
 #[test]
+#[should_panic]
+fn it_panic_numeric_to_numeric_asignment() {
+    let program = Program {
+        body: vec![Expression::Assignment(Assignment {
+            left: Box::new(Expression::String("x".to_string())),
+            right: Box::new(Expression::Numeric(5.0)),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
 fn it_compiles_new_vec_being_passed_as_fun_arg() {
     let program = Program {
         body: vec![
@@ -101,6 +115,174 @@ fn it_compiles_new_vec_being_passed_as_fun_arg() {
                 })],
             }),
         ],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compiles_print_function_with_global_string() {
+    let program = Program {
+        body: vec![Expression::FuncCall(FuncCall {
+            calee: Box::new(Expression::Identifier("print".to_string())),
+            args: vec![Expression::String("name".to_string())],
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compiles_print_function_with_string() {
+    let program = Program {
+        body: vec![Expression::FuncCall(FuncCall {
+            calee: Box::new(Expression::Identifier("print".to_string())),
+            args: vec![Expression::FuncCall(FuncCall {
+                calee: Box::new(Expression::Identifier("string".to_string())),
+                args: vec![Expression::Numeric(10.0)],
+            })],
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compiles_len_function_when_pass_new_vec() {
+    let program = Program {
+        body: vec![Expression::FuncCall(FuncCall {
+            calee: Box::new(Expression::Identifier("len".to_string())),
+            args: vec![Expression::FuncCall(FuncCall {
+                calee: Box::new(Expression::Identifier("vecnew".to_string())),
+                args: vec![],
+            })],
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compiles_vecset_function() {
+    let program = Program {
+        body: vec![
+            Expression::Assignment(Assignment {
+                left: Box::new(Expression::Identifier("z".to_string())),
+                right: Box::new(Expression::FuncCall(FuncCall {
+                    calee: Box::new(Expression::Identifier("vecnew".to_string())),
+                    args: vec![],
+                })),
+            }),
+            Expression::FuncCall(FuncCall {
+                calee: Box::new(Expression::Identifier("vecset".to_string())),
+                args: vec![
+                    Expression::Identifier("z".to_string()),
+                    Expression::Numeric(0.0),
+                    Expression::Numeric(1.0),
+                ],
+            }),
+        ],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compiles_vecget_function() {
+    let program = Program {
+        body: vec![
+            Expression::Assignment(Assignment {
+                left: Box::new(Expression::Identifier("z".to_string())),
+                right: Box::new(Expression::FuncCall(FuncCall {
+                    calee: Box::new(Expression::Identifier("vecnew".to_string())),
+                    args: vec![],
+                })),
+            }),
+            Expression::FuncCall(FuncCall {
+                calee: Box::new(Expression::Identifier("vecget".to_string())),
+                args: vec![
+                    Expression::Identifier("z".to_string()),
+                    Expression::Numeric(0.0),
+                ],
+            }),
+        ],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compiles_sqrt_funcion() {
+    let program = Program {
+        body: vec![Expression::FuncCall(FuncCall {
+            calee: Box::new(Expression::Identifier("sqrt".to_string())),
+            args: vec![Expression::Numeric(4.0)],
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+#[should_panic]
+fn it_panic_when_more_then_one_arg_pass_to_print_funcion() {
+    let program = Program {
+        body: vec![Expression::FuncCall(FuncCall {
+            calee: Box::new(Expression::Identifier("print".to_string())),
+            args: vec![
+                Expression::String("name".to_string()),
+                Expression::String("foo".to_string()),
+            ],
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_non_sring_type_pass_to_print_funcions() {
+    let program = Program {
+        body: vec![Expression::FuncCall(FuncCall {
+            calee: Box::new(Expression::Identifier("print".to_string())),
+            args: vec![Expression::Numeric(10.0)],
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+#[should_panic]
+fn it_panic_when_zero_args_pass_to_string_funcion() {
+    let program = Program {
+        body: vec![Expression::FuncCall(FuncCall {
+            calee: Box::new(Expression::Identifier("string".to_string())),
+            args: vec![],
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+#[should_panic]
+fn it_panic_when_bool_arg_pass_to_string_funcion() {
+    let program = Program {
+        body: vec![Expression::FuncCall(FuncCall {
+            calee: Box::new(Expression::Identifier("string".to_string())),
+            args: vec![Expression::Bool(true)],
+        })],
     };
 
     let mut compiler = Compiler::new(program);
