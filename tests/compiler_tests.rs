@@ -347,10 +347,37 @@ fn it_compiles_while_statment() {
     let program = Program {
         body: vec![Expression::While(While {
             predicate: Box::new(Expression::Bool(false)),
-            body: vec![]
-        })]
+            body: vec![],
+        })],
     };
-    
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+fn it_test_visit_func_decl() {
+    let program = Program {
+        body: vec![
+            Expression::FuncDecl(FuncDecl {
+                params: vec![Param {
+                    typ: Type::Numeric,
+                    name: "n".to_string(),
+                }],
+                body: vec![Expression::String("n".to_string())],
+                return_type: Type::Numeric,
+            }),
+            Expression::FuncDecl(FuncDecl {
+                params: vec![Param {
+                    typ: Type::Vector,
+                    name: "n".to_string(),
+                }],
+                body: vec![Expression::String("n".to_string())],
+                return_type: Type::Vector,
+            }),
+        ],
+    };
+
     let mut compiler = Compiler::new(program);
     compiler.compile().unwrap();
 }
