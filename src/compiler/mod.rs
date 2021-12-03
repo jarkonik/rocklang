@@ -541,21 +541,6 @@ impl Visitor<Value> for Compiler {
     fn visit_identifier(&mut self, expr: &str) -> Value {
         self.get_var(expr)
             .unwrap_or_else(|| panic!("undefined variable {}", expr))
-        // match &self.get_var(expr) {
-        //     Some(Value::Numeric(n)) => Value::Numeric(self.builder.build_load(n, expr)),
-        //     Some(Value::Function {
-        //         typ,
-        //         val,
-        //         return_type,
-        //     }) => Value::Function {
-        //         typ: *typ,
-        //         val: *val,
-        //         return_type: return_type.clone(),
-        //     },
-        //     Some(Value::Vec(n)) => Value::Vec(*n),
-        //     Some(Value::Pending) | None => panic!("undefined identifier {}", expr),
-        //     _ => todo!("{:?}", &self.get_var(expr)),
-        // }
     }
 
     fn visit_string(&mut self, expr: &str) -> Value {

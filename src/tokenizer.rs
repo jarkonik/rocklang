@@ -3,7 +3,7 @@ use std::error::Error;
 use std::fmt;
 
 pub trait Tokenize {
-    fn tokenize(&mut self) -> Result<&Vec<Token>>;
+    fn tokenize(&mut self) -> std::result::Result<&Vec<Token>, Box<dyn Error>>;
 }
 
 pub struct Tokenizer {
@@ -15,7 +15,7 @@ pub struct Tokenizer {
 }
 
 impl Tokenize for Tokenizer {
-    fn tokenize(&mut self) -> Result<&Vec<Token>> {
+    fn tokenize(&mut self) -> std::result::Result<&Vec<Token>, Box<dyn Error>> {
         self.current = 0;
         self.start = 0;
         self.line = 1;
@@ -33,6 +33,28 @@ impl Tokenize for Tokenizer {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct EndOfStreamError {}
+
+impl Error for EndOfStreamError {}
+
+impl fmt::Display for EndOfStreamError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unexpected end of stream")
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct UnterminatedStringError {}
+
+impl Error for UnterminatedStringError {}
+
+impl fmt::Display for UnterminatedStringError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unterminated string")
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct TokenizerError {
     pub chr: char,
     pub line: usize,
@@ -46,8 +68,6 @@ impl fmt::Display for TokenizerError {
     }
 }
 
-type Result<T> = std::result::Result<T, TokenizerError>;
-
 impl Tokenizer {
     pub fn new(source: String) -> Self {
         Tokenizer {
@@ -59,90 +79,95 @@ impl Tokenizer {
         }
     }
 
-    fn scan_token(&mut self) -> Result<()> {
+    fn scan_token(&mut self) -> std::result::Result<(), Box<dyn Error>> {
         let chr = self.advance();
         match chr {
-            ' ' | '\r' | '\t' => (),
-            '\n' => self.line += 1,
-            '<' => {
-                if '=' == self.advance() {
+            Some(' ' | '\r' | '\t') => (),
+            Some('\n') => self.line += 1,
+            Some('<') => {
+                if matches!(self.advance(), Some('=')) {
                     self.add_token(Token::LessOrEqual)
                 } else {
                     self.add_token(Token::Less)
                 }
             }
-            '>' => {
-                if '=' == self.advance() {
+            Some('>') => {
+                if matches!(self.advance(), Some('=')) {
                     self.add_token(Token::GreaterOrEqual)
                 } else {
                     self.add_token(Token::Greater)
                 }
             }
-            '(' => self.add_token(Token::LeftParen),
-            ')' => self.add_token(Token::RightParen),
-            '+' => self.add_token(Token::Plus),
-            '-' => self.add_token(Token::Minus),
-            '*' => self.add_token(Token::Asterisk),
-            '%' => self.add_token(Token::Percent),
-            '"' => self.string(),
-            '!' => {
-                if '=' == self.advance() {
+            Some('(') => self.add_token(Token::LeftParen),
+            Some(')') => self.add_token(Token::RightParen),
+            Some('+') => self.add_token(Token::Plus),
+            Some('-') => self.add_token(Token::Minus),
+            Some('*') => self.add_token(Token::Asterisk),
+            Some('%') => self.add_token(Token::Percent),
+            Some('"') => self.string()?,
+            Some('!') => {
+                if matches!(self.advance(), Some('=')) {
                     self.add_token(Token::NotEqual);
                 } else {
                     self.add_token(Token::Exclamation);
                 }
             }
-            '|' if self.advance() == '|' => {
+            Some('|') if matches!(self.advance(), Some('|')) => {
                 self.add_token(Token::Or);
             }
-            '&' if self.advance() == '&' => {
+            Some('&') if matches!(self.advance(), Some('&')) => {
                 self.add_token(Token::And);
             }
-            '=' => match self.peek() {
-                '=' => {
+            Some('=') => match self.peek() {
+                Some('=') => {
                     self.add_token(Token::DoubleEqual);
                     self.advance();
                 }
-                '>' => {
+                Some('>') => {
                     self.add_token(Token::Arrow);
                     self.advance();
                 }
                 _ => self.add_token(Token::Equal),
             },
-            '{' => self.add_token(Token::LCurly),
-            '}' => self.add_token(Token::RCurly),
-            ',' => self.add_token(Token::Comma),
-            ':' => self.add_token(Token::Colon),
-            '/' => {
-                if '/' == self.peek() {
-                    while self.peek() != '\n' && !self.at_end() {
+            Some('{') => self.add_token(Token::LCurly),
+            Some('}') => self.add_token(Token::RCurly),
+            Some(',') => self.add_token(Token::Comma),
+            Some(':') => self.add_token(Token::Colon),
+            Some('/') => {
+                if matches!(self.peek(), Some('/')) {
+                    while matches!(self.peek(), Some('\n')) && !self.at_end() {
                         self.advance();
                     }
                 } else {
                     self.add_token(Token::Slash);
                 }
             }
-            c if c.is_alphabetic() => self.identifier(),
-            c if c.is_numeric() => self.numeric(),
-            chr => {
-                return Err(TokenizerError {
+            Some(c) if c.is_alphabetic() => self.identifier(),
+            Some(c) if c.is_numeric() => self.numeric(),
+            Some(chr) => {
+                return Err(Box::new(TokenizerError {
                     chr,
                     line: self.line,
-                })
+                }))
             }
+            None => return Err(Box::new(EndOfStreamError {})),
         };
         Ok(())
     }
 
-    fn string(&mut self) {
+    fn string(&mut self) -> std::result::Result<(), Box<dyn Error>> {
         let mut literal = String::new();
 
-        while self.peek() != '"' {
+        while matches!(self.peek(), Some('"')) {
             let chr = self.advance();
-            literal.push(chr);
+            match chr {
+                Some(c) => literal.push(c),
+                None => return Err(Box::new(UnterminatedStringError {})),
+            }
         }
         self.advance();
         self.add_token(Token::String(literal));
+        Ok(())
     }
 
     fn numeric(&mut self) {
@@ -152,11 +177,14 @@ impl Tokenizer {
         loop {
             let chr = self.peek();
 
-            if chr.is_numeric() || chr == '.' {
-                literal.push(chr);
-                self.advance();
-            } else {
-                break;
+            match chr {
+                Some(c) if c.is_numeric() => {
+                    literal.push(c);
+                    self.advance();
+                }
+                _ => {
+                    break;
+                }
             }
         }
 
@@ -172,11 +200,14 @@ impl Tokenizer {
         loop {
             let chr = self.peek();
 
-            if chr.is_alphanumeric() {
-                literal.push(chr);
-                self.advance();
-            } else {
-                break;
+            match chr {
+                Some(c) if c.is_alphanumeric() => {
+                    literal.push(c);
+                    self.advance();
+                }
+                _ => {
+                    break;
+                }
             }
         }
 
@@ -195,7 +226,7 @@ impl Tokenizer {
         self.tokens.push(token);
     }
 
-    fn advance(&mut self) -> char {
+    fn advance(&mut self) -> Option<char> {
         let chr = self.peek();
         self.current += 1;
         chr
@@ -206,8 +237,8 @@ impl Tokenizer {
         chr
     }
 
-    fn peek(&mut self) -> char {
-        self.source.chars().nth(self.current).unwrap()
+    fn peek(&mut self) -> Option<char> {
+        self.source.chars().nth(self.current)
     }
 
     fn at_end(&self) -> bool {
