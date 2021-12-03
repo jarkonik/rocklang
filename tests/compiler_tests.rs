@@ -1,6 +1,6 @@
 use rocklang::compiler::{Compile, Compiler};
 use rocklang::expression::{
-    Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Operator,
+    Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Operator, While,
 };
 use rocklang::parser::{Param, Program, Type};
 
@@ -338,6 +338,19 @@ fn it_compiles_recursive_fun() {
         })],
     };
 
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compiles_while_statment() {
+    let program = Program {
+        body: vec![Expression::While(While {
+            predicate: Box::new(Expression::Bool(false)),
+            body: vec![]
+        })]
+    };
+    
     let mut compiler = Compiler::new(program);
     compiler.compile().unwrap();
 }
