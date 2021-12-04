@@ -808,11 +808,15 @@ impl Compiler {
     }
 
     pub fn run(&self) {
-        self.engine.call(MAIN_FUNCTION);
+        self.call(MAIN_FUNCTION);
     }
 
     pub fn no_opt(&mut self) {
         self.opt = false;
+    }
+
+    pub fn call(&self, fun_name: &str) {
+        self.engine.call(fun_name);
     }
 
     fn build_function(&mut self, fun_compiler_val: Value, expr: &expression::FuncDecl) {
