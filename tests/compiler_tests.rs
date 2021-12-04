@@ -720,3 +720,17 @@ fn it_panics_when_pass_string_to_unary() {
     let mut compiler = Compiler::new(program);
     compiler.compile().unwrap();
 }
+
+#[test]
+#[should_panic]
+fn it_panics_when_wrong_unary_operator() {
+    let program = Program {
+        body: vec![Expression::Unary(Unary {
+            operator: Operator::Plus,
+            right: Box::new(Expression::Numeric(2.0)),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
