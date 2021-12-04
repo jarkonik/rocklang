@@ -135,7 +135,7 @@ impl Tokenizer {
             Some(':') => self.add_token(Token::Colon),
             Some('/') => {
                 if matches!(self.peek(), Some('/')) {
-                    while matches!(self.peek(), Some('\n')) && !self.at_end() {
+                    while !matches!(self.peek(), Some('\n')) && !self.at_end() {
                         self.advance();
                     }
                 } else {
@@ -158,7 +158,7 @@ impl Tokenizer {
     fn string(&mut self) -> std::result::Result<(), Box<dyn Error>> {
         let mut literal = String::new();
 
-        while matches!(self.peek(), Some('"')) {
+        while !matches!(self.peek(), Some('"')) {
             let chr = self.advance();
             match chr {
                 Some(c) => literal.push(c),
@@ -178,7 +178,7 @@ impl Tokenizer {
             let chr = self.peek();
 
             match chr {
-                Some(c) if c.is_numeric() => {
+                Some(c) if c.is_numeric() || c == '.' => {
                     literal.push(c);
                     self.advance();
                 }
