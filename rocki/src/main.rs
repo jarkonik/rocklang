@@ -7,6 +7,8 @@ use rocklang::tokenizer::Tokenizer;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use std::error::Error;
+use std::io::stdout;
+use std::io::Write;
 
 const HISTORY_FILENAME: &str = ".rocki_history";
 
@@ -19,6 +21,7 @@ fn evaluate_line(line: &str) -> Result<(), Box<dyn Error>> {
 
     let mut compiler = Compiler::new(ast);
     compiler.compile()?;
+    compiler.run();
 
     Ok(())
 }
@@ -46,6 +49,7 @@ fn main() {
         match readline {
             Ok(line) => {
                 evaluate_line(&line).unwrap();
+                evaluate_line("print(\"\\n\")").unwrap();
                 rl.add_history_entry(line.as_str());
             }
             Err(ReadlineError::Interrupted) => {
