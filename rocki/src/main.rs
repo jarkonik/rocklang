@@ -7,8 +7,6 @@ use rocklang::tokenizer::Tokenizer;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use std::error::Error;
-use std::io::stdout;
-use std::io::Write;
 
 const HISTORY_FILENAME: &str = ".rocki_history";
 
