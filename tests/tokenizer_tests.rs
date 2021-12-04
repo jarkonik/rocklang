@@ -44,10 +44,8 @@ fn it_tokenizes_all_tokens() {
 #[test]
 fn it_returns_error_for_unexpected_character() {
     let mut tokenizer = Tokenizer::new(String::from("~"));
-    assert_eq!(
-        Err(TokenizerError { chr: '~', line: 1 }),
-        tokenizer.tokenize()
-    );
+    let err = tokenizer.tokenize().err().unwrap();
+    assert!(err.is::<TokenizerError>());
 }
 
 #[test]
