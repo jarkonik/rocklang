@@ -58,7 +58,7 @@ while y < HEIGHT {
 			if sqrt(vecget(acc, 0) * vecget(acc, 0) + vecget(acc, 1) * vecget(acc, 1)) > 2 {
 				isstable = 0
 			}
-			if sqrt(vecget(acc, 0) * vecget(acc, 0) + vecget(acc, 1) * vecget(acc, 1)) < 0-2 {
+			if sqrt(vecget(acc, 0) * vecget(acc, 0) + vecget(acc, 1) * vecget(acc, 1)) < -2 {
 				isstable = 0
 			}
 			i = i + 1

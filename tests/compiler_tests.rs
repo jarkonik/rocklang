@@ -1,6 +1,6 @@
 use rocklang::compiler::{Compile, Compiler};
 use rocklang::expression::{
-    Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Operator, While,
+    Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Operator, Unary, While,
 };
 use rocklang::parser::{Param, Program, Type};
 
@@ -692,4 +692,45 @@ fn it_panics_when_not_equal_string_to_numeric() {
         Operator::NotEqual,
         Box::new(Expression::Numeric(10.0))
     );
+}
+
+#[test]
+fn it_compiles_unary_operator() {
+    let program = Program {
+        body: vec![Expression::Unary(Unary {
+            operator: Operator::Minus,
+            right: Box::new(Expression::Numeric(2.0)),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_pass_string_to_unary() {
+    let program = Program {
+        body: vec![Expression::Unary(Unary {
+            operator: Operator::Minus,
+            right: Box::new(Expression::String("foo".to_string())),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+#[should_panic]
+fn it_panics_when_wrong_unary_operator() {
+    let program = Program {
+        body: vec![Expression::Unary(Unary {
+            operator: Operator::Plus,
+            right: Box::new(Expression::Numeric(2.0)),
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
 }

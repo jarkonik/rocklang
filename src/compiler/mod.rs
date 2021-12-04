@@ -219,8 +219,21 @@ impl Visitor<Value> for Compiler {
         val
     }
 
-    fn visit_unary(&mut self, _: &expression::Unary) -> Value {
-        todo!()
+    fn visit_unary(&mut self, expr: &expression::Unary) -> Value {
+        match expr.operator {
+            expression::Operator::Minus => {
+                let r = match self.walk(&expr.right) {
+                    Value::Numeric(p) => p,
+                    _ => panic!("panic"),
+                };
+
+                Value::Numeric(self.builder.build_fneg(r, ""))
+            }
+            _ => panic!(
+                "operator {:?} is not valid for unary operations",
+                expr.operator
+            ),
+        }
     }
 
     fn visit_grouping(&mut self, expr: &expression::Expression) -> Value {
