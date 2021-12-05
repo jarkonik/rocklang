@@ -24,8 +24,7 @@ impl Evaluate for Evaluator {
 
 		let f = self.compiler.compile(ast)?;
 		self.compiler.call(f);
-
-		Ok(String::from(""))
+		Ok(String::from("()"))
 	}
 }
 

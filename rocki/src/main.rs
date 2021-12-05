@@ -27,7 +27,10 @@ fn main() {
         let readline = rl.readline(">> ");
         match readline {
             Ok(line) => {
-                evaluator.evaluate(&line).unwrap();
+                match evaluator.evaluate(&line) {
+                    Ok(r) => println!("{}", r),
+                    Err(e) => eprintln!("{}", e),
+                };
                 rl.add_history_entry(line.as_str());
             }
             Err(ReadlineError::Interrupted) => {
