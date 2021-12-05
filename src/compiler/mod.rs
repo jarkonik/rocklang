@@ -569,8 +569,9 @@ impl Visitor<Value> for Compiler {
     }
 
     fn visit_program(&mut self, program: parser::Program) -> Value {
-        let void_t = self.context.void_type();
-        let fun_type = self.context.function_type(void_t, &[], false);
+        let fun_type =
+            self.context
+                .function_type(self.context.i8_type().pointer_type(0), &[], false);
         let fun = self.module.add_function("fun", fun_type);
         self.stack.push(Frame::new(fun));
         let block = self.context.append_basic_block(&fun, "entry");
@@ -580,7 +581,8 @@ impl Visitor<Value> for Compiler {
             self.walk(&stmt);
         }
 
-        self.builder.build_ret_void();
+        self.builder
+            .build_ret(self.builder.build_global_string_ptr("bar", ""));
 
         fun.verify_function().unwrap_or_else(|_x| {
             println!("IR Dump:");

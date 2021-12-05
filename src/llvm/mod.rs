@@ -73,7 +73,9 @@ impl Engine {
     pub fn call(&self, function: Value) {
         let mut params = [];
         unsafe {
-            LLVMRunFunction(self.0, function.0, 0, params.as_mut_ptr());
+            let res = LLVMRunFunction(self.0, function.0, 0, params.as_mut_ptr());
+            let ptr = CStr::from_ptr(LLVMGenericValueToPointer(res) as *const i8);
+            println!("res: {}", ptr.to_str().unwrap());
         }
     }
 }
