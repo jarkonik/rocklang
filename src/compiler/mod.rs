@@ -639,6 +639,10 @@ impl Visitor<Value> for Compiler {
 
 impl Compile for Compiler {
     fn compile(&mut self, program: Program) -> Result<Function, Box<dyn Error>> {
+        let module = llvm::Module::new("module", &self.context);
+        self.engine.add_module(&module);
+        self.module = module;
+
         Ok(Function(self.visit_program(program.clone())))
     }
 }

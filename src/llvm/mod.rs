@@ -66,6 +66,10 @@ impl Engine {
         Engine(ee)
     }
 
+    pub fn add_module(&self, module: &Module) {
+        unsafe { LLVMAddModule(self.0, module.0) };
+    }
+
     pub fn call(&self, function: Value) {
         let mut params = [];
         unsafe {
