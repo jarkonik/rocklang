@@ -1,42 +1,8 @@
-use rocklang::compiler::Compile;
-use rocklang::compiler::Compiler;
-use rocklang::parser::Parse;
-use rocklang::parser::Parser;
-use rocklang::tokenizer::Tokenize;
-use rocklang::tokenizer::Tokenizer;
+use rocki::{Evaluate, Evaluator};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-use std::error::Error;
 
 const HISTORY_FILENAME: &str = ".rocki_history";
-
-trait Evaulate {
-    fn evaluate(&self, line: &str) -> Result<std::string::String, Box<dyn Error>>;
-}
-
-struct Evaluator {}
-
-impl Evaulate for Evaluator {
-    fn evaluate(&self, line: &str) -> Result<std::string::String, Box<dyn Error>> {
-        let mut tokenizer = Tokenizer::new(line.to_string());
-        let tokens = tokenizer.tokenize()?;
-
-        let mut parser = Parser::new(tokens);
-        let ast = parser.parse()?;
-
-        let mut compiler = Compiler::new(ast);
-        compiler.compile()?;
-        compiler.run();
-
-        Ok(String::from(""))
-    }
-}
-
-impl Evaluator {
-    pub fn new() -> Self {
-        Evaluator {}
-    }
-}
 
 fn main() {
     let mut rl = Editor::<()>::new();
