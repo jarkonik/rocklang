@@ -7,22 +7,23 @@ use rocklang::tokenizer::Tokenizer;
 use std::error::Error;
 
 pub trait Evaluate {
-	fn evaluate(&self, line: &str) -> Result<std::string::String, Box<dyn Error>>;
+	fn evaluate(&mut self, line: &str) -> Result<std::string::String, Box<dyn Error>>;
 }
 
-pub struct Evaluator {}
+pub struct Evaluator {
+	compiler: Compiler,
+}
 
 impl Evaluate for Evaluator {
-	fn evaluate(&self, line: &str) -> Result<std::string::String, Box<dyn Error>> {
+	fn evaluate(&mut self, line: &str) -> Result<std::string::String, Box<dyn Error>> {
 		let mut tokenizer = Tokenizer::new(line.to_string());
 		let tokens = tokenizer.tokenize()?;
 
 		let mut parser = Parser::new(tokens);
 		let ast = parser.parse()?;
 
-		let mut compiler = Compiler::new(ast);
-		compiler.compile()?;
-		compiler.run();
+		let f = self.compiler.compile(ast)?;
+		self.compiler.call(f);
 
 		Ok(String::from(""))
 	}
@@ -30,6 +31,8 @@ impl Evaluate for Evaluator {
 
 impl Evaluator {
 	pub fn new() -> Self {
-		Evaluator {}
+		let compiler = Compiler::new();
+
+		Evaluator { compiler }
 	}
 }

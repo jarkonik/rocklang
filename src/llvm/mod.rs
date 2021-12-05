@@ -66,11 +66,10 @@ impl Engine {
         Engine(ee)
     }
 
-    pub fn call(&self, name: &str) {
+    pub fn call(&self, function: Value) {
+        let mut params = [];
         unsafe {
-            let addr = LLVMGetFunctionAddress(self.0, c_str(name).as_ptr());
-            let f: extern "C" fn() = mem::transmute(addr);
-            f();
+            LLVMRunFunction(self.0, function.0, 0, params.as_mut_ptr());
         }
     }
 }

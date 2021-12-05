@@ -6,7 +6,7 @@ const HISTORY_FILENAME: &str = ".rocki_history";
 
 fn main() {
     let mut rl = Editor::<()>::new();
-    let evaluator = Evaluator::new();
+    let mut evaluator = Evaluator::new();
 
     let history_path = match home::home_dir() {
         Some(path) => Some(path.join(HISTORY_FILENAME)),
@@ -28,7 +28,6 @@ fn main() {
         match readline {
             Ok(line) => {
                 evaluator.evaluate(&line).unwrap();
-                evaluator.evaluate("print(\"\\n\")").unwrap();
                 rl.add_history_entry(line.as_str());
             }
             Err(ReadlineError::Interrupted) => {

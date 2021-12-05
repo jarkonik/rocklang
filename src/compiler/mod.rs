@@ -14,14 +14,23 @@ use crate::visitor::Visitor;
 use std::convert::TryInto;
 use std::error::Error;
 
-const MAIN_FUNCTION: &str = "__main__";
+pub struct Function(Value);
+
+trait Call {
+    fn call(&self);
+}
+
+impl Call for Function {
+    fn call(&self) {
+        todo!()
+    }
+}
 
 pub trait Compile {
-    fn compile(&mut self) -> Result<(), Box<dyn Error>>;
+    fn compile(&mut self, program: Program) -> Result<Function, Box<dyn Error>>;
 }
 
 pub struct Compiler {
-    program: Program,
     engine: llvm::Engine,
     context: llvm::Context,
     module: llvm::Module,
@@ -561,10 +570,10 @@ impl Visitor<Value> for Compiler {
 
     fn visit_program(&mut self, program: parser::Program) -> Value {
         let void_t = self.context.void_type();
-        let sum_type = self.context.function_type(void_t, &[], false);
-        let sum_fun = self.module.add_function(MAIN_FUNCTION, sum_type);
-        self.stack.push(Frame::new(sum_fun));
-        let block = self.context.append_basic_block(&sum_fun, "entry");
+        let fun_type = self.context.function_type(void_t, &[], false);
+        let fun = self.module.add_function("fun", fun_type);
+        self.stack.push(Frame::new(fun));
+        let block = self.context.append_basic_block(&fun, "entry");
         self.builder.position_builder_at_end(&block);
 
         for stmt in program.body {
@@ -573,19 +582,23 @@ impl Visitor<Value> for Compiler {
 
         self.builder.build_ret_void();
 
-        sum_fun.verify_function().unwrap_or_else(|_x| {
+        fun.verify_function().unwrap_or_else(|_x| {
             println!("IR Dump:");
             self.dump_ir();
             panic!()
         });
 
         if self.opt {
-            self.fpm.run(&sum_fun);
+            self.fpm.run(&fun);
         }
 
         self.stack.pop();
 
-        Value::Null
+        Value::Function {
+            val: fun,
+            return_type: parser::Type::Null,
+            typ: fun_type,
+        }
     }
 
     fn visit_func_decl(&mut self, expr: &expression::FuncDecl) -> Value {
@@ -625,9 +638,8 @@ impl Visitor<Value> for Compiler {
 }
 
 impl Compile for Compiler {
-    fn compile(&mut self) -> Result<(), Box<dyn Error>> {
-        self.visit_program(self.program.clone());
-        Ok(())
+    fn compile(&mut self, program: Program) -> Result<Function, Box<dyn Error>> {
+        Ok(Function(self.visit_program(program.clone())))
     }
 }
 
@@ -807,16 +819,17 @@ impl Compiler {
         }
     }
 
-    pub fn run(&self) {
-        self.call(MAIN_FUNCTION);
-    }
-
     pub fn no_opt(&mut self) {
         self.opt = false;
     }
 
-    pub fn call(&self, fun_name: &str) {
-        self.engine.call(fun_name);
+    pub fn call(&self, fun: Function) {
+        match fun.0 {
+            Value::Function { val, .. } => {
+                self.engine.call(val);
+            }
+            _ => panic!("not a function"),
+        }
     }
 
     fn build_function(&mut self, fun_compiler_val: Value, expr: &expression::FuncDecl) {
@@ -899,7 +912,7 @@ impl Compiler {
         }
     }
 
-    pub fn new(program: Program) -> Self {
+    pub fn new() -> Self {
         let context = llvm::Context::new();
         let module = llvm::Module::new("main", &context);
         let builder = llvm::Builder::new(&context);
@@ -908,7 +921,6 @@ impl Compiler {
         let fpm = llvm::PassManager::new(&module);
 
         Compiler {
-            program,
             context,
             module,
             builder,
