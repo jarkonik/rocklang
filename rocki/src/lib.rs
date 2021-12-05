@@ -23,8 +23,8 @@ impl Evaluate for Evaluator {
 		let ast = parser.parse()?;
 
 		let f = self.compiler.compile(ast)?;
-		self.compiler.call(f);
-		Ok(String::from("()"))
+
+		Ok(self.compiler.call(f))
 	}
 }
 

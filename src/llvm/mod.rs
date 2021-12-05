@@ -70,12 +70,13 @@ impl Engine {
         unsafe { LLVMAddModule(self.0, module.0) };
     }
 
-    pub fn call(&self, function: Value) {
+    pub fn call(&self, function: Value) -> String {
         let mut params = [];
         unsafe {
             let res = LLVMRunFunction(self.0, function.0, 0, params.as_mut_ptr());
             let ptr = CStr::from_ptr(LLVMGenericValueToPointer(res) as *const i8);
-            println!("res: {}", ptr.to_str().unwrap());
+
+            ptr.to_str().unwrap().to_string()
         }
     }
 }

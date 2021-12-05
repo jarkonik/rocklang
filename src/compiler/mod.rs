@@ -577,12 +577,45 @@ impl Visitor<Value> for Compiler {
         let block = self.context.append_basic_block(&fun, "entry");
         self.builder.position_builder_at_end(&block);
 
+        let mut last_stmt = Value::Null;
+
         for stmt in program.body {
-            self.walk(&stmt);
+            last_stmt = self.walk(&stmt);
         }
 
-        self.builder
-            .build_ret(self.builder.build_global_string_ptr("bar", ""));
+        let ret_val = match last_stmt {
+            Value::GlobalString(val) => val,
+            Value::String(val) => {
+                self.builder
+                    .build_bitcast(&val, self.context.i8_type().pointer_type(0), "")
+            }
+            Value::Numeric(val) => {
+                let i8_pointer_type = self.context.i8_type().pointer_type(0);
+
+                let func_type = self.context.function_type(
+                    i8_pointer_type,
+                    &[i8_pointer_type, i8_pointer_type, self.context.double_type()],
+                    true,
+                );
+                let sprintf = self
+                    .module
+                    .get_function("sprintf")
+                    .unwrap_or_else(|| self.module.add_function("sprintf", func_type));
+
+                let arr_type = self.context.array_type(self.context.i8_type(), 100);
+
+                let format_str = self.builder.build_global_string_ptr("%f", "");
+
+                let arr = self.builder.build_malloc(arr_type, "");
+                let p = self.builder.build_bitcast(&arr, i8_pointer_type, "");
+                self.builder.build_call(&sprintf, &[p, format_str, val], "");
+
+                self.builder
+                    .build_bitcast(&arr, self.context.i8_type().pointer_type(0), "")
+            }
+            _ => todo!(),
+        };
+        self.builder.build_ret(ret_val);
 
         fun.verify_function().unwrap_or_else(|_x| {
             println!("IR Dump:");
@@ -829,11 +862,9 @@ impl Compiler {
         self.opt = false;
     }
 
-    pub fn call(&self, fun: Function) {
+    pub fn call(&self, fun: Function) -> String {
         match fun.0 {
-            Value::Function { val, .. } => {
-                self.engine.call(val);
-            }
+            Value::Function { val, .. } => self.engine.call(val),
             _ => panic!("not a function"),
         }
     }
