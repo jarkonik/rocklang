@@ -17,9 +17,9 @@ fn it_compiles_numeric_asignment() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new();
     compiler.no_opt();
-    compiler.compile().unwrap();
+    compiler.compile(program).unwrap();
 
     assert_eq!(
         remove_whitespace(&compiler.ir_string()),
@@ -52,9 +52,9 @@ fn it_compiles_numeric_to_numeric_asignment() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new();
     compiler.no_opt();
-    compiler.compile().unwrap();
+    compiler.compile(program).unwrap();
 
     assert_eq!(
         remove_whitespace(&compiler.ir_string()),
@@ -85,8 +85,8 @@ fn it_panic_numeric_to_numeric_asignment() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -114,8 +114,8 @@ fn it_compiles_new_vec_being_passed_as_fun_arg() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -127,8 +127,8 @@ fn it_compiles_print_function_with_global_string() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -143,8 +143,8 @@ fn it_compiles_print_function_with_string() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -159,8 +159,8 @@ fn it_compiles_len_function_when_pass_new_vec() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -185,8 +185,8 @@ fn it_compiles_vecset_function() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -210,8 +210,8 @@ fn it_compiles_vecget_function() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -729,5 +729,5 @@ fn it_panics_when_wrong_unary_operator() {
     };
 
     let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    compiler.compile(program).unwrap();
 }
