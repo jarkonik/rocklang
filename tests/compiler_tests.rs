@@ -223,8 +223,8 @@ fn it_compiles_sqrt_funcion() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -240,8 +240,8 @@ fn it_panic_when_more_then_one_arg_pass_to_print_funcion() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -254,8 +254,8 @@ fn it_panics_when_non_sring_type_pass_to_print_funcions() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -268,8 +268,8 @@ fn it_panic_when_zero_args_pass_to_string_funcion() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -282,8 +282,8 @@ fn it_panic_when_bool_arg_pass_to_string_funcion() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -315,8 +315,8 @@ fn it_compiles_new_vec_being_passed_as_variable() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -335,8 +335,8 @@ fn it_compiles_recursive_fun() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -348,8 +348,8 @@ fn it_compiles_while_statment() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -375,8 +375,8 @@ fn it_test_visit_func_decl() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -392,8 +392,8 @@ fn it_compiles_grouping_expressions() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -410,8 +410,8 @@ fn it_compiles_coditional() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 macro_rules! compile_operator {
@@ -427,8 +427,8 @@ macro_rules! compile_operator {
             })],
         };
 
-        let mut compiler = Compiler::new(program);
-        compiler.compile().unwrap()
+        let mut compiler = Compiler::new();
+        compiler.compile(program).unwrap()
     };
 }
 
@@ -700,8 +700,8 @@ fn it_compiles_unary_operator() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -714,8 +714,8 @@ fn it_panics_when_pass_string_to_unary() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
+    let mut compiler = Compiler::new();
+    compiler.compile(program).unwrap();
 }
 
 #[test]
@@ -728,6 +728,6 @@ fn it_panics_when_wrong_unary_operator() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new();
     compiler.compile(program).unwrap();
 }

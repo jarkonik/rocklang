@@ -613,7 +613,10 @@ impl Visitor<Value> for Compiler {
                 self.builder
                     .build_bitcast(&arr, self.context.i8_type().pointer_type(0), "")
             }
-            _ => todo!(),
+            Value::Null => self.builder.build_global_string_ptr("null", ""),
+            Value::Bool(_) => self.builder.build_global_string_ptr("bool", ""),
+            Value::Function { .. } => self.builder.build_global_string_ptr("fun", ""),
+            Value::Vec { .. } => self.builder.build_global_string_ptr("vec", ""),
         };
         self.builder.build_ret(ret_val);
 
@@ -678,7 +681,7 @@ impl Compile for Compiler {
         self.engine.add_module(&module);
         self.module = module;
 
-        Ok(Function(self.visit_program(program.clone())))
+        Ok(Function(self.visit_program(program)))
     }
 }
 
@@ -966,5 +969,11 @@ impl Compiler {
             fpm,
             opt: true,
         }
+    }
+}
+
+impl Default for Compiler {
+    fn default() -> Self {
+        Self::new()
     }
 }
