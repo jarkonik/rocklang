@@ -571,7 +571,12 @@ impl Visitor<Value> for Compiler {
     }
 
     fn visit_break(&mut self) -> Value {
-        todo!()
+        let loop_block = self.builder.get_insert_block();
+        let after_loop_block = loop_block.get_next_baisc_block();
+
+        self.builder.build_br(&after_loop_block);
+
+        Value::Null
     }
 
     fn visit_program(&mut self, program: parser::Program) -> Value {
