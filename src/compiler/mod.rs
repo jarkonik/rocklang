@@ -728,7 +728,10 @@ impl Compiler {
             _ => todo!("{:?}", val),
         };
 
-        self.stack.last_mut().unwrap().set(literal, var);
+        self.stack
+            .last_mut()
+            .unwrap()
+            .set(&self.context, &self.builder, literal, var);
     }
 
     #[allow(dead_code)]
@@ -737,12 +740,11 @@ impl Compiler {
     }
 
     fn get_var_ptr(&mut self, literal: &str) -> Option<Var> {
-        for frame in self.stack.iter().rev() {
-            if let Some(v) = frame.get(literal) {
-                return Some(*v);
-            };
+        if let Some(v) = self.stack.last().unwrap().get(literal) {
+            Some(*v)
+        } else {
+            None
         }
-        None
     }
 
     fn get_var(&mut self, literal: &str) -> Option<Value> {

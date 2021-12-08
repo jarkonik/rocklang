@@ -1,7 +1,6 @@
 use crate::compiler::var::Var;
 use crate::llvm;
 use std::collections::HashMap;
-use std::convert::TryInto;
 
 pub struct Frame {
     env: HashMap<String, Var>,
@@ -20,7 +19,17 @@ impl Frame {
         self.env.get(literal)
     }
 
-    pub fn set(&mut self, literal: &str, val: Var) {
+    pub fn set(
+        &mut self,
+        context: &llvm::Context,
+        builder: &llvm::Builder,
+        literal: &str,
+        val: Var,
+    ) {
+        let existing = self.env.get(literal);
+        if let Some(val) = existing {
+            val.dealloc(context, builder);
+        }
         self.env.insert(literal.to_string(), val);
     }
 
@@ -31,20 +40,7 @@ impl Frame {
 
     pub fn dealloc(&self, context: &llvm::Context, builder: &llvm::Builder) {
         for val in self.env.values() {
-            if let Var::Vec(v) = val {
-                let fun_type = context.function_type(
-                    context.void_type(),
-                    &[context.double_type().pointer_type(0)],
-                    false,
-                );
-
-                let fun_addr = stdlib::vecfree as usize;
-                let ptr = context.const_u64_to_ptr(
-                    context.const_u64(fun_addr.try_into().unwrap()),
-                    fun_type.pointer_type(0),
-                );
-                builder.build_call(&ptr, &[builder.build_load(v, "")], "");
-            }
+            val.dealloc(context, builder);
         }
     }
 }
