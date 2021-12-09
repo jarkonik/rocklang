@@ -718,6 +718,11 @@ impl Compiler {
             },
         };
 
+        self.stack
+            .last_mut()
+            .unwrap()
+            .set(&self.context, &self.builder, literal, var);
+
         match val {
             Value::Numeric(v)
             | Value::String(v)
@@ -727,11 +732,6 @@ impl Compiler {
             Value::Function { val: v, .. } => v,
             _ => todo!("{:?}", val),
         };
-
-        self.stack
-            .last_mut()
-            .unwrap()
-            .set(&self.context, &self.builder, literal, var);
     }
 
     #[allow(dead_code)]
@@ -740,11 +740,12 @@ impl Compiler {
     }
 
     fn get_var_ptr(&mut self, literal: &str) -> Option<Var> {
-        if let Some(v) = self.stack.last().unwrap().get(literal) {
-            Some(*v)
-        } else {
-            None
+        for frame in self.stack.iter().rev() {
+            if let Some(v) = frame.get(literal) {
+                return Some(*v);
+            };
         }
+        None
     }
 
     fn get_var(&mut self, literal: &str) -> Option<Value> {
