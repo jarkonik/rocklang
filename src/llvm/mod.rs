@@ -331,6 +331,7 @@ impl PassManager {
 
 impl PassManager {}
 
+#[derive(Clone, Copy, Debug)]
 pub struct BasicBlock(*mut llvm::LLVMBasicBlock);
 
 impl BasicBlock {

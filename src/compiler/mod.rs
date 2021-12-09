@@ -7,6 +7,7 @@ use crate::compiler::value::Value;
 use crate::compiler::var::Var;
 use crate::expression;
 use crate::llvm;
+use crate::llvm::{BasicBlock};
 use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
@@ -29,6 +30,7 @@ pub struct Compiler {
     fpm: PassManager,
     opt: bool,
     stack: Vec<Frame>,
+    after_loop_blocks: Vec<BasicBlock>
 }
 
 impl Visitor<Value> for Compiler {
@@ -184,18 +186,28 @@ impl Visitor<Value> for Compiler {
             Value::Bool(b) => {
                 self.builder.build_cond_br(&b, &then_block, &else_block);
                 self.builder.position_builder_at_end(&then_block);
+                
+                let mut is_break = false;
                 for stmt in &expr.body {
                     self.walk(stmt);
-                }
-                self.builder.create_br(&after_if_block);
 
-                self.builder.position_builder_at_end(&else_block);
-                for stmt in &expr.else_body {
-                    self.walk(stmt);
+                    if matches!(stmt, expression::Expression::Break) {
+                        is_break = true;
+                        break;
+                    }
                 }
-                self.builder.create_br(&after_if_block);
 
-                self.builder.position_builder_at_end(&after_if_block);
+                
+                if !is_break {
+                    self.builder.create_br(&after_if_block);
+                }
+                    self.builder.position_builder_at_end(&else_block);
+                    for stmt in &expr.else_body {
+                        self.walk(stmt);
+                    }
+                    self.builder.create_br(&after_if_block);
+    
+                    self.builder.position_builder_at_end(&after_if_block);
 
                 Value::Null
             }
@@ -517,6 +529,7 @@ impl Visitor<Value> for Compiler {
 
                 self.builder.position_builder_at_end(&loop_block);
 
+                self.after_loop_blocks.push(after_loop_block);
                 let mut is_break = false;
 
                 for stmt in &expr.body {
@@ -537,9 +550,17 @@ impl Visitor<Value> for Compiler {
                         }
                         _ => panic!("type error"),
                     }
+<<<<<<< HEAD
 
                     self.builder.position_builder_at_end(&after_loop_block);
                 }
+=======
+
+                    self.builder.position_builder_at_end(&after_loop_block);
+                }
+
+                self.after_loop_blocks.pop();
+>>>>>>> Skip building after break.
             }
             _ => panic!("type error"),
         }
@@ -580,8 +601,7 @@ impl Visitor<Value> for Compiler {
     }
 
     fn visit_break(&mut self) -> Value {
-        let loop_block = self.builder.get_insert_block();
-        let after_loop_block = loop_block.get_next_baisc_block();
+        let after_loop_block = self.after_loop_blocks.first().unwrap();
 
         self.builder.build_br(&after_loop_block);
         self.builder.position_builder_at_end(&after_loop_block);
@@ -952,6 +972,7 @@ impl Compiler {
             builder,
             engine,
             stack: vec![],
+            after_loop_blocks: vec![],
             fpm,
             opt: true,
         }
