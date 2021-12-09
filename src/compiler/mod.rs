@@ -718,6 +718,11 @@ impl Compiler {
             },
         };
 
+        self.stack
+            .last_mut()
+            .unwrap()
+            .set(&self.context, &self.builder, literal, var);
+
         match val {
             Value::Numeric(v)
             | Value::String(v)
@@ -727,8 +732,6 @@ impl Compiler {
             Value::Function { val: v, .. } => v,
             _ => todo!("{:?}", val),
         };
-
-        self.stack.last_mut().unwrap().set(literal, var);
     }
 
     #[allow(dead_code)]
