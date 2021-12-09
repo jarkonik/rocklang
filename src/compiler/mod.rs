@@ -513,24 +513,33 @@ impl Visitor<Value> for Compiler {
                 let after_loop_block = self.context.append_basic_block(&fun, "afterloop");
 
                 self.builder
-                    .build_cond_br(&b, &loop_block, &after_loop_block);
+                        .build_cond_br(&b, &loop_block, &after_loop_block);
 
                 self.builder.position_builder_at_end(&loop_block);
 
+                let mut is_break = false;
+
                 for stmt in &expr.body {
                     self.walk(stmt);
-                }
-                let term_pred = self.walk(&expr.predicate);
-
-                match term_pred {
-                    Value::Bool(b) => {
-                        self.builder
-                            .build_cond_br(&b, &loop_block, &after_loop_block);
+                    if matches!(stmt, expression::Expression::Break) {
+                        is_break = true;
+                        break;
                     }
-                    _ => panic!("type error"),
                 }
 
-                self.builder.position_builder_at_end(&after_loop_block);
+                if !is_break {
+                    let term_pred = self.walk(&expr.predicate);
+    
+                    match term_pred {
+                        Value::Bool(b) => {
+                            self.builder
+                                .build_cond_br(&b, &loop_block, &after_loop_block);
+                        }
+                        _ => panic!("type error"),
+                    }
+
+                    self.builder.position_builder_at_end(&after_loop_block);
+                }
             }
             _ => panic!("type error"),
         }
@@ -575,8 +584,9 @@ impl Visitor<Value> for Compiler {
         let after_loop_block = loop_block.get_next_baisc_block();
 
         self.builder.build_br(&after_loop_block);
+        self.builder.position_builder_at_end(&after_loop_block);
 
-        Value::Null
+        Value::Break
     }
 
     fn visit_program(&mut self, program: parser::Program) -> Value {
@@ -669,6 +679,7 @@ impl Compiler {
             Value::GlobalString(_) => self.context.i8_type().pointer_type(0),
             Value::Bool(_) => self.context.i1_type(),
             Value::Function { typ, .. } => typ.pointer_type(0),
+            Value::Break => self.context.void_type()
         };
 
         let existing_ptr: Option<llvm::Value> = match self.get_var_ptr(literal) {
@@ -694,17 +705,28 @@ impl Compiler {
                 Value::Function { val: v, .. } => v,
             };
 
-            match val {
-                Value::Numeric(_) | Value::GlobalString(_) | Value::Vec(_) => {
-                    ptr.set_initializer(self.context.const_double(0.0));
-                }
-                Value::Null => unreachable!(),
-                Value::String(_) => todo!(),
-                Value::Function { .. } => (),
-                Value::Bool(_) => {
-                    ptr.set_initializer(self.context.const_bool(false));
-                }
-            }
+        let ptr = existing_ptr.unwrap_or_else(|| self.builder.build_alloca(typ, literal));
+
+        let var = match val {
+            Value::Numeric(_) => Var::Numeric(ptr),
+            Value::Pending => Var::Pending,
+            Value::Null => Var::Null,
+            Value::String(_) => Var::String(ptr),
+            Value::GlobalString(_) => Var::GlobalString(ptr),
+            Value::Vec(_) => Var::Vec(ptr),
+            Value::Bool(_) => Var::Bool(ptr),
+            Value::Break => Var::Break,
+            Value::Function {
+                typ,
+                return_type,
+                val,
+                ..
+            } => Var::Function {
+                val,
+                typ,
+                return_type,
+            },
+        };
 
             let var = match val {
                 Value::Numeric(_) => Var::Numeric(ptr),
