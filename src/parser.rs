@@ -363,6 +363,40 @@ impl Parser {
             Token::Extern => {
                 self.advance();
 
+                if !matches!(self.advance(), Token::Less) {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                let mut types = vec![];
+
+                while !matches!(self.peek(), Token::Greater) {
+                    let token = self.advance().clone();
+
+                    match token {
+                        Token::Identifier(s) => {
+                            types.push(self.type_from_literal(&s));
+                        }
+                        _ => {
+                            return Err(ParserError::SyntaxError {
+                                token: self.previous().clone(),
+                                backtrace: Backtrace::new(),
+                            });
+                        }
+                    }
+                }
+
+                if !matches!(self.advance(), Token::Greater) {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                println!("{:?}", self.tokens);
+
                 if !matches!(self.advance(), Token::LeftParen) {
                     return Err(ParserError::SyntaxError {
                         token: self.previous().clone(),
@@ -404,30 +438,23 @@ impl Parser {
                 while match self.advance().clone() {
                     Token::Identifier(name_literal) => {
                         match self.advance() {
-                            Token::Colon => match self.advance() {
-                                Token::Identifier(type_literal) => {
-                                    params.push(Param {
-                                        name: name_literal.to_string(),
-                                        typ: match type_literal.as_str() {
-                                            "number" => Type::Numeric,
-                                            "vec" => Type::Vector,
-                                            "fun" => Type::Function,
-                                            _ => {
-                                                return Err(ParserError::SyntaxError {
-                                                    token: self.previous().clone(),
-                                                    backtrace: Backtrace::new(),
-                                                })
-                                            }
-                                        },
-                                    });
+                            Token::Colon => {
+                                let token = self.advance().clone();
+                                match token {
+                                    Token::Identifier(type_literal) => {
+                                        params.push(Param {
+                                            name: name_literal.to_string(),
+                                            typ: self.type_from_literal(&type_literal)?,
+                                        });
+                                    }
+                                    _ => {
+                                        return Err(ParserError::SyntaxError {
+                                            token: self.previous().clone(),
+                                            backtrace: Backtrace::new(),
+                                        })
+                                    }
                                 }
-                                _ => {
-                                    return Err(ParserError::SyntaxError {
-                                        token: self.previous().clone(),
-                                        backtrace: Backtrace::new(),
-                                    })
-                                }
-                            },
+                            }
                             _ => {
                                 self.current = current;
                                 return self.func_call();
@@ -638,6 +665,18 @@ impl Parser {
             self.current += 1;
         }
         self.previous()
+    }
+
+    fn type_from_literal(&mut self, type_literal: &str) -> Result<Type> {
+        match type_literal {
+            "number" => Ok(Type::Numeric),
+            "vec" => Ok(Type::Vector),
+            "fun" => Ok(Type::Function),
+            _ => Err(ParserError::SyntaxError {
+                token: self.previous().clone(),
+                backtrace: Backtrace::new(),
+            }),
+        }
     }
 
     fn at_end(&mut self) -> bool {
