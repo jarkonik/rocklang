@@ -624,28 +624,12 @@ impl Visitor<Value> for Compiler {
         let types: Vec<llvm::Type> = expr
             .params
             .iter()
-            .map(|arg| match arg.typ {
-                parser::Type::Vector => self.context.double_type().pointer_type(0),
-                parser::Type::Numeric => self.context.double_type(),
-                parser::Type::Function => self
-                    .context
-                    .function_type(self.context.void_type(), &[], false)
-                    .pointer_type(0),
-                parser::Type::Null => self.context.void_type(),
-            })
+            .map(|arg| self.get_llvm_type(arg.typ))
             .collect();
 
-        let return_type = match expr.return_type {
-            parser::Type::Vector => self.context.double_type().pointer_type(0),
-            parser::Type::Numeric => self.context.double_type(),
-            parser::Type::Function => self
-                .context
-                .function_type(self.context.void_type(), &[], false)
-                .pointer_type(0),
-            parser::Type::Null => self.context.void_type(),
-        };
-
-        let fun_type = self.context.function_type(return_type, &types, false);
+        let fun_type =
+            self.context
+                .function_type(self.get_llvm_type(expr.return_type), &types, false);
         let fun = self.module.add_function("fun", fun_type);
 
         Value::Function {
@@ -660,11 +644,19 @@ impl Visitor<Value> for Compiler {
         Value::Null
     }
 
-    fn visit_extern(&mut self, name: &str) -> Value {
+    fn visit_extern(&mut self, extern_stmt: &expression::Extern) -> Value {
         let return_type = self.context.void_type();
 
-        let fun_type = self.context.function_type(return_type, &[], false);
-        let fun = self.module.add_function(name, fun_type);
+        let types: Vec<llvm::Type> = extern_stmt
+            .types
+            .iter()
+            .map(|typ| self.get_llvm_type(*typ))
+            .collect();
+
+        let fun_type = self.context.function_type(return_type, &types, false);
+        let fun = self
+            .module
+            .add_function(extern_stmt.name.as_str(), fun_type);
 
         Value::Function {
             val: fun,
@@ -887,6 +879,18 @@ impl Compiler {
 
         if self.opt {
             self.fpm.run(&fun);
+        }
+    }
+
+    fn get_llvm_type(&self, typ: parser::Type) -> llvm::Type {
+        match typ {
+            parser::Type::Vector => self.context.double_type().pointer_type(0),
+            parser::Type::Numeric => self.context.double_type(),
+            parser::Type::Function => self
+                .context
+                .function_type(self.context.void_type(), &[], false)
+                .pointer_type(0),
+            parser::Type::Null => self.context.void_type(),
         }
     }
 

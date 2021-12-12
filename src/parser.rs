@@ -372,12 +372,15 @@ impl Parser {
 
                 let mut types = vec![];
 
-                while !matches!(self.peek(), Token::Greater) {
+                loop {
                     let token = self.advance().clone();
-
                     match token {
-                        Token::Identifier(s) => {
-                            types.push(self.type_from_literal(&s));
+                        Token::Identifier(ref s) => {
+                            types.push(self.type_from_literal(&s)?);
+                        }
+                        Token::Comma => (),
+                        Token::Greater => {
+                            break;
                         }
                         _ => {
                             return Err(ParserError::SyntaxError {
@@ -387,15 +390,6 @@ impl Parser {
                         }
                     }
                 }
-
-                if !matches!(self.advance(), Token::Greater) {
-                    return Err(ParserError::SyntaxError {
-                        token: self.previous().clone(),
-                        backtrace: Backtrace::new(),
-                    });
-                };
-
-                println!("{:?}", self.tokens);
 
                 if !matches!(self.advance(), Token::LeftParen) {
                     return Err(ParserError::SyntaxError {
@@ -420,7 +414,21 @@ impl Parser {
                     });
                 };
 
-                Ok(Expression::Extern(name))
+                let return_type = match types.last() {
+                    Some(v) => *v,
+                    _ => {
+                        return Err(ParserError::SyntaxError {
+                            token: self.previous().clone(),
+                            backtrace: Backtrace::new(),
+                        });
+                    }
+                };
+
+                Ok(Expression::Extern(expression::Extern {
+                    types: types[0..types.len() - 1].to_vec(),
+                    return_type,
+                    name,
+                }))
             }
             _ => self.func_declr(),
         }
@@ -669,6 +677,7 @@ impl Parser {
 
     fn type_from_literal(&mut self, type_literal: &str) -> Result<Type> {
         match type_literal {
+            "void" => Ok(Type::Null),
             "number" => Ok(Type::Numeric),
             "vec" => Ok(Type::Vector),
             "fun" => Ok(Type::Function),

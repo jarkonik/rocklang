@@ -18,7 +18,7 @@ pub trait Visitor<T> {
     fn visit_program(&mut self, program: Program) -> T;
     fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> T;
     fn visit_load(&mut self, name: &str) -> T;
-    fn visit_extern(&mut self, name: &str) -> T;
+    fn visit_extern(&mut self, name: &expression::Extern) -> T;
 
     fn walk(&mut self, expr: &Expression) -> T {
         match expr {
