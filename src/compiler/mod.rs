@@ -10,7 +10,6 @@ use crate::llvm;
 use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
-use crate::parser::Type;
 use crate::visitor::Visitor;
 use std::convert::TryInto;
 use std::error::Error;
@@ -455,6 +454,7 @@ impl Visitor<Value> for Compiler {
                             .iter()
                             .map(|arg| match self.walk(arg) {
                                 Value::Numeric(n) => n,
+                                Value::Ptr(n) => n,
                                 Value::Vec(v) => {
                                     let fun_type = self.context.function_type(
                                         self.context.double_type().pointer_type(0),
@@ -493,6 +493,9 @@ impl Visitor<Value> for Compiler {
                             parser::Type::Null => {
                                 self.builder.build_call(val, &args, "");
                                 Value::Null
+                            }
+                            parser::Type::Ptr => {
+                                Value::Ptr(self.builder.build_call(val, &args, ""))
                             }
                         }
                     }
@@ -645,15 +648,15 @@ impl Visitor<Value> for Compiler {
     }
 
     fn visit_extern(&mut self, extern_stmt: &expression::Extern) -> Value {
-        let return_type = self.context.void_type();
-
         let types: Vec<llvm::Type> = extern_stmt
             .types
             .iter()
             .map(|typ| self.get_llvm_type(*typ))
             .collect();
 
-        let fun_type = self.context.function_type(return_type, &types, false);
+        let fun_type =
+            self.context
+                .function_type(self.get_llvm_type(extern_stmt.return_type), &types, false);
         let fun = self
             .module
             .add_function(extern_stmt.name.as_str(), fun_type);
@@ -661,7 +664,7 @@ impl Visitor<Value> for Compiler {
         Value::Function {
             val: fun,
             typ: fun_type,
-            return_type: Type::Null,
+            return_type: extern_stmt.return_type,
         }
     }
 }
@@ -684,6 +687,7 @@ impl Compiler {
 
     fn set_var(&mut self, literal: &str, val: Value) {
         let typ = match val {
+            Value::Ptr(_) => self.context.void_type().pointer_type(0),
             Value::Numeric(_) => self.context.double_type(),
             Value::Pending => self.context.void_type(),
             Value::Vec(_) => self.context.double_type().pointer_type(0),
@@ -710,6 +714,7 @@ impl Compiler {
         let ptr = existing_ptr.unwrap_or_else(|| self.builder.build_alloca(typ, literal));
 
         let var = match val {
+            Value::Ptr(_) => Var::Ptr(ptr),
             Value::Numeric(_) => Var::Numeric(ptr),
             Value::Pending => Var::Pending,
             Value::Null => Var::Null,
@@ -739,6 +744,7 @@ impl Compiler {
             | Value::String(v)
             | Value::GlobalString(v)
             | Value::Vec(v)
+            | Value::Ptr(v)
             | Value::Bool(v) => self.builder.create_store(v, &ptr),
             Value::Function { val: v, .. } => v,
             _ => todo!("{:?}", val),
@@ -767,6 +773,7 @@ impl Compiler {
                     | Var::String(p)
                     | Var::GlobalString(p)
                     | Var::Vec(p)
+                    | Var::Ptr(p)
                     | Var::Bool(p) => self.builder.build_load(&p, ""),
                     Var::Function { val: p, .. } => p,
                     _ => todo!(),
@@ -774,6 +781,7 @@ impl Compiler {
 
                 Some(match v {
                     Var::Numeric(_) => Value::Numeric(val),
+                    Var::Ptr(_) => Value::Ptr(val),
                     Var::String(_) => Value::String(val),
                     Var::GlobalString(_) => Value::GlobalString(val),
                     Var::Vec(_) => Value::Vec(val),
@@ -821,6 +829,7 @@ impl Compiler {
                 match param.typ {
                     parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
                     parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Ptr => Value::Ptr(fun.get_param(i.try_into().unwrap())),
                     parser::Type::Null => Value::Null,
                     parser::Type::Function => Value::Function {
                         val: fun.get_param(i.try_into().unwrap()),
@@ -891,6 +900,7 @@ impl Compiler {
                 .function_type(self.context.void_type(), &[], false)
                 .pointer_type(0),
             parser::Type::Null => self.context.void_type(),
+            parser::Type::Ptr => self.context.void_type().pointer_type(0),
         }
     }
 

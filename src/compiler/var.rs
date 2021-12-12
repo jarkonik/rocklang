@@ -6,6 +6,7 @@ pub enum Var {
     Numeric(llvm::Value),
     Pending,
     Null,
+    Ptr(llvm::Value),
     String(llvm::Value),
     Vec(llvm::Value),
     GlobalString(llvm::Value),

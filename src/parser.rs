@@ -49,6 +49,7 @@ pub enum Type {
     Vector,
     Null,
     Function,
+    Ptr,
 }
 
 #[derive(Clone, Serialize, Debug)]
@@ -681,6 +682,7 @@ impl Parser {
             "number" => Ok(Type::Numeric),
             "vec" => Ok(Type::Vector),
             "fun" => Ok(Type::Function),
+            "ptr" => Ok(Type::Ptr),
             _ => Err(ParserError::SyntaxError {
                 token: self.previous().clone(),
                 backtrace: Backtrace::new(),

@@ -15,4 +15,5 @@ pub enum Value {
     },
     Vec(llvm::Value),
     Pending,
+    Ptr(llvm::Value),
 }
