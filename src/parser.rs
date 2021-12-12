@@ -483,7 +483,7 @@ impl Parser {
     }
 
     fn func_call(&mut self) -> Result<Expression> {
-        let mut expr = self.primary()?;
+        let mut expr = self.import()?;
 
         while match self.peek() {
             Token::LeftParen => {
@@ -525,6 +525,38 @@ impl Parser {
             _ => false,
         } {}
         Ok(expr)
+    }
+
+    fn import(&mut self) -> Result<Expression> {
+        match self.peek() {
+            Token::Load => {
+                self.advance();
+                match self.advance() {
+                    Token::String(s) => Ok(Expression::Load(s.to_string())),
+                    _ => Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    }),
+                }
+            }
+            _ => self.extern_stmt(),
+        }
+    }
+
+    fn extern_stmt(&mut self) -> Result<Expression> {
+        match self.peek() {
+            Token::Extern => {
+                self.advance();
+                match self.advance() {
+                    Token::String(s) => Ok(Expression::Extern(self.func_declr()?)),
+                    _ => Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    }),
+                }
+            }
+            _ => self.primary(),
+        }
     }
 
     fn primary(&mut self) -> Result<Expression> {

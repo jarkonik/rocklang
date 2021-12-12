@@ -653,6 +653,11 @@ impl Visitor<Value> for Compiler {
             val: fun,
         }
     }
+
+    fn visit_load(&mut self, name: &str) -> Value {
+        self.context.load_libary_permanently(name);
+        Value::Null
+    }
 }
 
 impl Compile for Compiler {

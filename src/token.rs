@@ -34,6 +34,8 @@ pub enum Token {
     String(String),
     Identifier(String),
     Numeric(f64),
+    Load,
+    Extern,
     Eof,
 }
 
@@ -71,6 +73,7 @@ fn token_name(token: &Token) -> &str {
         Token::And => "And",
         Token::Else => "Else",
         Token::Colon => "Colon",
+        Token::Load => "Load",
     }
 }
 
