@@ -354,6 +354,40 @@ impl Parser {
                     right: Box::new(self.unary()?),
                 }))
             }
+            _ => self.extern_stmt(),
+        }
+    }
+
+    fn extern_stmt(&mut self) -> Result<Expression> {
+        match self.peek() {
+            Token::Extern => {
+                self.advance();
+
+                if !matches!(self.advance(), Token::LeftParen) {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                let name = if let Token::String(s) = self.advance() {
+                    s.to_string()
+                } else {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                if !matches!(self.advance(), Token::RightParen) {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                Ok(Expression::Extern(name))
+            }
             _ => self.func_declr(),
         }
     }
@@ -483,7 +517,7 @@ impl Parser {
     }
 
     fn func_call(&mut self) -> Result<Expression> {
-        let mut expr = self.import()?;
+        let mut expr = self.load()?;
 
         while match self.peek() {
             Token::LeftParen => {
@@ -527,27 +561,35 @@ impl Parser {
         Ok(expr)
     }
 
-    fn import(&mut self) -> Result<Expression> {
+    fn load(&mut self) -> Result<Expression> {
         match self.peek() {
             Token::Load => {
                 self.advance();
-                match self.advance() {
-                    Token::String(s) => Ok(Expression::Load(s.to_string())),
-                    _ => Err(ParserError::SyntaxError {
+
+                if !matches!(self.advance(), Token::LeftParen) {
+                    return Err(ParserError::SyntaxError {
                         token: self.previous().clone(),
                         backtrace: Backtrace::new(),
-                    }),
-                }
-            }
-            _ => self.extern_stmt(),
-        }
-    }
+                    });
+                };
 
-    fn extern_stmt(&mut self) -> Result<Expression> {
-        match self.peek() {
-            Token::Extern => {
-                self.advance();
-                Ok(Expression::Extern(Box::new(self.func_declr()?)))
+                let name = if let Token::String(s) = self.advance() {
+                    s.to_string()
+                } else {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                if !matches!(self.advance(), Token::RightParen) {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                Ok(Expression::Load(name))
             }
             _ => self.primary(),
         }

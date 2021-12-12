@@ -10,6 +10,7 @@ use crate::llvm;
 use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
+use crate::parser::Type;
 use crate::visitor::Visitor;
 use std::convert::TryInto;
 use std::error::Error;
@@ -659,10 +660,16 @@ impl Visitor<Value> for Compiler {
         Value::Null
     }
 
-    fn visit_extern(&mut self, expr: &expression::Expression) -> Value {
-        match expr {
-            expression::Expression::FuncDecl { .. } => Value::Null,
-            _ => panic!(),
+    fn visit_extern(&mut self, name: &str) -> Value {
+        let return_type = self.context.void_type();
+
+        let fun_type = self.context.function_type(return_type, &vec![], false);
+        let fun = self.module.add_function(name, fun_type);
+
+        Value::Function {
+            val: fun,
+            typ: fun_type,
+            return_type: Type::Null,
         }
     }
 }

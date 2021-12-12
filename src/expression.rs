@@ -78,5 +78,5 @@ pub enum Expression {
     FuncCall(FuncCall),
     FuncDecl(FuncDecl),
     Load(String),
-    Extern(Box<Expression>),
+    Extern(String),
 }

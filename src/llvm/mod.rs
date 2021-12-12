@@ -419,7 +419,7 @@ impl Context {
 
     pub fn load_libary_permanently(&self, name: &str) {
         unsafe {
-            if LLVMLoadLibraryPermanently(c_str(name).as_ptr()) == 0 {
+            if LLVMLoadLibraryPermanently(c_str(name).as_ptr()) == 1 {
                 panic!("library {} load error", name);
             }
         }
