@@ -50,6 +50,7 @@ pub enum Type {
     Null,
     Function,
     Ptr,
+    String,
 }
 
 #[derive(Clone, Serialize, Debug)]
@@ -679,6 +680,7 @@ impl Parser {
     fn type_from_literal(&mut self, type_literal: &str) -> Result<Type> {
         match type_literal {
             "void" => Ok(Type::Null),
+            "string" => Ok(Type::String),
             "number" => Ok(Type::Numeric),
             "vec" => Ok(Type::Vector),
             "fun" => Ok(Type::Function),

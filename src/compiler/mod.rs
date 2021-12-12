@@ -471,6 +471,7 @@ impl Visitor<Value> for Compiler {
                                     self.builder.build_call(&ptr, &[v], "")
                                 }
                                 Value::Function { val, .. } => val,
+                                Value::GlobalString(s) => s,
                                 _ => todo!("{:?}", self.walk(arg)),
                             })
                             .collect();
@@ -481,6 +482,9 @@ impl Visitor<Value> for Compiler {
                             }
                             parser::Type::Numeric => {
                                 Value::Numeric(self.builder.build_call(val, &args, ""))
+                            }
+                            parser::Type::String => {
+                                Value::String(self.builder.build_call(val, &args, ""))
                             }
                             parser::Type::Function => Value::Function {
                                 val: self.builder.build_call(val, &args, ""),
@@ -830,6 +834,7 @@ impl Compiler {
                     parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
                     parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
                     parser::Type::Ptr => Value::Ptr(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::String => Value::String(fun.get_param(i.try_into().unwrap())),
                     parser::Type::Null => Value::Null,
                     parser::Type::Function => Value::Function {
                         val: fun.get_param(i.try_into().unwrap()),
@@ -901,6 +906,7 @@ impl Compiler {
                 .pointer_type(0),
             parser::Type::Null => self.context.void_type(),
             parser::Type::Ptr => self.context.void_type().pointer_type(0),
+            parser::Type::String => self.context.i8_type().pointer_type(0),
         }
     }
 
