@@ -74,6 +74,7 @@ fn token_name(token: &Token) -> &str {
         Token::Else => "Else",
         Token::Colon => "Colon",
         Token::Load => "Load",
+        Token::Extern => "Extern",
     }
 }
 

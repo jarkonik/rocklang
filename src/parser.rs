@@ -547,13 +547,7 @@ impl Parser {
         match self.peek() {
             Token::Extern => {
                 self.advance();
-                match self.advance() {
-                    Token::String(s) => Ok(Expression::Extern(self.func_declr()?)),
-                    _ => Err(ParserError::SyntaxError {
-                        token: self.previous().clone(),
-                        backtrace: Backtrace::new(),
-                    }),
-                }
+                Ok(Expression::Extern(Box::new(self.func_declr()?)))
             }
             _ => self.primary(),
         }

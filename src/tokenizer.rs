@@ -188,6 +188,7 @@ impl Tokenizer {
             "break" => self.add_token(Token::Break),
             "else" => self.add_token(Token::Else),
             "load" => self.add_token(Token::Load),
+            "extern" => self.add_token(Token::Extern),
             _ => self.add_token(Token::Identifier(literal)),
         };
     }

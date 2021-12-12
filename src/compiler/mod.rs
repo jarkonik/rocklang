@@ -658,6 +658,13 @@ impl Visitor<Value> for Compiler {
         self.context.load_libary_permanently(name);
         Value::Null
     }
+
+    fn visit_extern(&mut self, expr: &expression::Expression) -> Value {
+        match expr {
+            expression::Expression::FuncDecl { .. } => Value::Null,
+            _ => panic!(),
+        }
+    }
 }
 
 impl Compile for Compiler {
