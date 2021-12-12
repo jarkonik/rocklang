@@ -376,7 +376,7 @@ impl Parser {
                     let token = self.advance().clone();
                     match token {
                         Token::Identifier(ref s) => {
-                            types.push(self.type_from_literal(&s)?);
+                            types.push(self.type_from_literal(s)?);
                         }
                         Token::Comma => (),
                         Token::Greater => {
