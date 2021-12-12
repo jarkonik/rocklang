@@ -663,7 +663,7 @@ impl Visitor<Value> for Compiler {
     fn visit_extern(&mut self, name: &str) -> Value {
         let return_type = self.context.void_type();
 
-        let fun_type = self.context.function_type(return_type, &vec![], false);
+        let fun_type = self.context.function_type(return_type, &[], false);
         let fun = self.module.add_function(name, fun_type);
 
         Value::Function {
