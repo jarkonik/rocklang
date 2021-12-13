@@ -91,7 +91,7 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         env:
           LLVM_SYS_130_PREFIX: 'C:\llvm-13.0.0-windows-amd64-msvc15-libcmt'
-        run: cargo wix
+        run: cargo wix -o target/wix/rocklang.msi
 
       - name: Upload installer when platform == Windows
         if: ${{ runner.os == 'Windows' }}
@@ -101,5 +101,5 @@ jobs:
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_name: rocklang-${{ matrix.config.os }}.msi
-          asset_path: target/wix/rocklang-${{ github.ref_name }}-x86_64.msi
+          asset_path: target/wix/rocklang.msi
           asset_content_type: application/octet-stream
