@@ -18,7 +18,7 @@ JIT-compiled functional programming language.
 
 ### Windows
 
-1. Download and run the installer. [download link](https://github.com/jarkonik/rocklang/releases/latest/download/rocklang-windows-latest.msi)
+1. [Download and run the installer.](https://github.com/jarkonik/rocklang/releases/latest/download/rocklang-windows-latest.msi)
 2. At this point, if you haven't changed the default installer options,
    `rocklang.exe` should be installed and added to your `PATH`.
 3. Create a file named `main.rc` in a directory of your choice, with following
