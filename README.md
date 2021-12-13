@@ -77,6 +77,11 @@ sieve = (n: number): void => {
 sieve(100)
 ```
 
+## Building from source
+1. Install Rust compiler that supports Rust Edition 2021, along with `cargo` tool, in your favorite fashion.
+2. Install llvm 13
+3. Run `cargo build` to build binaries or `cargo run examples/sieve.rc` to run a sample program.
+
 ## License
 
 This project is licensed under the terms of the MIT license.
