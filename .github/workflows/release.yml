@@ -3,7 +3,7 @@ name: Build, bump tag version and release
 on:
   push:
     tags:
-      - "v[0-9]+.*"
+      - "[0-9]+.*"
 
 jobs:
   release:
@@ -21,7 +21,7 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           draft: false
-          prerelease: true
+          prerelease: false
 
   release_assets:
     name: Release assets
@@ -81,4 +81,25 @@ jobs:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_name: rocklang-${{ matrix.config.os }}.exe
           asset_path: target/release/rocklang.exe
+          asset_content_type: application/octet-stream
+
+      - name: Install wix when platform == Windows
+        if: ${{ runner.os == 'Windows' }}
+        run: cargo install cargo-wix
+
+      - name: Create wix installer when platform == Windows
+        if: ${{ runner.os == 'Windows' }}
+        env:
+          LLVM_SYS_130_PREFIX: 'C:\llvm-13.0.0-windows-amd64-msvc15-libcmt'
+        run: cargo wix
+
+      - name: Upload installer when platform == Windows
+        if: ${{ runner.os == 'Windows' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_name: rocklang-${{ matrix.config.os }}.msi
+          asset_path: target/wix/rocklang-${{ github.ref }}-x86_64.msi
           asset_content_type: application/octet-stream

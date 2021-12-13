@@ -1,7 +1,13 @@
 [package]
 name = "rocklang"
-version = "0.1.0"
+version = "0.2.8"
 edition = "2021"
+authors = ["Jaroslaw Konik"]
+license = "MIT"
+description = "JIT-compiled functional programming language."
+documentation = "https://jarkonik.github.io/rocklang/"
+homepage = "https://jarkonik.github.io/rocklang/"
+repository = "https://github.com/jarkonik/rocklang"
 
 # See more keys and their definitions at
 # https://doc.rust-lang.org/cargo/reference/manifest.html
