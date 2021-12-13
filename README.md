@@ -14,6 +14,22 @@ Discord](https://badgen.net/discord/members/NK3baHRTve)](https://discord.gg/NK3b
 
 JIT-compiled functional programming language.
 
+## Getting started
+
+### Windows
+
+1. Download and run the installer. [download link](https://github.com/jarkonik/rocklang/releases/latest/download/rocklang-windows-latest.msi)
+2. At this point, if you haven't changed the default installer options,
+   `rocklang.exe` should be installed and added to your `PATH`.
+3. Create a file named `main.rc` in a directory of your choice, with following
+   content:
+```
+print("Hello from rocklang")
+```
+4. While being in the same directory, that you've created the source file in, run `rocklang main.rc` from PowerShell or
+   Command Prompt.
+5. You should see text `Hello from rocklang` printed in your terminal.
+
 ## Example
 
 Example implementation of Sieve of Eratosthenes written in Rock
