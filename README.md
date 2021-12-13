@@ -32,7 +32,7 @@ print("Hello from rocklang")
 
 ## Example
 
-Example implementation of Sieve of Eratosthenes written in Rock
+Sample implementation of Sieve of Eratosthenes written in Rock
 
 ```c
 memset = (vec: vec, val: number, n: number): vec => {
