@@ -229,6 +229,12 @@ impl Value {
             Err(Box::new(LLVMError {}))
         }
     }
+
+    pub fn set_initializer(&self, value: Value) {
+        unsafe {
+            LLVMSetInitializer(self.0, value.0);
+        }
+    }
 }
 
 pub struct Module(*mut llvm::LLVMModule);
@@ -241,6 +247,10 @@ impl Module {
                 context.0,
             ))
         }
+    }
+
+    pub fn add_global(&self, typ: Type, name: &str) -> Value {
+        Value(unsafe { LLVMAddGlobal(self.0, typ.0, c_str(name).as_ptr()) })
     }
 
     pub fn add_function(&self, name: &str, function_type: Type) -> Value {

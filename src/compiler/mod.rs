@@ -495,22 +495,6 @@ impl Visitor<Value> for Compiler {
                             }
                         }
                     }
-                    Some(Value::Pending) => {
-                        let args: Vec<llvm::Value> = expr
-                            .args
-                            .iter()
-                            .map(|arg| match self.walk(arg) {
-                                Value::Numeric(n) => n,
-                                _ => todo!("{:?}", self.walk(arg)),
-                            })
-                            .collect();
-
-                        Value::Numeric(self.builder.build_call(
-                            &self.stack.last().unwrap().fun,
-                            &args,
-                            literal,
-                        ))
-                    }
                     Some(e) => panic!("unexpected {:?}", e),
                     None => panic!("undefined function {}", literal),
                 },
@@ -674,7 +658,6 @@ impl Compiler {
     fn set_var(&mut self, literal: &str, val: Value) {
         let typ = match val {
             Value::Numeric(_) => self.context.double_type(),
-            Value::Pending => self.context.void_type(),
             Value::Vec(_) => self.context.double_type().pointer_type(0),
             Value::Null => self.context.void_type(),
             Value::String(_) => self.context.i8_type().pointer_type(0),
@@ -695,43 +678,99 @@ impl Compiler {
             },
             None => None,
         };
+        if self.get_var(literal).is_none() && self.stack.len() <= 1 {
+            let ptr = match val {
+                Value::Null => unreachable!(),
+                Value::Numeric(_)
+                | Value::String(_)
+                | Value::GlobalString(_)
+                | Value::Vec(_)
+                | Value::Bool(_) => self.module.add_global(typ, literal),
+                Value::Function { val: v, .. } => v,
+            };
 
-        let ptr = existing_ptr.unwrap_or_else(|| self.builder.build_alloca(typ, literal));
+            match val {
+                Value::Numeric(_) | Value::GlobalString(_) | Value::Vec(_) => {
+                    ptr.set_initializer(self.context.const_double(0.0));
+                }
+                Value::Null => unreachable!(),
+                Value::String(_) => todo!(),
+                Value::Function { .. } => (),
+                Value::Bool(_) => {
+                    ptr.set_initializer(self.context.const_bool(false));
+                }
+            }
 
-        let var = match val {
-            Value::Numeric(_) => Var::Numeric(ptr),
-            Value::Pending => Var::Pending,
-            Value::Null => Var::Null,
-            Value::String(_) => Var::String(ptr),
-            Value::GlobalString(_) => Var::GlobalString(ptr),
-            Value::Vec(_) => Var::Vec(ptr),
-            Value::Bool(_) => Var::Bool(ptr),
-            Value::Function {
-                typ,
-                return_type,
-                val,
-                ..
-            } => Var::Function {
-                val,
-                typ,
-                return_type,
-            },
-        };
+            let var = match val {
+                Value::Numeric(_) => Var::Numeric(ptr),
+                Value::Null => Var::Null,
+                Value::String(_) => Var::String(ptr),
+                Value::GlobalString(_) => Var::GlobalString(ptr),
+                Value::Vec(_) => Var::Vec(ptr),
+                Value::Bool(_) => Var::Bool(ptr),
+                Value::Function {
+                    typ,
+                    return_type,
+                    val,
+                    ..
+                } => Var::Function {
+                    val,
+                    typ,
+                    return_type,
+                },
+            };
 
-        self.stack
-            .last_mut()
-            .unwrap()
-            .set(&self.context, &self.builder, literal, var);
+            self.stack
+                .last_mut()
+                .unwrap()
+                .set(&self.context, &self.builder, literal, var);
 
-        match val {
-            Value::Numeric(v)
-            | Value::String(v)
-            | Value::GlobalString(v)
-            | Value::Vec(v)
-            | Value::Bool(v) => self.builder.create_store(v, &ptr),
-            Value::Function { val: v, .. } => v,
-            _ => todo!("{:?}", val),
-        };
+            match val {
+                Value::Numeric(v)
+                | Value::String(v)
+                | Value::GlobalString(v)
+                | Value::Vec(v)
+                | Value::Bool(v) => self.builder.create_store(v, &ptr),
+                Value::Function { val: v, .. } => v,
+                _ => todo!("{:?}", val),
+            };
+        } else {
+            let ptr = existing_ptr.unwrap_or_else(|| self.builder.build_alloca(typ, literal));
+
+            let var = match val {
+                Value::Numeric(_) => Var::Numeric(ptr),
+                Value::Null => Var::Null,
+                Value::String(_) => Var::String(ptr),
+                Value::GlobalString(_) => Var::GlobalString(ptr),
+                Value::Vec(_) => Var::Vec(ptr),
+                Value::Bool(_) => Var::Bool(ptr),
+                Value::Function {
+                    typ,
+                    return_type,
+                    val,
+                    ..
+                } => Var::Function {
+                    val,
+                    typ,
+                    return_type,
+                },
+            };
+
+            self.stack
+                .last_mut()
+                .unwrap()
+                .set(&self.context, &self.builder, literal, var);
+
+            match val {
+                Value::Numeric(v)
+                | Value::String(v)
+                | Value::GlobalString(v)
+                | Value::Vec(v)
+                | Value::Bool(v) => self.builder.create_store(v, &ptr),
+                Value::Function { val: v, .. } => v,
+                _ => todo!("{:?}", val),
+            };
+        }
     }
 
     #[allow(dead_code)]

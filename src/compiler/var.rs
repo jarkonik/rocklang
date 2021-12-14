@@ -4,7 +4,6 @@ use crate::parser;
 #[derive(Debug, Clone, Copy)]
 pub enum Var {
     Numeric(llvm::Value),
-    Pending,
     Null,
     String(llvm::Value),
     Vec(llvm::Value),
