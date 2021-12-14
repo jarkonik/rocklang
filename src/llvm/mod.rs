@@ -243,6 +243,7 @@ impl Value {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Module(*mut llvm::LLVMModule);
 
 impl Module {
@@ -253,6 +254,10 @@ impl Module {
                 context.0,
             ))
         }
+    }
+
+    pub fn get_named_global(&self, name: &str) -> Value {
+        Value(unsafe { LLVMGetNamedGlobal(self.0, c_str(name).as_ptr()) })
     }
 
     pub fn add_global(&self, typ: Type, name: &str) -> Value {

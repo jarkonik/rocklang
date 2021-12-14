@@ -30,6 +30,10 @@ pub trait Compile {
     fn compile(&mut self, program: Program) -> Result<Function, Box<dyn Error>>;
 }
 
+struct ModuleContext {
+    frame: Frame,
+}
+
 pub struct Compiler {
     engine: llvm::Engine,
     context: llvm::Context,
@@ -38,6 +42,7 @@ pub struct Compiler {
     fpm: PassManager,
     opt: bool,
     stack: Vec<Frame>,
+    past_frames: Vec<Frame>,
 }
 
 impl Visitor<Value> for Compiler {
@@ -630,7 +635,7 @@ impl Visitor<Value> for Compiler {
             self.fpm.run(&fun);
         }
 
-        self.stack.pop();
+        self.past_frames.push(self.stack.pop().unwrap());
 
         Value::Function {
             val: fun,
@@ -857,7 +862,55 @@ impl Compiler {
                     _ => todo!(),
                 })
             }
-            None => None,
+            None => {
+                for i in (0..self.past_frames.len()).rev() {
+                    match self.past_frames[i].get(literal) {
+                        Some(v) => {
+                            let typ = match v {
+                                Var::Numeric(_) => self.context.double_type(),
+                                Var::Vec(_) => self.context.double_type().pointer_type(0),
+                                Var::Null => self.context.void_type(),
+                                Var::String(_) => self.context.i8_type().pointer_type(0),
+                                Var::GlobalString(_) => self.context.i8_type().pointer_type(0),
+                                Var::Bool(_) => self.context.i1_type(),
+                                Var::Function { typ, .. } => typ.pointer_type(0),
+                            };
+
+                            let ptr = match v {
+                                Var::Null => unreachable!(),
+                                Var::Numeric(_)
+                                | Var::String(_)
+                                | Var::GlobalString(_)
+                                | Var::Vec(_)
+                                | Var::Bool(_) => self.module.add_global(typ, literal),
+                                Var::Function { val: v, .. } => *v,
+                            };
+
+                            let var = match v {
+                                Var::Numeric(_) => Var::Numeric(ptr),
+                                Var::String(_) => Var::String(ptr),
+                                Var::GlobalString(_) => Var::GlobalString(ptr),
+                                Var::Vec(_) => Var::Vec(ptr),
+                                Var::Bool(_) => Var::Bool(ptr),
+                                Var::Function {
+                                    val,
+                                    return_type,
+                                    typ,
+                                } => Var::Function {
+                                    val: *val,
+                                    return_type: *return_type,
+                                    typ: *typ,
+                                },
+                                _ => todo!(),
+                            };
+
+                            return Some(var.load(&self.builder));
+                        }
+                        None => (),
+                    }
+                }
+                None
+            }
         }
     }
 
@@ -961,6 +1014,7 @@ impl Compiler {
         let fpm = llvm::PassManager::new(&module);
 
         Compiler {
+            past_frames: vec![],
             context,
             module,
             builder,

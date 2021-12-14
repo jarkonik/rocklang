@@ -1,3 +1,4 @@
+use crate::compiler::Value;
 use crate::llvm;
 use crate::parser;
 
@@ -31,6 +32,36 @@ impl Var {
                 fun_type.pointer_type(0),
             );
             builder.build_call(&ptr, &[builder.build_load(v, "")], "");
+        }
+    }
+
+    pub fn load(&self, builder: &llvm::Builder) -> Value {
+        let val = match self {
+            Var::Numeric(p)
+            | Var::String(p)
+            | Var::GlobalString(p)
+            | Var::Vec(p)
+            | Var::Bool(p) => builder.build_load(&p, ""),
+            Var::Function { val: p, .. } => *p,
+            _ => todo!(),
+        };
+
+        match self {
+            Var::Numeric(_) => Value::Numeric(val),
+            Var::String(_) => Value::String(val),
+            Var::GlobalString(_) => Value::GlobalString(val),
+            Var::Vec(_) => Value::Vec(val),
+            Var::Bool(_) => Value::Bool(val),
+            Var::Function {
+                val,
+                return_type,
+                typ,
+            } => Value::Function {
+                val: *val,
+                return_type: *return_type,
+                typ: *typ,
+            },
+            _ => todo!(),
         }
     }
 }
