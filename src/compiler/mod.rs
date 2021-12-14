@@ -14,14 +14,27 @@ use crate::visitor::Visitor;
 use std::convert::TryInto;
 use std::error::Error;
 
-const MAIN_FUNCTION: &str = "__main__";
+pub struct Function(Value);
+
+trait Call {
+    fn call(&self);
+}
+
+impl Call for Function {
+    fn call(&self) {
+        todo!()
+    }
+}
 
 pub trait Compile {
-    fn compile(&mut self) -> Result<(), Box<dyn Error>>;
+    fn compile(&mut self, program: Program) -> Result<Function, Box<dyn Error>>;
+}
+
+struct ModuleContext {
+    frame: Frame,
 }
 
 pub struct Compiler {
-    program: Program,
     engine: llvm::Engine,
     context: llvm::Context,
     module: llvm::Module,
@@ -29,6 +42,7 @@ pub struct Compiler {
     fpm: PassManager,
     opt: bool,
     stack: Vec<Frame>,
+    past_frames: Vec<Frame>,
 }
 
 impl Visitor<Value> for Compiler {
@@ -541,21 +555,6 @@ impl Visitor<Value> for Compiler {
     fn visit_identifier(&mut self, expr: &str) -> Value {
         self.get_var(expr)
             .unwrap_or_else(|| panic!("undefined variable {}", expr))
-        // match &self.get_var(expr) {
-        //     Some(Value::Numeric(n)) => Value::Numeric(self.builder.build_load(n, expr)),
-        //     Some(Value::Function {
-        //         typ,
-        //         val,
-        //         return_type,
-        //     }) => Value::Function {
-        //         typ: *typ,
-        //         val: *val,
-        //         return_type: return_type.clone(),
-        //     },
-        //     Some(Value::Vec(n)) => Value::Vec(*n),
-        //     Some(Value::Pending) | None => panic!("undefined identifier {}", expr),
-        //     _ => todo!("{:?}", &self.get_var(expr)),
-        // }
     }
 
     fn visit_string(&mut self, expr: &str) -> Value {
@@ -575,32 +574,74 @@ impl Visitor<Value> for Compiler {
     }
 
     fn visit_program(&mut self, program: parser::Program) -> Value {
-        let void_t = self.context.void_type();
-        let sum_type = self.context.function_type(void_t, &[], false);
-        let sum_fun = self.module.add_function(MAIN_FUNCTION, sum_type);
-        self.stack.push(Frame::new(sum_fun));
-        let block = self.context.append_basic_block(&sum_fun, "entry");
+        let fun_type =
+            self.context
+                .function_type(self.context.i8_type().pointer_type(0), &[], false);
+        let fun = self.module.add_function("fun", fun_type);
+        self.stack.push(Frame::new(fun));
+        let block = self.context.append_basic_block(&fun, "entry");
         self.builder.position_builder_at_end(&block);
 
+        let mut last_stmt = Value::Null;
+
         for stmt in program.body {
-            self.walk(&stmt);
+            last_stmt = self.walk(&stmt);
         }
 
-        self.builder.build_ret_void();
+        let ret_val = match last_stmt {
+            Value::GlobalString(val) => val,
+            Value::String(val) => {
+                self.builder
+                    .build_bitcast(&val, self.context.i8_type().pointer_type(0), "")
+            }
+            Value::Numeric(val) => {
+                let i8_pointer_type = self.context.i8_type().pointer_type(0);
 
-        sum_fun.verify_function().unwrap_or_else(|_x| {
+                let func_type = self.context.function_type(
+                    i8_pointer_type,
+                    &[i8_pointer_type, i8_pointer_type, self.context.double_type()],
+                    true,
+                );
+                let sprintf = self
+                    .module
+                    .get_function("sprintf")
+                    .unwrap_or_else(|| self.module.add_function("sprintf", func_type));
+
+                let arr_type = self.context.array_type(self.context.i8_type(), 100);
+
+                let format_str = self.builder.build_global_string_ptr("%f", "");
+
+                let arr = self.builder.build_malloc(arr_type, "");
+                let p = self.builder.build_bitcast(&arr, i8_pointer_type, "");
+                self.builder.build_call(&sprintf, &[p, format_str, val], "");
+
+                self.builder
+                    .build_bitcast(&arr, self.context.i8_type().pointer_type(0), "")
+            }
+            Value::Null => self.builder.build_global_string_ptr("null", ""),
+            Value::Bool(_) => self.builder.build_global_string_ptr("bool", ""),
+            Value::Function { .. } => self.builder.build_global_string_ptr("fun", ""),
+            Value::Vec { .. } => self.builder.build_global_string_ptr("vec", ""),
+        };
+        self.builder.build_ret(ret_val);
+
+        fun.verify_function().unwrap_or_else(|_x| {
             println!("IR Dump:");
             self.dump_ir();
             panic!()
         });
 
         if self.opt {
-            self.fpm.run(&sum_fun);
+            self.fpm.run(&fun);
         }
 
-        self.stack.pop();
+        self.past_frames.push(self.stack.pop().unwrap());
 
-        Value::Null
+        Value::Function {
+            val: fun,
+            return_type: parser::Type::Null,
+            typ: fun_type,
+        }
     }
 
     fn visit_func_decl(&mut self, expr: &expression::FuncDecl) -> Value {
@@ -640,9 +681,12 @@ impl Visitor<Value> for Compiler {
 }
 
 impl Compile for Compiler {
-    fn compile(&mut self) -> Result<(), Box<dyn Error>> {
-        self.visit_program(self.program.clone());
-        Ok(())
+    fn compile(&mut self, program: Program) -> Result<Function, Box<dyn Error>> {
+        let module = llvm::Module::new("module", &self.context);
+        self.engine.add_module(&module);
+        self.module = module;
+
+        Ok(Function(self.visit_program(program)))
     }
 }
 
@@ -818,16 +862,67 @@ impl Compiler {
                     _ => todo!(),
                 })
             }
-            None => None,
-        }
-    }
+            None => {
+                for i in (0..self.past_frames.len()).rev() {
+                    match self.past_frames[i].get(literal) {
+                        Some(v) => {
+                            let typ = match v {
+                                Var::Numeric(_) => self.context.double_type(),
+                                Var::Vec(_) => self.context.double_type().pointer_type(0),
+                                Var::Null => self.context.void_type(),
+                                Var::String(_) => self.context.i8_type().pointer_type(0),
+                                Var::GlobalString(_) => self.context.i8_type().pointer_type(0),
+                                Var::Bool(_) => self.context.i1_type(),
+                                Var::Function { typ, .. } => typ.pointer_type(0),
+                            };
 
-    pub fn run(&self) {
-        self.engine.call(MAIN_FUNCTION);
+                            let ptr = match v {
+                                Var::Null => unreachable!(),
+                                Var::Numeric(_)
+                                | Var::String(_)
+                                | Var::GlobalString(_)
+                                | Var::Vec(_)
+                                | Var::Bool(_) => self.module.add_global(typ, literal),
+                                Var::Function { val: v, .. } => *v,
+                            };
+
+                            let var = match v {
+                                Var::Numeric(_) => Var::Numeric(ptr),
+                                Var::String(_) => Var::String(ptr),
+                                Var::GlobalString(_) => Var::GlobalString(ptr),
+                                Var::Vec(_) => Var::Vec(ptr),
+                                Var::Bool(_) => Var::Bool(ptr),
+                                Var::Function {
+                                    val,
+                                    return_type,
+                                    typ,
+                                } => Var::Function {
+                                    val: *val,
+                                    return_type: *return_type,
+                                    typ: *typ,
+                                },
+                                _ => todo!(),
+                            };
+
+                            return Some(var.load(&self.builder));
+                        }
+                        None => (),
+                    }
+                }
+                None
+            }
+        }
     }
 
     pub fn no_opt(&mut self) {
         self.opt = false;
+    }
+
+    pub fn call(&self, fun: Function) -> String {
+        match fun.0 {
+            Value::Function { val, .. } => self.engine.call(val),
+            _ => panic!("not a function"),
+        }
     }
 
     fn build_function(&mut self, fun_compiler_val: Value, expr: &expression::FuncDecl) {
@@ -910,7 +1005,7 @@ impl Compiler {
         }
     }
 
-    pub fn new(program: Program) -> Self {
+    pub fn new() -> Self {
         let context = llvm::Context::new();
         let module = llvm::Module::new("main", &context);
         let builder = llvm::Builder::new(&context);
@@ -919,7 +1014,7 @@ impl Compiler {
         let fpm = llvm::PassManager::new(&module);
 
         Compiler {
-            program,
+            past_frames: vec![],
             context,
             module,
             builder,
@@ -928,5 +1023,11 @@ impl Compiler {
             fpm,
             opt: true,
         }
+    }
+}
+
+impl Default for Compiler {
+    fn default() -> Self {
+        Self::new()
     }
 }

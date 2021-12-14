@@ -66,11 +66,17 @@ impl Engine {
         Engine(ee)
     }
 
-    pub fn call(&self, name: &str) {
+    pub fn add_module(&self, module: &Module) {
+        unsafe { LLVMAddModule(self.0, module.0) };
+    }
+
+    pub fn call(&self, function: Value) -> String {
+        let mut params = [];
         unsafe {
-            let addr = LLVMGetFunctionAddress(self.0, c_str(name).as_ptr());
-            let f: extern "C" fn() = mem::transmute(addr);
-            f();
+            let res = LLVMRunFunction(self.0, function.0, 0, params.as_mut_ptr());
+            let ptr = CStr::from_ptr(LLVMGenericValueToPointer(res) as *const i8);
+
+            ptr.to_str().unwrap().to_string()
         }
     }
 }
@@ -237,6 +243,7 @@ impl Value {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Module(*mut llvm::LLVMModule);
 
 impl Module {
@@ -247,6 +254,10 @@ impl Module {
                 context.0,
             ))
         }
+    }
+
+    pub fn get_named_global(&self, name: &str) -> Value {
+        Value(unsafe { LLVMGetNamedGlobal(self.0, c_str(name).as_ptr()) })
     }
 
     pub fn add_global(&self, typ: Type, name: &str) -> Value {

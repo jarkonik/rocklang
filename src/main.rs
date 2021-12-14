@@ -52,19 +52,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
-    // let mut evaluator = Evaluator::new(ast);
-    // evaluator.evaluate();
-
-    let mut compiler = Compiler::new(ast);
+    let mut compiler = Compiler::new();
     if no_opt {
         compiler.no_opt();
     }
 
-    compiler.compile()?;
+    let f = compiler.compile(ast)?;
     if dump_ir {
         compiler.dump_ir();
     } else {
-        compiler.run();
+        compiler.call(f);
     }
 
     Ok(())

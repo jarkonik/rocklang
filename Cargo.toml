@@ -14,7 +14,8 @@ repository = "https://github.com/jarkonik/rocklang"
 
 [workspace]
 members = [
-	"stdlib"
+	"stdlib",
+	"rocki"
 ]
 
 [dependencies]
