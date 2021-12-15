@@ -338,14 +338,6 @@ impl BasicBlock {
     pub fn get_parent(&self) -> Value {
         Value(unsafe { LLVMGetBasicBlockParent(self.0) })
     }
-
-    pub fn get_next_baisc_block(&self) -> BasicBlock {
-        BasicBlock(unsafe { LLVMGetNextBasicBlock(self.0) })
-    }
-
-    // pub fn get_basic_block_name(&self) -> *const ::libc::c_char {
-    //     unsafe { LLVMGetBasicBlockName(self.0) }
-    // }
 }
 
 impl Context {

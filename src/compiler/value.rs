@@ -14,6 +14,5 @@ pub enum Value {
         return_type: parser::Type,
     },
     Vec(llvm::Value),
-    Pending,
-    Break
+    Break,
 }
