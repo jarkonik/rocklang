@@ -103,6 +103,10 @@ impl Builder {
         Value(unsafe { LLVMBuildCondBr(self.0, iff.0, then.0, els.0) })
     }
 
+    pub fn build_br(&self, dest: &BasicBlock) -> Value {
+        Value(unsafe { LLVMBuildBr(self.0, dest.0) })
+    }
+
     pub fn build_alloca(&self, el_type: Type, name: &str) -> Value {
         Value(unsafe { LLVMBuildAlloca(self.0, el_type.0, c_str(name).as_ptr()) })
     }
@@ -327,6 +331,7 @@ impl PassManager {
 
 impl PassManager {}
 
+#[derive(Clone, Copy, Debug)]
 pub struct BasicBlock(*mut llvm::LLVMBasicBlock);
 
 impl BasicBlock {

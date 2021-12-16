@@ -731,3 +731,33 @@ fn it_panics_when_wrong_unary_operator() {
     let mut compiler = Compiler::new(program);
     compiler.compile().unwrap();
 }
+
+#[test]
+fn it_compile_break_in_while() {
+    let program = Program {
+        body: vec![Expression::While(While {
+            predicate: Box::new(Expression::Bool(true)),
+            body: vec![Expression::Break],
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compile_break_in_while_and_if() {
+    let program = Program {
+        body: vec![Expression::While(While {
+            predicate: Box::new(Expression::Bool(true)),
+            body: vec![Expression::Conditional(Conditional {
+                predicate: Box::new(Expression::Bool(true)),
+                body: vec![Expression::Break],
+                else_body: vec![],
+            })],
+        })],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+}

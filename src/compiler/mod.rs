@@ -7,6 +7,7 @@ use crate::compiler::value::Value;
 use crate::compiler::var::Var;
 use crate::expression;
 use crate::llvm;
+use crate::llvm::BasicBlock;
 use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
@@ -29,6 +30,7 @@ pub struct Compiler {
     fpm: PassManager,
     opt: bool,
     stack: Vec<Frame>,
+    after_loop_blocks: Vec<BasicBlock>,
 }
 
 impl Visitor<Value> for Compiler {
@@ -184,11 +186,20 @@ impl Visitor<Value> for Compiler {
             Value::Bool(b) => {
                 self.builder.build_cond_br(&b, &then_block, &else_block);
                 self.builder.position_builder_at_end(&then_block);
+
+                let mut is_break = false;
                 for stmt in &expr.body {
                     self.walk(stmt);
-                }
-                self.builder.create_br(&after_if_block);
 
+                    if matches!(stmt, expression::Expression::Break) {
+                        is_break = true;
+                        break;
+                    }
+                }
+
+                if !is_break {
+                    self.builder.create_br(&after_if_block);
+                }
                 self.builder.position_builder_at_end(&else_block);
                 for stmt in &expr.else_body {
                     self.walk(stmt);
@@ -517,20 +528,31 @@ impl Visitor<Value> for Compiler {
 
                 self.builder.position_builder_at_end(&loop_block);
 
+                self.after_loop_blocks.push(after_loop_block);
+                let mut is_break = false;
+
                 for stmt in &expr.body {
                     self.walk(stmt);
-                }
-                let term_pred = self.walk(&expr.predicate);
-
-                match term_pred {
-                    Value::Bool(b) => {
-                        self.builder
-                            .build_cond_br(&b, &loop_block, &after_loop_block);
+                    if matches!(stmt, expression::Expression::Break) {
+                        is_break = true;
+                        break;
                     }
-                    _ => panic!("type error"),
                 }
 
-                self.builder.position_builder_at_end(&after_loop_block);
+                if !is_break {
+                    let term_pred = self.walk(&expr.predicate);
+
+                    match term_pred {
+                        Value::Bool(b) => {
+                            self.builder
+                                .build_cond_br(&b, &loop_block, &after_loop_block);
+                        }
+                        _ => panic!("type error"),
+                    }
+                    self.builder.position_builder_at_end(&after_loop_block);
+                }
+
+                self.after_loop_blocks.pop();
             }
             _ => panic!("type error"),
         }
@@ -571,7 +593,12 @@ impl Visitor<Value> for Compiler {
     }
 
     fn visit_break(&mut self) -> Value {
-        todo!()
+        let after_loop_block = self.after_loop_blocks.first().unwrap();
+
+        self.builder.build_br(after_loop_block);
+        self.builder.position_builder_at_end(after_loop_block);
+
+        Value::Break
     }
 
     fn visit_program(&mut self, program: parser::Program) -> Value {
@@ -664,6 +691,7 @@ impl Compiler {
             Value::GlobalString(_) => self.context.i8_type().pointer_type(0),
             Value::Bool(_) => self.context.i1_type(),
             Value::Function { typ, .. } => typ.pointer_type(0),
+            Value::Break => self.context.void_type(),
         };
 
         let existing_ptr: Option<llvm::Value> = match self.get_var_ptr(literal) {
@@ -684,6 +712,7 @@ impl Compiler {
                 Value::Numeric(_)
                 | Value::String(_)
                 | Value::GlobalString(_)
+                | Value::Break
                 | Value::Vec(_)
                 | Value::Bool(_) => self.module.add_global(typ, literal),
                 Value::Function { val: v, .. } => v,
@@ -696,6 +725,7 @@ impl Compiler {
                 Value::Null => unreachable!(),
                 Value::String(_) => todo!(),
                 Value::Function { .. } => (),
+                Value::Break => unreachable!(),
                 Value::Bool(_) => {
                     ptr.set_initializer(self.context.const_bool(false));
                 }
@@ -708,6 +738,7 @@ impl Compiler {
                 Value::GlobalString(_) => Var::GlobalString(ptr),
                 Value::Vec(_) => Var::Vec(ptr),
                 Value::Bool(_) => Var::Bool(ptr),
+                Value::Break => Var::Null,
                 Value::Function {
                     typ,
                     return_type,
@@ -744,6 +775,7 @@ impl Compiler {
                 Value::GlobalString(_) => Var::GlobalString(ptr),
                 Value::Vec(_) => Var::Vec(ptr),
                 Value::Bool(_) => Var::Bool(ptr),
+                Value::Break => Var::Null,
                 Value::Function {
                     typ,
                     return_type,
@@ -925,6 +957,7 @@ impl Compiler {
             builder,
             engine,
             stack: vec![],
+            after_loop_blocks: vec![],
             fpm,
             opt: true,
         }
