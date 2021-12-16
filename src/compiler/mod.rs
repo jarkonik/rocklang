@@ -595,8 +595,8 @@ impl Visitor<Value> for Compiler {
     fn visit_break(&mut self) -> Value {
         let after_loop_block = self.after_loop_blocks.first().unwrap();
 
-        self.builder.build_br(&after_loop_block);
-        self.builder.position_builder_at_end(&after_loop_block);
+        self.builder.build_br(after_loop_block);
+        self.builder.position_builder_at_end(after_loop_block);
 
         Value::Break
     }

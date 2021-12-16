@@ -7,7 +7,7 @@ use serde_json::json;
 
 #[test]
 fn it_parses_addition() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Numeric(5.2),
         Token::Plus,
         Token::Numeric(10.0),
@@ -142,7 +142,7 @@ fn it_parses_while_loop() {
 
 #[test]
 fn it_returns_error_when_no_curly_after_while_predicate_in_while() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::While,
         Token::Identifier("x".to_string()),
         Token::Less,
@@ -333,7 +333,7 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_if() {
 
 #[test]
 fn it_returns_error_when_no_curly_after_while_predicate_in_else() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::If,
         Token::Identifier("x".to_string()),
         Token::Less,
@@ -369,7 +369,7 @@ fn it_displays_correct_syntax_error() {
 
 #[test]
 fn it_parses_assignments() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Identifier("x".to_string()),
         Token::Equal,
         Token::Numeric(10.0),
@@ -400,7 +400,7 @@ fn it_parses_assignments() {
 
 #[test]
 fn it_parses_binary_equal() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Identifier("x".to_string()),
         Token::DoubleEqual,
         Token::Numeric(10.0),
@@ -432,7 +432,7 @@ fn it_parses_binary_equal() {
 
 #[test]
 fn it_parses_binary_not_equal() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Identifier("x".to_string()),
         Token::NotEqual,
         Token::Numeric(10.0),
@@ -464,7 +464,7 @@ fn it_parses_binary_not_equal() {
 
 #[test]
 fn it_parses_less_or_equal() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Identifier("x".to_string()),
         Token::LessOrEqual,
         Token::Numeric(10.0),
@@ -496,7 +496,7 @@ fn it_parses_less_or_equal() {
 
 #[test]
 fn it_parses_less() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Identifier("x".to_string()),
         Token::Less,
         Token::Numeric(10.0),
@@ -528,7 +528,7 @@ fn it_parses_less() {
 
 #[test]
 fn it_parses_greater() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Identifier("x".to_string()),
         Token::Greater,
         Token::Numeric(10.0),
@@ -560,7 +560,7 @@ fn it_parses_greater() {
 
 #[test]
 fn it_parses_greater_or_equal() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Identifier("x".to_string()),
         Token::GreaterOrEqual,
         Token::Numeric(10.0),
@@ -592,7 +592,7 @@ fn it_parses_greater_or_equal() {
 
 #[test]
 fn it_parses_subtraction() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Numeric(10.0),
         Token::Minus,
         Token::Identifier("x".to_string()),
@@ -624,7 +624,7 @@ fn it_parses_subtraction() {
 
 #[test]
 fn it_parses_modulo() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Numeric(10.0),
         Token::Percent,
         Token::Identifier("x".to_string()),
@@ -656,7 +656,7 @@ fn it_parses_modulo() {
 
 #[test]
 fn it_parses_multiplication() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Numeric(10.0),
         Token::Asterisk,
         Token::Identifier("x".to_string()),
@@ -688,7 +688,7 @@ fn it_parses_multiplication() {
 
 #[test]
 fn it_parses_division() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Numeric(10.0),
         Token::Slash,
         Token::Identifier("x".to_string()),
@@ -720,7 +720,7 @@ fn it_parses_division() {
 
 #[test]
 fn it_parses_unary_minus() {
-    let mut parser = Parser::new(&vec![Token::Minus, Token::Numeric(10.0), Token::Eof]);
+    let mut parser = Parser::new(&[Token::Minus, Token::Numeric(10.0), Token::Eof]);
 
     let ast = parser.parse().unwrap().body;
     let json = serde_json::to_value(&ast).unwrap();
@@ -1308,7 +1308,7 @@ fn it_returns_error_when_func_decl_has_no_body() {
 
 #[test]
 fn it_parses_func_call() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Identifier("print".to_string()),
         Token::LeftParen,
         Token::RightParen,
@@ -1338,7 +1338,7 @@ fn it_parses_func_call() {
 
 #[test]
 fn it_parses_func_call_with_one_arg() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Identifier("print".to_string()),
         Token::LeftParen,
         Token::String("hello".to_string()),
@@ -1439,7 +1439,7 @@ fn it_returns_error_for_call_syntax_on_non_identifiers() {
 
 #[test]
 fn it_parses_grouping_expression() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::LeftParen,
         Token::String("hello".to_string()),
         Token::RightParen,
@@ -1465,7 +1465,7 @@ fn it_parses_grouping_expression() {
 
 #[test]
 fn it_returns_error_for_unterminated_grouping_expresions() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::LeftParen,
         Token::String("hello".to_string()),
         Token::Eof,
@@ -1487,7 +1487,7 @@ fn it_returns_error_for_unterminated_grouping_expresions() {
 
 #[test]
 fn it_parses_true_bool_literal() {
-    let mut parser = Parser::new(&vec![Token::True, Token::Eof]);
+    let mut parser = Parser::new(&[Token::True, Token::Eof]);
 
     let ast = parser.parse().unwrap().body;
     let json = serde_json::to_value(&ast).unwrap();
@@ -1506,7 +1506,7 @@ fn it_parses_true_bool_literal() {
 
 #[test]
 fn it_parses_false_bool_literal() {
-    let mut parser = Parser::new(&vec![Token::False, Token::Eof]);
+    let mut parser = Parser::new(&[Token::False, Token::Eof]);
 
     let ast = parser.parse().unwrap().body;
     let json = serde_json::to_value(&ast).unwrap();
@@ -1525,7 +1525,7 @@ fn it_parses_false_bool_literal() {
 
 #[test]
 fn it_parses_break_expression() {
-    let mut parser = Parser::new(&vec![Token::Break, Token::Eof]);
+    let mut parser = Parser::new(&[Token::Break, Token::Eof]);
 
     let ast = parser.parse().unwrap().body;
     let json = serde_json::to_value(&ast).unwrap();
