@@ -14,7 +14,6 @@ pub enum Var {
         typ: llvm::Type,
         return_type: parser::Type,
     },
-    Break,
 }
 
 impl Var {

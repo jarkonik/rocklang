@@ -725,7 +725,7 @@ impl Compiler {
                 Value::Null => unreachable!(),
                 Value::String(_) => todo!(),
                 Value::Function { .. } => (),
-                Value::Break => todo!(),
+                Value::Break => unreachable!(),
                 Value::Bool(_) => {
                     ptr.set_initializer(self.context.const_bool(false));
                 }
@@ -738,7 +738,7 @@ impl Compiler {
                 Value::GlobalString(_) => Var::GlobalString(ptr),
                 Value::Vec(_) => Var::Vec(ptr),
                 Value::Bool(_) => Var::Bool(ptr),
-                Value::Break => Var::Break,
+                Value::Break => Var::Null,
                 Value::Function {
                     typ,
                     return_type,
@@ -775,7 +775,7 @@ impl Compiler {
                 Value::GlobalString(_) => Var::GlobalString(ptr),
                 Value::Vec(_) => Var::Vec(ptr),
                 Value::Bool(_) => Var::Bool(ptr),
-                Value::Break => Var::Break,
+                Value::Break => Var::Null,
                 Value::Function {
                     typ,
                     return_type,
