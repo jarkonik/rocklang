@@ -184,15 +184,27 @@ impl Visitor<Value> for Compiler {
             Value::Bool(b) => {
                 self.builder.build_cond_br(&b, &then_block, &else_block);
                 self.builder.position_builder_at_end(&then_block);
+                self.stack.push(Frame::new());
                 for stmt in &expr.body {
                     self.walk(stmt);
                 }
+                self.stack
+                    .pop()
+                    .unwrap()
+                    .dealloc(&self.context, &self.builder);
                 self.builder.create_br(&after_if_block);
 
                 self.builder.position_builder_at_end(&else_block);
+
+                self.stack.push(Frame::new());
                 for stmt in &expr.else_body {
                     self.walk(stmt);
                 }
+                self.stack
+                    .pop()
+                    .unwrap()
+                    .dealloc(&self.context, &self.builder);
+
                 self.builder.create_br(&after_if_block);
 
                 self.builder.position_builder_at_end(&after_if_block);
@@ -517,6 +529,8 @@ impl Visitor<Value> for Compiler {
 
                 self.builder.position_builder_at_end(&loop_block);
 
+                self.stack.push(Frame::new());
+
                 for stmt in &expr.body {
                     self.walk(stmt);
                 }
@@ -531,6 +545,11 @@ impl Visitor<Value> for Compiler {
                 }
 
                 self.builder.position_builder_at_end(&after_loop_block);
+
+                self.stack
+                    .pop()
+                    .unwrap()
+                    .dealloc(&self.context, &self.builder);
             }
             _ => panic!("type error"),
         }
@@ -578,7 +597,7 @@ impl Visitor<Value> for Compiler {
         let void_t = self.context.void_type();
         let sum_type = self.context.function_type(void_t, &[], false);
         let sum_fun = self.module.add_function(MAIN_FUNCTION, sum_type);
-        self.stack.push(Frame::new(sum_fun));
+        self.stack.push(Frame::new());
         let block = self.context.append_basic_block(&sum_fun, "entry");
         self.builder.position_builder_at_end(&block);
 
@@ -841,7 +860,7 @@ impl Compiler {
         let block = self.context.append_basic_block(&fun, "entry");
         self.builder.position_builder_at_end(&block);
 
-        self.stack.push(Frame::new(fun));
+        self.stack.push(Frame::new());
 
         for (i, param) in expr.params.iter().enumerate() {
             self.set_var(
