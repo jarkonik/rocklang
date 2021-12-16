@@ -200,15 +200,14 @@ impl Visitor<Value> for Compiler {
                 for stmt in &expr.else_body {
                     self.walk(stmt);
                 }
-
-                self.builder.create_br(&after_if_block);
-
-                self.builder.position_builder_at_end(&after_if_block);
-
                 self.stack
                     .pop()
                     .unwrap()
                     .dealloc(&self.context, &self.builder);
+
+                self.builder.create_br(&after_if_block);
+
+                self.builder.position_builder_at_end(&after_if_block);
 
                 Value::Null
             }
