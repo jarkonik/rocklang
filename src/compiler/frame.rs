@@ -4,14 +4,12 @@ use std::collections::HashMap;
 
 pub struct Frame {
     env: HashMap<String, Var>,
-    pub fun: llvm::Value,
 }
 
 impl Frame {
-    pub fn new(fun: llvm::Value) -> Self {
+    pub fn new() -> Self {
         Frame {
             env: HashMap::new(),
-            fun,
         }
     }
 

@@ -1,0 +1,8 @@
+mandelbrot = (): void => {
+	acc = vecnew()
+	if true {
+		acc = acc
+	}
+}
+
+mandelbrot()
