@@ -42,7 +42,9 @@ pub unsafe extern "C" fn len(vec: *mut Vec<f64>) -> f64 {
 
 #[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn vecfree(vec: *mut Vec<f64>) {
-    Box::from_raw(vec);
+    if vec.as_ref().as_mut().is_some() {
+        Box::from_raw(vec);
+    }
 }
 
 pub extern "C" fn veccopy(vec: *mut Vec<f64>) -> *mut std::vec::Vec<f64> {

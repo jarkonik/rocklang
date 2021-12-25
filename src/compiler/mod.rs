@@ -184,15 +184,25 @@ impl Visitor<Value> for Compiler {
             Value::Bool(b) => {
                 self.builder.build_cond_br(&b, &then_block, &else_block);
                 self.builder.position_builder_at_end(&then_block);
+                self.stack.push(Frame::new(fun));
                 for stmt in &expr.body {
                     self.walk(stmt);
                 }
+                self.stack
+                    .pop()
+                    .unwrap()
+                    .dealloc(&self.context, &self.builder);
                 self.builder.create_br(&after_if_block);
 
                 self.builder.position_builder_at_end(&else_block);
+                self.stack.push(Frame::new(fun));
                 for stmt in &expr.else_body {
                     self.walk(stmt);
                 }
+                self.stack
+                    .pop()
+                    .unwrap()
+                    .dealloc(&self.context, &self.builder);
                 self.builder.create_br(&after_if_block);
 
                 self.builder.position_builder_at_end(&after_if_block);
@@ -306,14 +316,6 @@ impl Visitor<Value> for Compiler {
 
                             let format_str = self.builder.build_global_string_ptr("%f", "");
 
-                            // 							/// CreateEntryBlockAlloca - Create an alloca instruction in the entry block of
-                            // /// the function.  This is used for mutable variables etc.
-                            // static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
-                            //                                           const std::string &VarName) {
-                            //   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
-                            //                  TheFunction->getEntryBlock().begin());
-                            //   return TmpB.CreateAlloca(Type::getDoubleTy(TheContext), 0,
-                            //                            VarName.c_str());
                             let arr = self.builder.build_malloc(arr_type, "");
                             let p = self.builder.build_bitcast(&arr, i8_pointer_type, "");
                             self.builder.build_call(&sprintf, &[p, format_str, f], "");
@@ -517,18 +519,27 @@ impl Visitor<Value> for Compiler {
 
                 self.builder.position_builder_at_end(&loop_block);
 
+                self.stack.push(Frame::new(fun));
                 for stmt in &expr.body {
                     self.walk(stmt);
                 }
+                let frame = self.stack.pop().unwrap();
+
                 let term_pred = self.walk(&expr.predicate);
+
+                let exit_loop_block = self.context.append_basic_block(&fun, "exitloop");
 
                 match term_pred {
                     Value::Bool(b) => {
                         self.builder
-                            .build_cond_br(&b, &loop_block, &after_loop_block);
+                            .build_cond_br(&b, &loop_block, &exit_loop_block);
                     }
                     _ => panic!("type error"),
                 }
+
+                self.builder.position_builder_at_end(&exit_loop_block);
+                frame.dealloc(&self.context, &self.builder);
+                self.builder.create_br(&after_loop_block);
 
                 self.builder.position_builder_at_end(&after_loop_block);
             }
@@ -541,21 +552,6 @@ impl Visitor<Value> for Compiler {
     fn visit_identifier(&mut self, expr: &str) -> Value {
         self.get_var(expr)
             .unwrap_or_else(|| panic!("undefined variable {}", expr))
-        // match &self.get_var(expr) {
-        //     Some(Value::Numeric(n)) => Value::Numeric(self.builder.build_load(n, expr)),
-        //     Some(Value::Function {
-        //         typ,
-        //         val,
-        //         return_type,
-        //     }) => Value::Function {
-        //         typ: *typ,
-        //         val: *val,
-        //         return_type: return_type.clone(),
-        //     },
-        //     Some(Value::Vec(n)) => Value::Vec(*n),
-        //     Some(Value::Pending) | None => panic!("undefined identifier {}", expr),
-        //     _ => todo!("{:?}", &self.get_var(expr)),
-        // }
     }
 
     fn visit_string(&mut self, expr: &str) -> Value {
@@ -735,7 +731,25 @@ impl Compiler {
                 _ => todo!("{:?}", val),
             };
         } else {
-            let ptr = existing_ptr.unwrap_or_else(|| self.builder.build_alloca(typ, literal));
+            let curr = self.builder.get_insert_block();
+            let frame = self.stack.last_mut().unwrap();
+
+            match frame.fun.get_entry_block().get_first_instruction() {
+                Some(inst) => {
+                    self.builder.position_before(&inst);
+                }
+                None => {
+                    self.builder
+                        .position_builder_at_end(&frame.fun.get_entry_block());
+                }
+            }
+
+            let ptr = existing_ptr.unwrap_or_else(|| {
+                let al = self.builder.build_alloca(typ, literal);
+                self.builder.create_store(typ.const_null(), &al);
+                al
+            });
+            self.builder.position_builder_at_end(&curr);
 
             let var = match val {
                 Value::Numeric(_) => Var::Numeric(ptr),
@@ -771,11 +785,6 @@ impl Compiler {
                 _ => todo!("{:?}", val),
             };
         }
-    }
-
-    #[allow(dead_code)]
-    fn remove_var(&mut self, literal: &str) {
-        self.stack.last_mut().unwrap().remove(literal);
     }
 
     fn get_var_ptr(&mut self, literal: &str) -> Option<Var> {

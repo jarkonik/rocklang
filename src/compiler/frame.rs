@@ -26,10 +26,7 @@ impl Frame {
         literal: &str,
         val: Var,
     ) {
-        let existing = self.env.get(literal);
-        if let Some(val) = existing {
-            val.dealloc(context, builder);
-        }
+        val.dealloc(context, builder);
         self.env.insert(literal.to_string(), val);
     }
 

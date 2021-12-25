@@ -174,6 +174,14 @@ impl Builder {
         unsafe { LLVMPositionBuilderAtEnd(self.0, block.0) }
     }
 
+    pub fn position_before(&self, inst: &Value) {
+        unsafe { LLVMPositionBuilderBefore(self.0, inst.0) }
+    }
+
+    pub fn position_builder_at(&self, block: &BasicBlock, inst: Value) {
+        unsafe { LLVMPositionBuilder(self.0, block.0, inst.0) }
+    }
+
     pub fn build_ret(&self, value: Value) -> Value {
         Value(unsafe { LLVMBuildRet(self.0, value.0) })
     }
@@ -217,6 +225,10 @@ pub struct Value(*mut llvm::LLVMValue);
 impl Value {
     pub fn get_param(&self, idx: u32) -> Value {
         Value(unsafe { LLVMGetParam(self.0, idx) })
+    }
+
+    pub fn get_entry_block(&self) -> BasicBlock {
+        BasicBlock(unsafe { LLVMGetEntryBasicBlock(self.0) })
     }
 
     pub fn verify_function(&self) -> Result<(), Box<dyn Error>> {
@@ -296,6 +308,10 @@ impl Type {
     pub fn pointer_type(&self, address_space: u32) -> Type {
         Type(unsafe { LLVMPointerType(self.0, address_space) })
     }
+
+    pub fn const_null(&self) -> Value {
+        Value(unsafe { LLVMConstNull(self.0) })
+    }
 }
 
 pub struct PassManager(*mut llvm::LLVMPassManager);
@@ -332,6 +348,15 @@ pub struct BasicBlock(*mut llvm::LLVMBasicBlock);
 impl BasicBlock {
     pub fn get_parent(&self) -> Value {
         Value(unsafe { LLVMGetBasicBlockParent(self.0) })
+    }
+
+    pub fn get_first_instruction(&self) -> Option<Value> {
+        let val = unsafe { LLVMGetFirstInstruction(self.0) };
+        if val.is_null() {
+            None
+        } else {
+            Some(Value(val))
+        }
     }
 }
 
