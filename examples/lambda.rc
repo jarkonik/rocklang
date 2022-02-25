@@ -1,0 +1,4 @@
+somefunction = (callback: fun): void => {
+}
+
+somefunction()
