@@ -53,6 +53,16 @@ pub enum Type {
     String,
 }
 
+#[derive(Copy, Clone, Serialize, Debug)]
+pub enum GenericType {
+    Numeric,
+    Vector,
+    Null,
+    Function,
+    Ptr,
+    String,
+}
+
 #[derive(Clone, Serialize, Debug)]
 pub struct Param {
     pub typ: Type,
@@ -458,30 +468,37 @@ impl Parser {
                                 let token = self.advance().clone();
                                 match token {
                                     Token::Identifier(type_literal) => {
-                                        let paren = self.advance();
                                         let mut generic_params: Vec<GenericParam> = Vec::new();
 
-                                        match paren {
+                                        match self.peek() {
                                             Token::Less => {
-                                                while match self.advance().clone() {
-                                                    Token::Identifier(generic_type_literal) => {
-                                                        generic_params.push(GenericParam {
-                                                            typ: self.type_from_literal(&generic_type_literal)?,
-                                                        });
-                                                        true
+                                                let paren = self.advance();
+                                                match paren {
+                                                    Token::Less => {
+                                                        while match self.advance().clone() {
+                                                            Token::Identifier(generic_type_literal) => {
+                                                                generic_params.push(GenericParam {
+                                                                    typ: self.type_from_literal(&generic_type_literal)?,
+                                                                });
+                                                                true
+                                                            }
+                                                            Token::Comma => true,
+                                                            Token::Greater => false,
+                                                            _ => {
+                                                                return Err(ParserError::SyntaxError {
+                                                                    token: self.previous().clone(),
+                                                                    backtrace: Backtrace::new(),
+                                                                })
+                                                            }
+                                                        } {}
                                                     }
-                                                    Token::Comma => true,
-                                                    Token::Greater => false,
                                                     _ => {
-                                                        return Err(ParserError::SyntaxError {
-                                                            token: self.previous().clone(),
-                                                            backtrace: Backtrace::new(),
-                                                        })
                                                     }
-                                                } {}
+                                                }
                                             }
                                             _ => {}
                                         }
+
                                         params.push(Param {
                                             name: name_literal.to_string(),
                                             typ: self.type_from_literal(&type_literal)?,

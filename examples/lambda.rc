@@ -1,4 +1,9 @@
-somefunction = (callback: fun): void => {
+x = (firstname: string, lastname: string): void => {
+  print(firstname)
 }
 
-somefunction()
+displayname = (callback: fun<string, string>): void => {
+  callback("Jakub", "Oczkowski")
+}
+
+displayname(x)

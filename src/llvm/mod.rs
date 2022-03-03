@@ -351,6 +351,7 @@ impl Context {
         })
     }
 
+
     pub fn array_type(&self, el_type: Type, el_count: u32) -> Type {
         Type(unsafe { LLVMArrayType(el_type.0, el_count) })
     }

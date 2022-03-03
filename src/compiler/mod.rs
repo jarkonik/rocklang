@@ -631,7 +631,7 @@ impl Visitor<Value> for Compiler {
         let types: Vec<llvm::Type> = expr
             .params
             .iter()
-            .map(|arg| self.get_llvm_type(arg.typ))
+            .map(|arg| self.get_llvm_type_with_function_args(arg.typ, &self.helper(arg)))
             .collect();
 
         let fun_type =
@@ -896,12 +896,39 @@ impl Compiler {
         }
     }
 
+    // do tej funkcji trzeba przekazac typy
+    fn get_llvm_type_with_function_args(&self, typ: parser::Type, param_types: &[llvm::Type]) -> llvm::Type {
+        match typ {
+            parser::Type::Vector => self.context.double_type().pointer_type(0),
+            parser::Type::Numeric => self.context.double_type(),
+            parser::Type::Function => self
+                .context
+                // i tutaj je przekazac
+                .function_type(self.context.void_type(), param_types, false)
+                .pointer_type(0),
+            parser::Type::Null => self.context.void_type(),
+            parser::Type::Ptr => self.context.void_type().pointer_type(0),
+            parser::Type::String => self.context.i8_type().pointer_type(0),
+        }
+    }
+
+    fn helper(&self, arg: &parser::Param) -> Vec<llvm::Type> {
+        let types: Vec<llvm::Type> = arg
+            .generic_params
+            .iter()
+            .map(|arg2| self.get_llvm_type(arg2.typ))
+            .collect();
+
+        types
+    }
+
     fn get_llvm_type(&self, typ: parser::Type) -> llvm::Type {
         match typ {
             parser::Type::Vector => self.context.double_type().pointer_type(0),
             parser::Type::Numeric => self.context.double_type(),
             parser::Type::Function => self
                 .context
+                // i tutaj je przekazac
                 .function_type(self.context.void_type(), &[], false)
                 .pointer_type(0),
             parser::Type::Null => self.context.void_type(),
