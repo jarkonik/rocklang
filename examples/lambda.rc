@@ -1,9 +1,9 @@
-x = (firstname: string, lastname: string): void => {
-  print(firstname)
+pow = (firstname: string, lastname: string): string => {
+  "eloo"
 }
 
-displayname = (callback: fun<string, string>): void => {
+displayname = (callback: fun<string, string, string>): void => {
   callback("Jakub", "Oczkowski")
 }
 
-displayname(x)
+displayname(pow)
