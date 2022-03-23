@@ -1,0 +1,6 @@
+load("./tests/rockffitestlib.so")
+rockffitestlib = extern<number, number, number>("rockffitest")
+
+print("2 + 3 is ")
+print(string(rockffitestlib(2, 3)))
+print("\n")

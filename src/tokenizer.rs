@@ -65,14 +65,16 @@ impl Tokenizer {
             ' ' | '\r' | '\t' => (),
             '\n' => self.line += 1,
             '<' => {
-                if '=' == self.advance() {
+                if '=' == self.peek() {
+                    self.advance();
                     self.add_token(Token::LessOrEqual)
                 } else {
                     self.add_token(Token::Less)
                 }
             }
             '>' => {
-                if '=' == self.advance() {
+                if '=' == self.peek() {
+                    self.advance();
                     self.add_token(Token::GreaterOrEqual)
                 } else {
                     self.add_token(Token::Greater)
@@ -86,7 +88,8 @@ impl Tokenizer {
             '%' => self.add_token(Token::Percent),
             '"' => self.string(),
             '!' => {
-                if '=' == self.advance() {
+                if '=' == self.peek() {
+                    self.advance();
                     self.add_token(Token::NotEqual);
                 } else {
                     self.add_token(Token::Exclamation);
@@ -187,6 +190,8 @@ impl Tokenizer {
             "false" => self.add_token(Token::False),
             "break" => self.add_token(Token::Break),
             "else" => self.add_token(Token::Else),
+            "load" => self.add_token(Token::Load),
+            "extern" => self.add_token(Token::Extern),
             _ => self.add_token(Token::Identifier(literal)),
         };
     }

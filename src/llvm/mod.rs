@@ -1,6 +1,7 @@
 extern crate llvm_sys as llvm;
 
 use core::fmt::Display;
+use llvm::support::LLVMLoadLibraryPermanently;
 use llvm_sys::analysis::*;
 use llvm_sys::transforms::util::LLVMAddPromoteMemoryToRegisterPass;
 use std::borrow::Cow;
@@ -429,6 +430,14 @@ impl Context {
 
     pub fn const_bool(&self, value: bool) -> Value {
         Value(unsafe { LLVMConstInt(self.i1_type().0, if value { 1 } else { 0 }, 0) })
+    }
+
+    pub fn load_libary_permanently(&self, name: &str) {
+        unsafe {
+            if LLVMLoadLibraryPermanently(c_str(name).as_ptr()) == 1 {
+                panic!("library {} load error", name);
+            }
+        }
     }
 }
 

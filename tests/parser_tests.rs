@@ -1583,3 +1583,24 @@ fn it_parses_grouping_expression_with_identifiers() {
         json
     )
 }
+
+#[test]
+fn it_parses_load_expression() {
+    let mut parser = Parser::new(&vec![
+        Token::Load,
+        Token::LeftParen,
+        Token::String(String::from("somelib.so")),
+        Token::RightParen,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!([{
+            "Load": "somelib.so"
+        }]),
+        json
+    )
+}

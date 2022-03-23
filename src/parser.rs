@@ -49,6 +49,8 @@ pub enum Type {
     Vector,
     Null,
     Function,
+    Ptr,
+    String,
 }
 
 #[derive(Clone, Serialize, Debug)]
@@ -354,6 +356,82 @@ impl Parser {
                     right: Box::new(self.unary()?),
                 }))
             }
+            _ => self.extern_stmt(),
+        }
+    }
+
+    fn extern_stmt(&mut self) -> Result<Expression> {
+        match self.peek() {
+            Token::Extern => {
+                self.advance();
+
+                if !matches!(self.advance(), Token::Less) {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                let mut types = vec![];
+
+                loop {
+                    let token = self.advance().clone();
+                    match token {
+                        Token::Identifier(ref s) => {
+                            types.push(self.type_from_literal(s)?);
+                        }
+                        Token::Comma => (),
+                        Token::Greater => {
+                            break;
+                        }
+                        _ => {
+                            return Err(ParserError::SyntaxError {
+                                token: self.previous().clone(),
+                                backtrace: Backtrace::new(),
+                            });
+                        }
+                    }
+                }
+
+                if !matches!(self.advance(), Token::LeftParen) {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                let name = if let Token::String(s) = self.advance() {
+                    s.to_string()
+                } else {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                if !matches!(self.advance(), Token::RightParen) {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                let return_type = match types.last() {
+                    Some(v) => *v,
+                    _ => {
+                        return Err(ParserError::SyntaxError {
+                            token: self.previous().clone(),
+                            backtrace: Backtrace::new(),
+                        });
+                    }
+                };
+
+                Ok(Expression::Extern(expression::Extern {
+                    types: types[0..types.len() - 1].to_vec(),
+                    return_type,
+                    name,
+                }))
+            }
             _ => self.func_declr(),
         }
     }
@@ -370,30 +448,23 @@ impl Parser {
                 while match self.advance().clone() {
                     Token::Identifier(name_literal) => {
                         match self.advance() {
-                            Token::Colon => match self.advance() {
-                                Token::Identifier(type_literal) => {
-                                    params.push(Param {
-                                        name: name_literal.to_string(),
-                                        typ: match type_literal.as_str() {
-                                            "number" => Type::Numeric,
-                                            "vec" => Type::Vector,
-                                            "fun" => Type::Function,
-                                            _ => {
-                                                return Err(ParserError::SyntaxError {
-                                                    token: self.previous().clone(),
-                                                    backtrace: Backtrace::new(),
-                                                })
-                                            }
-                                        },
-                                    });
+                            Token::Colon => {
+                                let token = self.advance().clone();
+                                match token {
+                                    Token::Identifier(type_literal) => {
+                                        params.push(Param {
+                                            name: name_literal.to_string(),
+                                            typ: self.type_from_literal(&type_literal)?,
+                                        });
+                                    }
+                                    _ => {
+                                        return Err(ParserError::SyntaxError {
+                                            token: self.previous().clone(),
+                                            backtrace: Backtrace::new(),
+                                        })
+                                    }
                                 }
-                                _ => {
-                                    return Err(ParserError::SyntaxError {
-                                        token: self.previous().clone(),
-                                        backtrace: Backtrace::new(),
-                                    })
-                                }
-                            },
+                            }
                             _ => {
                                 self.current = current;
                                 return self.func_call();
@@ -483,7 +554,7 @@ impl Parser {
     }
 
     fn func_call(&mut self) -> Result<Expression> {
-        let mut expr = self.primary()?;
+        let mut expr = self.load()?;
 
         while match self.peek() {
             Token::LeftParen => {
@@ -525,6 +596,40 @@ impl Parser {
             _ => false,
         } {}
         Ok(expr)
+    }
+
+    fn load(&mut self) -> Result<Expression> {
+        match self.peek() {
+            Token::Load => {
+                self.advance();
+
+                if !matches!(self.advance(), Token::LeftParen) {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                let name = if let Token::String(s) = self.advance() {
+                    s.to_string()
+                } else {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                if !matches!(self.advance(), Token::RightParen) {
+                    return Err(ParserError::SyntaxError {
+                        token: self.previous().clone(),
+                        backtrace: Backtrace::new(),
+                    });
+                };
+
+                Ok(Expression::Load(name))
+            }
+            _ => self.primary(),
+        }
     }
 
     fn primary(&mut self) -> Result<Expression> {
@@ -570,6 +675,21 @@ impl Parser {
             self.current += 1;
         }
         self.previous()
+    }
+
+    fn type_from_literal(&mut self, type_literal: &str) -> Result<Type> {
+        match type_literal {
+            "void" => Ok(Type::Null),
+            "string" => Ok(Type::String),
+            "number" => Ok(Type::Numeric),
+            "vec" => Ok(Type::Vector),
+            "fun" => Ok(Type::Function),
+            "ptr" => Ok(Type::Ptr),
+            _ => Err(ParserError::SyntaxError {
+                token: self.previous().clone(),
+                backtrace: Backtrace::new(),
+            }),
+        }
     }
 
     fn at_end(&mut self) -> bool {

@@ -60,3 +60,16 @@ fn mandelbrot() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[test]
+#[cfg_attr(tarpaulin, ignore)]
+fn ffi() -> Result<(), Box<dyn std::error::Error>> {
+    let mut cmd = Command::cargo_bin("rocklang")?;
+
+    cmd.arg("examples/ffi.rc");
+    cmd.assert()
+        .success()
+        .stdout(predicate::eq("2 + 3 is 5.000000\n").normalize());
+
+    Ok(())
+}

@@ -465,6 +465,7 @@ impl Visitor<Value> for Compiler {
                             .iter()
                             .map(|arg| match self.walk(arg) {
                                 Value::Numeric(n) => n,
+                                Value::Ptr(n) => n,
                                 Value::Vec(v) => {
                                     let fun_type = self.context.function_type(
                                         self.context.double_type().pointer_type(0),
@@ -481,6 +482,7 @@ impl Visitor<Value> for Compiler {
                                     self.builder.build_call(&ptr, &[v], "")
                                 }
                                 Value::Function { val, .. } => val,
+                                Value::GlobalString(s) => s,
                                 _ => todo!("{:?}", self.walk(arg)),
                             })
                             .collect();
@@ -491,6 +493,9 @@ impl Visitor<Value> for Compiler {
                             }
                             parser::Type::Numeric => {
                                 Value::Numeric(self.builder.build_call(val, &args, ""))
+                            }
+                            parser::Type::String => {
+                                Value::String(self.builder.build_call(val, &args, ""))
                             }
                             parser::Type::Function => Value::Function {
                                 val: self.builder.build_call(val, &args, ""),
@@ -503,6 +508,9 @@ impl Visitor<Value> for Compiler {
                             parser::Type::Null => {
                                 self.builder.build_call(val, &args, "");
                                 Value::Null
+                            }
+                            parser::Type::Ptr => {
+                                Value::Ptr(self.builder.build_call(val, &args, ""))
                             }
                         }
                     }
@@ -634,34 +642,44 @@ impl Visitor<Value> for Compiler {
         let types: Vec<llvm::Type> = expr
             .params
             .iter()
-            .map(|arg| match arg.typ {
-                parser::Type::Vector => self.context.double_type().pointer_type(0),
-                parser::Type::Numeric => self.context.double_type(),
-                parser::Type::Function => self
-                    .context
-                    .function_type(self.context.void_type(), &[], false)
-                    .pointer_type(0),
-                parser::Type::Null => self.context.void_type(),
-            })
+            .map(|arg| self.get_llvm_type(arg.typ))
             .collect();
 
-        let return_type = match expr.return_type {
-            parser::Type::Vector => self.context.double_type().pointer_type(0),
-            parser::Type::Numeric => self.context.double_type(),
-            parser::Type::Function => self
-                .context
-                .function_type(self.context.void_type(), &[], false)
-                .pointer_type(0),
-            parser::Type::Null => self.context.void_type(),
-        };
-
-        let fun_type = self.context.function_type(return_type, &types, false);
+        let fun_type =
+            self.context
+                .function_type(self.get_llvm_type(expr.return_type), &types, false);
         let fun = self.module.add_function("fun", fun_type);
 
         Value::Function {
             return_type: expr.return_type,
             typ: fun_type,
             val: fun,
+        }
+    }
+
+    fn visit_load(&mut self, name: &str) -> Value {
+        self.context.load_libary_permanently(name);
+        Value::Null
+    }
+
+    fn visit_extern(&mut self, extern_stmt: &expression::Extern) -> Value {
+        let types: Vec<llvm::Type> = extern_stmt
+            .types
+            .iter()
+            .map(|typ| self.get_llvm_type(*typ))
+            .collect();
+
+        let fun_type =
+            self.context
+                .function_type(self.get_llvm_type(extern_stmt.return_type), &types, false);
+        let fun = self
+            .module
+            .add_function(extern_stmt.name.as_str(), fun_type);
+
+        Value::Function {
+            val: fun,
+            typ: fun_type,
+            return_type: extern_stmt.return_type,
         }
     }
 }
@@ -684,6 +702,7 @@ impl Compiler {
 
     fn set_var(&mut self, literal: &str, val: Value) {
         let typ = match val {
+            Value::Ptr(_) => self.context.void_type().pointer_type(0),
             Value::Numeric(_) => self.context.double_type(),
             Value::Vec(_) => self.context.double_type().pointer_type(0),
             Value::Null => self.context.void_type(),
@@ -710,6 +729,7 @@ impl Compiler {
             let ptr = match val {
                 Value::Null => unreachable!(),
                 Value::Numeric(_)
+                | Value::Ptr(_)
                 | Value::String(_)
                 | Value::GlobalString(_)
                 | Value::Break
@@ -720,6 +740,9 @@ impl Compiler {
 
             match val {
                 Value::Numeric(_) | Value::GlobalString(_) | Value::Vec(_) => {
+                    ptr.set_initializer(self.context.const_double(0.0));
+                }
+                Value::Ptr(_) => {
                     ptr.set_initializer(self.context.const_double(0.0));
                 }
                 Value::Null => unreachable!(),
@@ -733,6 +756,7 @@ impl Compiler {
 
             let var = match val {
                 Value::Numeric(_) => Var::Numeric(ptr),
+                Value::Ptr(_) => Var::Ptr(ptr),
                 Value::Null => Var::Null,
                 Value::String(_) => Var::String(ptr),
                 Value::GlobalString(_) => Var::GlobalString(ptr),
@@ -758,6 +782,7 @@ impl Compiler {
 
             match val {
                 Value::Numeric(v)
+                | Value::Ptr(v)
                 | Value::String(v)
                 | Value::GlobalString(v)
                 | Value::Vec(v)
@@ -770,6 +795,7 @@ impl Compiler {
 
             let var = match val {
                 Value::Numeric(_) => Var::Numeric(ptr),
+                Value::Ptr(_) => Var::Ptr(ptr),
                 Value::Null => Var::Null,
                 Value::String(_) => Var::String(ptr),
                 Value::GlobalString(_) => Var::GlobalString(ptr),
@@ -827,6 +853,7 @@ impl Compiler {
                     | Var::String(p)
                     | Var::GlobalString(p)
                     | Var::Vec(p)
+                    | Var::Ptr(p)
                     | Var::Bool(p) => self.builder.build_load(&p, ""),
                     Var::Function { val: p, .. } => p,
                     _ => todo!(),
@@ -834,6 +861,7 @@ impl Compiler {
 
                 Some(match v {
                     Var::Numeric(_) => Value::Numeric(val),
+                    Var::Ptr(_) => Value::Ptr(val),
                     Var::String(_) => Value::String(val),
                     Var::GlobalString(_) => Value::GlobalString(val),
                     Var::Vec(_) => Value::Vec(val),
@@ -881,6 +909,8 @@ impl Compiler {
                 match param.typ {
                     parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
                     parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Ptr => Value::Ptr(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::String => Value::String(fun.get_param(i.try_into().unwrap())),
                     parser::Type::Null => Value::Null,
                     parser::Type::Function => Value::Function {
                         val: fun.get_param(i.try_into().unwrap()),
@@ -939,6 +969,20 @@ impl Compiler {
 
         if self.opt {
             self.fpm.run(&fun);
+        }
+    }
+
+    fn get_llvm_type(&self, typ: parser::Type) -> llvm::Type {
+        match typ {
+            parser::Type::Vector => self.context.double_type().pointer_type(0),
+            parser::Type::Numeric => self.context.double_type(),
+            parser::Type::Function => self
+                .context
+                .function_type(self.context.void_type(), &[], false)
+                .pointer_type(0),
+            parser::Type::Null => self.context.void_type(),
+            parser::Type::Ptr => self.context.void_type().pointer_type(0),
+            parser::Type::String => self.context.i8_type().pointer_type(0),
         }
     }
 

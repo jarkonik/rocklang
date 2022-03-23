@@ -17,6 +17,8 @@ pub trait Visitor<T> {
     fn visit_break(&mut self) -> T;
     fn visit_program(&mut self, program: Program) -> T;
     fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> T;
+    fn visit_load(&mut self, name: &str) -> T;
+    fn visit_extern(&mut self, name: &expression::Extern) -> T;
 
     fn walk(&mut self, expr: &Expression) -> T {
         match expr {
@@ -33,6 +35,8 @@ pub trait Visitor<T> {
             Expression::Break => self.visit_break(),
             Expression::While(expr) => self.visit_while(expr),
             Expression::FuncDecl(expr) => self.visit_func_decl(expr),
+            Expression::Load(expr) => self.visit_load(expr),
+            Expression::Extern(expr) => self.visit_extern(expr),
         }
     }
 }
