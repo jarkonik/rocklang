@@ -91,7 +91,7 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         env:
           LLVM_SYS_130_PREFIX: 'C:\llvm-13.0.0-windows-amd64-msvc15-libcmt'
-        run: cargo wix -o target/wix/rocklang.msi
+        run: cargo wix -o target/wix/rocklang.msi -p rocklang
 
       - name: Upload installer when platform == Windows
         if: ${{ runner.os == 'Windows' }}
