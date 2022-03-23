@@ -5,6 +5,7 @@ use crate::parser;
 pub enum Var {
     Numeric(llvm::Value),
     Null,
+    Ptr(llvm::Value),
     String(llvm::Value),
     Vec(llvm::Value),
     GlobalString(llvm::Value),

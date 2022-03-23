@@ -1,11 +1,20 @@
 use rocklang::compiler::{Compile, Compiler};
+
 use rocklang::expression::{
-    Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Operator, Unary, While,
+    self, Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Operator, Unary, While,
 };
 use rocklang::parser::{Param, Program, Type};
 
 fn remove_whitespace(s: &str) -> String {
     s.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
+macro_rules! assert_eq_ir {
+    ($expression1:expr, $expression2:expr) => {
+        if (!remove_whitespace($expression1).eq(&remove_whitespace($expression2))) {
+            panic!("result: {}\n valid: {}", $expression1, $expression2);
+        }
+    };
 }
 
 #[test]
@@ -743,6 +752,94 @@ fn it_compile_break_in_while() {
 
     let mut compiler = Compiler::new(program);
     compiler.compile().unwrap();
+}
+
+#[test]
+fn it_compiles_ffi_calls() {
+    let program = Program {
+        body: vec![
+            Expression::Load(String::from("./tests/rockffitestlib.so")),
+            Expression::Assignment(expression::Assignment {
+                left: Box::new(Expression::Identifier(String::from("sum"))),
+                right: Box::new(Expression::Extern(expression::Extern {
+                    types: [Type::Numeric, Type::Numeric].to_vec(),
+                    return_type: Type::Numeric,
+                    name: String::from("rockffitest"),
+                })),
+            }),
+            Expression::Assignment(expression::Assignment {
+                left: Box::new(Expression::Identifier(String::from("getptr"))),
+                right: Box::new(Expression::Extern(expression::Extern {
+                    types: [].to_vec(),
+                    return_type: Type::Ptr,
+                    name: String::from("getpr"),
+                })),
+            }),
+            Expression::Assignment(expression::Assignment {
+                left: Box::new(Expression::Identifier(String::from("passptr"))),
+                right: Box::new(Expression::Extern(expression::Extern {
+                    types: [Type::Ptr].to_vec(),
+                    return_type: Type::Null,
+                    name: String::from("passptr"),
+                })),
+            }),
+            Expression::Assignment(expression::Assignment {
+                left: Box::new(Expression::Identifier(String::from("passstr"))),
+                right: Box::new(Expression::Extern(expression::Extern {
+                    types: [Type::String].to_vec(),
+                    return_type: Type::Null,
+                    name: String::from("passstr"),
+                })),
+            }),
+            Expression::FuncCall(expression::FuncCall {
+                calee: Box::new(Expression::Identifier(String::from("passptr"))),
+                args: [Expression::FuncCall(expression::FuncCall {
+                    calee: Box::new(Expression::Identifier(String::from("getptr"))),
+                    args: [].to_vec(),
+                })]
+                .to_vec(),
+            }),
+            Expression::FuncCall(expression::FuncCall {
+                calee: Box::new(Expression::Identifier(String::from("sum"))),
+                args: [Expression::Numeric(2.0), Expression::Numeric(3.0)].to_vec(),
+            }),
+            Expression::FuncCall(expression::FuncCall {
+                calee: Box::new(Expression::Identifier(String::from("passstr"))),
+                args: [Expression::String(String::from("test"))].to_vec(),
+            }),
+        ],
+    };
+
+    let mut compiler = Compiler::new(program);
+    compiler.compile().unwrap();
+
+    assert_eq_ir!(
+        &compiler.ir_string(),
+        "
+            ; ModuleID = 'main'
+source_filename = \"main\"
+target datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"
+
+@0 = private unnamed_addr constant [5 x i8] c\"test\\00\", align 1
+
+define void @__main__() {
+entry:
+  %0 = call void* @getpr()
+  call void @passptr(void* %0)
+  %1 = call double @rockffitest(double 2.000000e+00, double 3.000000e+00)
+  call void @passstr(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @0, i64 0, i64 0))
+  ret void
+}
+
+declare double @rockffitest(double, double)
+
+declare void* @getpr()
+
+declare void @passptr(void*)
+
+declare void @passstr(i8*)
+        "
+    );
 }
 
 #[test]

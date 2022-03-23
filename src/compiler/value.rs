@@ -15,4 +15,5 @@ pub enum Value {
     },
     Vec(llvm::Value),
     Break,
+    Ptr(llvm::Value),
 }

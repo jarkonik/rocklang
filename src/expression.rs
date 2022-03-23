@@ -63,6 +63,13 @@ pub struct FuncDecl {
 }
 
 #[derive(Serialize, Debug, Clone)]
+pub struct Extern {
+    pub types: Vec<Type>,
+    pub return_type: Type,
+    pub name: String,
+}
+
+#[derive(Serialize, Debug, Clone)]
 pub enum Expression {
     Break,
     Bool(bool),
@@ -77,4 +84,6 @@ pub enum Expression {
     Grouping(Box<Expression>),
     FuncCall(FuncCall),
     FuncDecl(FuncDecl),
+    Load(String),
+    Extern(Extern),
 }
