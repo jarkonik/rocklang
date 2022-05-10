@@ -642,7 +642,7 @@ impl Visitor<Value> for Compiler {
         let types: Vec<llvm::Type> = expr
             .params
             .iter()
-            .map(|arg| self.get_llvm_type(arg.typ))
+            .map(|arg| self.get_llvm_type_with_function_args(arg.typ, &self.get_lambda_func_args(arg), self.get_lambda_func_return_type(arg)))
             .collect();
 
         let fun_type =
@@ -972,12 +972,57 @@ impl Compiler {
         }
     }
 
+    fn get_llvm_type_with_function_args(&self, typ: parser::Type, param_types: &[llvm::Type], return_type: llvm::Type) -> llvm::Type {
+        match typ {
+            parser::Type::Vector => self.context.double_type().pointer_type(0),
+            parser::Type::Numeric => self.context.double_type(),
+            parser::Type::Function => self
+                .context
+                .function_type(return_type, param_types, false)
+                .pointer_type(0),
+            parser::Type::Null => self.context.void_type(),
+            parser::Type::Ptr => self.context.void_type().pointer_type(0),
+            parser::Type::String => self.context.i8_type().pointer_type(0),
+        }
+    }
+
+    fn get_lambda_func_args(&self, arg: &parser::Param) -> Vec<llvm::Type> {
+        let types: Vec<llvm::Type> = arg
+            .generic_params
+            .iter()
+            .map(|arg2| self.get_llvm_type(arg2.typ))
+            .collect();
+
+        if types.len() > 0  {
+            let len = types.len() - 1;
+            return types[..len].to_vec();
+        } else {
+            return types
+        }
+    }
+
+    fn get_lambda_func_return_type(&self, arg: &parser::Param) -> llvm::Type {
+        let types: Vec<llvm::Type> = arg
+            .generic_params
+            .iter()
+            .map(|arg2| self.get_llvm_type(arg2.typ))
+            .collect();
+
+        if types.len() >= 1  {
+            let len = types.len() - 1;
+            return types[len]
+        } else {
+            return self.context.void_type()
+        }
+    }
+
     fn get_llvm_type(&self, typ: parser::Type) -> llvm::Type {
         match typ {
             parser::Type::Vector => self.context.double_type().pointer_type(0),
             parser::Type::Numeric => self.context.double_type(),
             parser::Type::Function => self
                 .context
+                // i tutaj je przekazac
                 .function_type(self.context.void_type(), &[], false)
                 .pointer_type(0),
             parser::Type::Null => self.context.void_type(),

@@ -53,10 +53,26 @@ pub enum Type {
     String,
 }
 
+#[derive(Copy, Clone, Serialize, Debug)]
+pub enum GenericType {
+    Numeric,
+    Vector,
+    Null,
+    Function,
+    Ptr,
+    String,
+}
+
 #[derive(Clone, Serialize, Debug)]
 pub struct Param {
     pub typ: Type,
     pub name: String,
+    pub generic_params: Vec<GenericParam>
+}
+
+#[derive(Clone, Serialize, Debug)]
+pub struct GenericParam {
+    pub typ: Type,
 }
 
 #[derive(Serialize, Clone)]
@@ -452,9 +468,40 @@ impl Parser {
                                 let token = self.advance().clone();
                                 match token {
                                     Token::Identifier(type_literal) => {
+                                        let mut generic_params: Vec<GenericParam> = Vec::new();
+
+                                        match self.peek() {
+                                            Token::Less => {
+                                                let paren = self.advance();
+                                                match paren {
+                                                    Token::Less => {
+                                                        while match self.advance().clone() {
+                                                            Token::Identifier(generic_type_literal) => {
+                                                                generic_params.push(GenericParam {
+                                                                    typ: self.type_from_literal(&generic_type_literal)?,
+                                                                });
+                                                                true
+                                                            }
+                                                            Token::Comma => true,
+                                                            Token::Greater => false,
+                                                            _ => {
+                                                                return Err(ParserError::SyntaxError {
+                                                                    token: self.previous().clone(),
+                                                                    backtrace: Backtrace::new(),
+                                                                })
+                                                            }
+                                                        } {}
+                                                    }
+                                                    _ => {
+                                                    }
+                                                }
+                                            }
+                                            _ => {}
+                                        }
                                         params.push(Param {
                                             name: name_literal.to_string(),
                                             typ: self.type_from_literal(&type_literal)?,
+                                            generic_params: generic_params,
                                         });
                                     }
                                     _ => {
