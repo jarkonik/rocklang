@@ -175,7 +175,7 @@ impl Tokenizer {
         loop {
             let chr = self.peek();
 
-            if chr.is_alphanumeric() {
+            if chr.is_alphanumeric() || chr == '_' {
                 literal.push(chr);
                 self.advance();
             } else {
