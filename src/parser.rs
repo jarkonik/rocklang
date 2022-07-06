@@ -53,21 +53,11 @@ pub enum Type {
     String,
 }
 
-#[derive(Copy, Clone, Serialize, Debug)]
-pub enum GenericType {
-    Numeric,
-    Vector,
-    Null,
-    Function,
-    Ptr,
-    String,
-}
-
 #[derive(Clone, Serialize, Debug)]
 pub struct Param {
     pub typ: Type,
     pub name: String,
-    pub generic_params: Vec<GenericParam>
+    pub generic_params: Vec<GenericParam>,
 }
 
 #[derive(Clone, Serialize, Debug)]
@@ -476,24 +466,32 @@ impl Parser {
                                                 match paren {
                                                     Token::Less => {
                                                         while match self.advance().clone() {
-                                                            Token::Identifier(generic_type_literal) => {
+                                                            Token::Identifier(
+                                                                generic_type_literal,
+                                                            ) => {
                                                                 generic_params.push(GenericParam {
-                                                                    typ: self.type_from_literal(&generic_type_literal)?,
+                                                                    typ: self.type_from_literal(
+                                                                        &generic_type_literal,
+                                                                    )?,
                                                                 });
                                                                 true
                                                             }
                                                             Token::Comma => true,
                                                             Token::Greater => false,
                                                             _ => {
-                                                                return Err(ParserError::SyntaxError {
-                                                                    token: self.previous().clone(),
-                                                                    backtrace: Backtrace::new(),
-                                                                })
+                                                                return Err(
+                                                                    ParserError::SyntaxError {
+                                                                        token: self
+                                                                            .previous()
+                                                                            .clone(),
+                                                                        backtrace: Backtrace::new(),
+                                                                    },
+                                                                )
                                                             }
-                                                        } {}
+                                                        } {
+                                                        }
                                                     }
-                                                    _ => {
-                                                    }
+                                                    _ => {}
                                                 }
                                             }
                                             _ => {}
@@ -501,7 +499,7 @@ impl Parser {
                                         params.push(Param {
                                             name: name_literal.to_string(),
                                             typ: self.type_from_literal(&type_literal)?,
-                                            generic_params: generic_params,
+                                            generic_params,
                                         });
                                     }
                                     _ => {
@@ -542,6 +540,7 @@ impl Parser {
                         "number" => Type::Numeric,
                         "vec" => Type::Vector,
                         "void" => Type::Null,
+                        "string" => Type::String,
                         _ => {
                             return Err(ParserError::SyntaxError {
                                 token: self.previous().clone(),
