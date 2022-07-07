@@ -824,7 +824,8 @@ fn it_parses_func_declaration_with_one_number_param() {
                         "params": [
                             {
                                 "typ": "Numeric",
-                                "name": "a"
+                                "name": "a",
+                                "generic_params": []
                             }
                         ],
                         "body": [
@@ -882,7 +883,8 @@ fn it_parses_func_declaration_with_one_vec_param() {
                         "params": [
                             {
                                 "typ": "Vector",
-                                "name": "a"
+                                "name": "a",
+                                "generic_params": []
                             }
                         ],
                         "body": [
@@ -940,7 +942,8 @@ fn it_parses_func_declaration_with_one_fun_param() {
                         "params": [
                             {
                                 "typ": "Function",
-                                "name": "a"
+                                "name": "a",
+                                "generic_params": []
                             }
                         ],
                         "body": [
@@ -1002,11 +1005,13 @@ fn it_parses_func_declaration_with_multiple_params() {
                         "params": [
                             {
                                 "typ": "Function",
-                                "name": "a"
+                                "name": "a",
+                                "generic_params": []
                             },
                             {
                                 "typ": "Numeric",
-                                "name": "b"
+                                "name": "b",
+                                "generic_params": []
                             }
                         ],
                         "body": [
@@ -1586,7 +1591,7 @@ fn it_parses_grouping_expression_with_identifiers() {
 
 #[test]
 fn it_parses_load_expression() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Load,
         Token::LeftParen,
         Token::String(String::from("somelib.so")),

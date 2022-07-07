@@ -642,7 +642,7 @@ impl Visitor<Value> for Compiler {
         let types: Vec<llvm::Type> = expr
             .params
             .iter()
-            .map(|arg| self.get_llvm_type(arg.typ))
+            .map(|arg| self.get_llvm_type_with_function_args(arg))
             .collect();
 
         let fun_type =
@@ -969,6 +969,48 @@ impl Compiler {
 
         if self.opt {
             self.fpm.run(&fun);
+        }
+    }
+
+    fn get_llvm_type_with_function_args(&self, arg: &parser::Param) -> llvm::Type {
+        let typ = arg.typ;
+        match typ {
+            parser::Type::Vector => self.context.double_type().pointer_type(0),
+            parser::Type::Numeric => self.context.double_type(),
+            parser::Type::Function => self
+                .context
+                .function_type(
+                    self.get_lambda_func_return_type(arg),
+                    &self.get_lambda_func_args(arg),
+                    false,
+                )
+                .pointer_type(0),
+            parser::Type::Null => self.context.void_type(),
+            parser::Type::Ptr => self.context.void_type().pointer_type(0),
+            parser::Type::String => self.context.i8_type().pointer_type(0),
+        }
+    }
+
+    fn get_lambda_func_args(&self, arg: &parser::Param) -> Vec<llvm::Type> {
+        let types: Vec<llvm::Type> = arg
+            .generic_params
+            .iter()
+            .map(|arg2| self.get_llvm_type(arg2.typ))
+            .collect();
+
+        if !types.is_empty() {
+            let len = types.len() - 1;
+            types[..len].to_vec()
+        } else {
+            types
+        }
+    }
+
+    fn get_lambda_func_return_type(&self, arg: &parser::Param) -> llvm::Type {
+        if !arg.generic_params.is_empty() {
+            self.get_llvm_type(arg.generic_params[arg.generic_params.len() - 1].typ)
+        } else {
+            unreachable!();
         }
     }
 

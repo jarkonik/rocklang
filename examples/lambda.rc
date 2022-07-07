@@ -1,0 +1,9 @@
+pow = (firstName: string, lastName: string): void => {
+    print("siemanko")
+}
+
+displayname = (callback: fun<string, string, void>): void => {
+    callback("name", "lastname")
+}
+
+displayname(pow)

@@ -110,6 +110,7 @@ fn it_compiles_new_vec_being_passed_as_fun_arg() {
                     params: vec![Param {
                         name: "v".to_string(),
                         typ: Type::Vector,
+                        generic_params: vec![],
                     }],
                 })),
             }),
@@ -307,6 +308,7 @@ fn it_compiles_new_vec_being_passed_as_variable() {
                     params: vec![Param {
                         name: "v".to_string(),
                         typ: Type::Vector,
+                        generic_params: vec![],
                     }],
                 })),
             }),
@@ -369,6 +371,7 @@ fn it_test_visit_func_decl() {
                 params: vec![Param {
                     typ: Type::Numeric,
                     name: "n".to_string(),
+                    generic_params: vec![],
                 }],
                 body: vec![Expression::String("n".to_string())],
                 return_type: Type::Numeric,
@@ -377,6 +380,7 @@ fn it_test_visit_func_decl() {
                 params: vec![Param {
                     typ: Type::Vector,
                     name: "n".to_string(),
+                    generic_params: vec![],
                 }],
                 body: vec![Expression::String("n".to_string())],
                 return_type: Type::Vector,
