@@ -115,16 +115,17 @@ impl Parser {
 
                 let mut body: Vec<Expression> = Vec::new();
 
-                while match self.peek() {
-                    Token::RCurly => {
-                        self.advance();
-                        false
+                loop {
+                    match self.peek() {
+                        Token::RCurly => {
+                            self.advance();
+                            break;
+                        }
+                        _ => {
+                            body.push(self.expression()?);
+                        }
                     }
-                    _ => {
-                        body.push(self.expression()?);
-                        true
-                    }
-                } {}
+                }
 
                 Ok(Expression::While(expression::While {
                     predicate: Box::new(predicate),
@@ -154,16 +155,17 @@ impl Parser {
                 let mut body: Vec<Expression> = Vec::new();
                 let mut else_body: Vec<Expression> = Vec::new();
 
-                while match self.peek() {
-                    Token::RCurly => {
-                        self.advance();
-                        false
+                loop {
+                    match self.peek() {
+                        Token::RCurly => {
+                            self.advance();
+                            break;
+                        }
+                        _ => {
+                            body.push(self.expression()?);
+                        }
                     }
-                    _ => {
-                        body.push(self.expression()?);
-                        true
-                    }
-                } {}
+                }
 
                 if let Token::Else = self.peek() {
                     self.advance();
@@ -178,16 +180,17 @@ impl Parser {
                         }
                     };
 
-                    while match self.peek() {
-                        Token::RCurly => {
-                            self.advance();
-                            false
+                    loop {
+                        match self.peek() {
+                            Token::RCurly => {
+                                self.advance();
+                                break;
+                            }
+                            _ => {
+                                else_body.push(self.expression()?);
+                            }
                         }
-                        _ => {
-                            else_body.push(self.expression()?);
-                            true
-                        }
-                    } {}
+                    }
                 }
 
                 Ok(Expression::Conditional(expression::Conditional {
@@ -203,17 +206,18 @@ impl Parser {
     fn assignment(&mut self) -> Result<Expression> {
         let mut expr = self.equality()?;
 
-        while match self.peek() {
-            Token::Equal => {
-                self.advance();
-                expr = Expression::Assignment(expression::Assignment {
-                    left: Box::new(expr),
-                    right: Box::new(self.equality()?),
-                });
-                true
+        loop {
+            match self.peek() {
+                Token::Equal => {
+                    self.advance();
+                    expr = Expression::Assignment(expression::Assignment {
+                        left: Box::new(expr),
+                        right: Box::new(self.equality()?),
+                    });
+                }
+                _ => break,
             }
-            _ => false,
-        } {}
+        }
 
         Ok(expr)
     }
@@ -221,63 +225,59 @@ impl Parser {
     fn equality(&mut self) -> Result<Expression> {
         let mut expr = self.addition_or_modulo()?;
 
-        while match self.peek() {
-            Token::DoubleEqual => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::Equal,
-                    right: Box::new(self.addition_or_modulo()?),
-                });
-                true
+        loop {
+            match self.peek() {
+                Token::DoubleEqual => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::Equal,
+                        right: Box::new(self.addition_or_modulo()?),
+                    });
+                }
+                Token::NotEqual => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::NotEqual,
+                        right: Box::new(self.addition_or_modulo()?),
+                    });
+                }
+                Token::LessOrEqual => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::LessOrEqual,
+                        right: Box::new(self.addition_or_modulo()?),
+                    });
+                }
+                Token::Less => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::Less,
+                        right: Box::new(self.addition_or_modulo()?),
+                    });
+                }
+                Token::Greater => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::Greater,
+                        right: Box::new(self.addition_or_modulo()?),
+                    });
+                }
+                Token::GreaterOrEqual => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::GreaterOrEqual,
+                        right: Box::new(self.addition_or_modulo()?),
+                    });
+                }
+                _ => break,
             }
-            Token::NotEqual => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::NotEqual,
-                    right: Box::new(self.addition_or_modulo()?),
-                });
-                true
-            }
-            Token::LessOrEqual => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::LessOrEqual,
-                    right: Box::new(self.addition_or_modulo()?),
-                });
-                true
-            }
-            Token::Less => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::Less,
-                    right: Box::new(self.addition_or_modulo()?),
-                });
-                true
-            }
-            Token::Greater => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::Greater,
-                    right: Box::new(self.addition_or_modulo()?),
-                });
-                true
-            }
-            Token::GreaterOrEqual => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::GreaterOrEqual,
-                    right: Box::new(self.addition_or_modulo()?),
-                });
-                true
-            }
-            _ => false,
-        } {}
+        }
 
         Ok(expr)
     }
@@ -285,64 +285,62 @@ impl Parser {
     fn addition_or_modulo(&mut self) -> Result<Expression> {
         let mut expr = self.factor()?;
 
-        while match self.peek() {
-            Token::Plus => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::Plus,
-                    right: Box::new(self.factor()?),
-                });
-                true
+        loop {
+            match self.peek() {
+                Token::Plus => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::Plus,
+                        right: Box::new(self.factor()?),
+                    });
+                }
+                Token::Minus => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::Minus,
+                        right: Box::new(self.factor()?),
+                    });
+                }
+                Token::Percent => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::Mod,
+                        right: Box::new(self.factor()?),
+                    });
+                }
+                _ => break,
             }
-            Token::Minus => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::Minus,
-                    right: Box::new(self.factor()?),
-                });
-                true
-            }
-            Token::Percent => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::Mod,
-                    right: Box::new(self.factor()?),
-                });
-                true
-            }
-            _ => false,
-        } {}
-
+        }
         Ok(expr)
     }
 
     fn factor(&mut self) -> Result<Expression> {
         let mut expr = self.unary()?;
 
-        while match self.peek() {
-            Token::Asterisk => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::Asterisk,
-                    right: Box::new(self.unary()?),
-                });
-                true
+        loop {
+            match self.peek() {
+                Token::Asterisk => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::Asterisk,
+                        right: Box::new(self.unary()?),
+                    });
+                }
+                Token::Slash => {
+                    self.advance();
+                    expr = Expression::Binary(expression::Binary {
+                        left: Box::new(expr),
+                        operator: Operator::Slash,
+                        right: Box::new(self.unary()?),
+                    });
+                }
+                _ => break,
             }
-            Token::Slash => {
-                self.advance();
-                expr = Expression::Binary(expression::Binary {
-                    left: Box::new(expr),
-                    operator: Operator::Slash,
-                    right: Box::new(self.unary()?),
-                });
-                true
-            }
-            _ => false,
-        } {}
+        }
 
         Ok(expr)
     }
@@ -445,9 +443,9 @@ impl Parser {
 
                 let mut params: Vec<Param> = Vec::new();
 
-                while match self.advance().clone() {
-                    Token::Identifier(name_literal) => {
-                        match self.advance() {
+                loop {
+                    match self.advance().clone() {
+                        Token::Identifier(name_literal) => match self.advance() {
                             Token::Colon => {
                                 let token = self.advance().clone();
                                 match token {
@@ -469,16 +467,15 @@ impl Parser {
                                 self.current = current;
                                 return self.func_call();
                             }
+                        },
+                        Token::Comma => {}
+                        Token::RightParen => break,
+                        _ => {
+                            self.current = current;
+                            return self.func_call();
                         }
-                        true
                     }
-                    Token::Comma => true,
-                    Token::RightParen => false,
-                    _ => {
-                        self.current = current;
-                        return self.func_call();
-                    }
-                } {}
+                }
 
                 match self.advance() {
                     Token::Colon => (),
@@ -532,16 +529,17 @@ impl Parser {
 
                 let mut body: Vec<Expression> = Vec::new();
 
-                while match self.peek() {
-                    Token::RCurly => {
-                        self.advance();
-                        false
+                loop {
+                    match self.peek() {
+                        Token::RCurly => {
+                            self.advance();
+                            break;
+                        }
+                        _ => {
+                            body.push(self.expression()?);
+                        }
                     }
-                    _ => {
-                        body.push(self.expression()?);
-                        true
-                    }
-                } {}
+                }
                 Ok(Expression::FuncDecl(expression::FuncDecl {
                     body,
                     params,
@@ -556,27 +554,27 @@ impl Parser {
     fn func_call(&mut self) -> Result<Expression> {
         let mut expr = self.load()?;
 
-        while match self.peek() {
-            Token::LeftParen => {
-                match expr {
+        loop {
+            match self.peek() {
+                Token::LeftParen => match expr {
                     Expression::Identifier { .. } => {
                         self.advance();
                         let mut args: Vec<Expression> = Vec::new();
 
-                        while match self.peek() {
-                            Token::Comma => {
-                                self.advance();
-                                true
+                        loop {
+                            match self.peek() {
+                                Token::Comma => {
+                                    self.advance();
+                                }
+                                Token::RightParen => {
+                                    self.advance();
+                                    break;
+                                }
+                                _ => {
+                                    args.push(self.expression()?);
+                                }
                             }
-                            Token::RightParen => {
-                                self.advance();
-                                false
-                            }
-                            _ => {
-                                args.push(self.expression()?);
-                                true
-                            }
-                        } {}
+                        }
 
                         expr = Expression::FuncCall(expression::FuncCall {
                             calee: Box::new(expr),
@@ -589,12 +587,10 @@ impl Parser {
                             backtrace: Backtrace::new(),
                         })
                     }
-                }
-
-                true
+                },
+                _ => break,
             }
-            _ => false,
-        } {}
+        }
         Ok(expr)
     }
 
