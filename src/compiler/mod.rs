@@ -317,14 +317,6 @@ impl Visitor<Value> for Compiler {
 
                             let format_str = self.builder.build_global_string_ptr("%f", "");
 
-                            // 							/// CreateEntryBlockAlloca - Create an alloca instruction in the entry block of
-                            // /// the function.  This is used for mutable variables etc.
-                            // static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
-                            //                                           const std::string &VarName) {
-                            //   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
-                            //                  TheFunction->getEntryBlock().begin());
-                            //   return TmpB.CreateAlloca(Type::getDoubleTy(TheContext), 0,
-                            //                            VarName.c_str());
                             let arr = self.builder.build_malloc(arr_type, "");
                             let p = self.builder.build_bitcast(&arr, i8_pointer_type, "");
                             self.builder.build_call(&sprintf, &[p, format_str, f], "");
@@ -359,21 +351,21 @@ impl Visitor<Value> for Compiler {
 
                     Value::Numeric(self.builder.build_call(&ptr, &args, ""))
                 }
-                "vecnew" => {
+                "vec_new" => {
                     let fun_type = self.context.function_type(
                         self.context.double_type().pointer_type(0),
                         &[],
                         false,
                     );
 
-                    let fun_addr = stdlib::vecnew as usize;
+                    let fun_addr = stdlib::vec_new as usize;
                     let ptr = self.context.const_u64_to_ptr(
                         self.context.const_u64(fun_addr.try_into().unwrap()),
                         fun_type.pointer_type(0),
                     );
                     Value::Vec(self.builder.build_call(&ptr, &[], ""))
                 }
-                "vecset" => {
+                "vec_mut" => {
                     let args: Vec<llvm::Value> = expr
                         .args
                         .iter()
@@ -385,7 +377,7 @@ impl Visitor<Value> for Compiler {
                         .collect();
 
                     let fun_type = self.context.function_type(
-                        self.context.double_type().pointer_type(0),
+                        self.context.void_type(),
                         &[
                             self.context.double_type().pointer_type(0),
                             self.context.double_type(),
@@ -394,13 +386,13 @@ impl Visitor<Value> for Compiler {
                         false,
                     );
 
-                    let fun_addr = stdlib::vecset as usize;
+                    let fun_addr = stdlib::vec_mut as usize;
                     let ptr = self.context.const_u64_to_ptr(
                         self.context.const_u64(fun_addr.try_into().unwrap()),
                         fun_type.pointer_type(0),
                     );
 
-                    Value::Vec(self.builder.build_call(&ptr, &args, "vecset"))
+                    Value::Vec(self.builder.build_call(&ptr, &args, ""))
                 }
                 "sqrt" => {
                     let args: Vec<llvm::Value> = expr
@@ -426,7 +418,7 @@ impl Visitor<Value> for Compiler {
 
                     Value::Numeric(self.builder.build_call(&ptr, &args, ""))
                 }
-                "vecget" => {
+                "vec_get" => {
                     let args: Vec<llvm::Value> = expr
                         .args
                         .iter()
@@ -446,7 +438,7 @@ impl Visitor<Value> for Compiler {
                         false,
                     );
 
-                    let fun_addr = stdlib::vecget as usize;
+                    let fun_addr = stdlib::vec_get as usize;
                     let ptr = self.context.const_u64_to_ptr(
                         self.context.const_u64(fun_addr.try_into().unwrap()),
                         fun_type.pointer_type(0),
@@ -468,18 +460,17 @@ impl Visitor<Value> for Compiler {
                                 Value::Ptr(n) => n,
                                 Value::Vec(v) => {
                                     let fun_type = self.context.function_type(
-                                        self.context.double_type().pointer_type(0),
+                                        self.context.void_type(),
                                         &[self.context.double_type().pointer_type(0)],
                                         false,
                                     );
-
-                                    let fun_addr = stdlib::veccopy as usize;
+                                    let fun_addr = stdlib::vec_reference as usize;
                                     let ptr = self.context.const_u64_to_ptr(
                                         self.context.const_u64(fun_addr.try_into().unwrap()),
                                         fun_type.pointer_type(0),
                                     );
-
-                                    self.builder.build_call(&ptr, &[v], "")
+                                    self.builder.build_call(&ptr, &[v], "");
+                                    v
                                 }
                                 Value::Function { val, .. } => val,
                                 Value::GlobalString(s) => s,
@@ -831,11 +822,6 @@ impl Compiler {
         }
     }
 
-    #[allow(dead_code)]
-    fn remove_var(&mut self, literal: &str) {
-        self.stack.last_mut().unwrap().remove(literal);
-    }
-
     fn get_var_ptr(&mut self, literal: &str) -> Option<Var> {
         for frame in self.stack.iter().rev() {
             if let Some(v) = frame.get(literal) {
@@ -936,23 +922,23 @@ impl Compiler {
             Value::Numeric(n) => Some(n),
             Value::Vec(n) => {
                 let fun_type = self.context.function_type(
-                    self.context.double_type().pointer_type(0),
+                    self.context.void_type(),
                     &[self.context.double_type().pointer_type(0)],
                     false,
                 );
-
-                let fun_addr = stdlib::veccopy as usize;
+                let fun_addr = stdlib::vec_reference as usize;
                 let ptr = self.context.const_u64_to_ptr(
                     self.context.const_u64(fun_addr.try_into().unwrap()),
                     fun_type.pointer_type(0),
                 );
+                self.builder.build_call(&ptr, &[n], "");
 
-                Some(self.builder.build_call(&ptr, &[n], ""))
+                Some(n)
             }
             _ => todo!("{:?}", last_val),
         };
 
-        frame.dealloc(&self.context, &self.builder);
+        frame.release(&self.context, &self.builder);
 
         match ret_val {
             Some(v) => self.builder.build_ret(v),
@@ -964,7 +950,7 @@ impl Compiler {
         fun.verify_function().unwrap_or_else(|_x| {
             println!("IR Dump:");
             self.dump_ir();
-            panic!()
+            panic!("Function verification failed")
         });
 
         if self.opt {

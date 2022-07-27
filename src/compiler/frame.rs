@@ -28,19 +28,14 @@ impl Frame {
     ) {
         let existing = self.env.get(literal);
         if let Some(val) = existing {
-            val.dealloc(context, builder);
+            val.release(context, builder);
         }
         self.env.insert(literal.to_string(), val);
     }
 
-    #[allow(dead_code)]
-    pub fn remove(&mut self, literal: &str) {
-        self.env.remove(&literal.to_string());
-    }
-
-    pub fn dealloc(&self, context: &llvm::Context, builder: &llvm::Builder) {
+    pub fn release(&self, context: &llvm::Context, builder: &llvm::Builder) {
         for val in self.env.values() {
-            val.dealloc(context, builder);
+            val.release(context, builder);
         }
     }
 }

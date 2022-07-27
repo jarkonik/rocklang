@@ -2,32 +2,32 @@ WIDTH = 30
 HEIGHT = 30
 
 complexprint = (c: vec): void => {
-	print(string(vecget(c, 0)))
+	print(string(vec_get(c, 0)))
 	print("+")
-	print(string(vecget(c, 1)))
+	print(string(vec_get(c, 1)))
 	print("i")
 	print("\n")
 }
 
 complexadd = (a: vec, b: vec): vec => {
-	r = vecget(a, 0) + vecget(b, 0)
-	img = vecget(a, 1) + vecget(b, 1)
+	r = vec_get(a, 0) + vec_get(b, 0)
+	img = vec_get(a, 1) + vec_get(b, 1)
 
-	res = vecnew()
-	res = vecset(res, 0, r)
-	res = vecset(res, 1, img)
+	res = vec_new()
+	vec_mut(res, 0, r)
+	vec_mut(res, 1, img)
 
 	res
 }
 
 
 complexmul = (a: vec, b: vec): vec => {
-	r = vecget(a, 0) * vecget(b, 0) - vecget(a, 1) * vecget(b, 1)
-	img = vecget(a, 0) * vecget(b, 1) + vecget(a, 1) * vecget(b, 0)
+	r = vec_get(a, 0) * vec_get(b, 0) - vec_get(a, 1) * vec_get(b, 1)
+	img = vec_get(a, 0) * vec_get(b, 1) + vec_get(a, 1) * vec_get(b, 0)
 
-	res = vecnew()
-	res = vecset(res, 0, r)
-	res = vecset(res, 1, img)
+	res = vec_new()
+	vec_mut(res, 0, r)
+	vec_mut(res, 1, img)
 
 	res
 }
@@ -36,29 +36,29 @@ y = 0
 while y < HEIGHT {
 	x = 0
 	while x < WIDTH {
-		c = vecnew()
+		c = vec_new()
 		halfwidth = WIDTH * 0.5
 		halfheight = HEIGHT * 0.5
 
 		rx = y - halfwidth
 		ry = x - halfheight
-		c = vecset(c, 0, rx * 0.1)
-		c = vecset(c, 1, ry * 0.1)
+		vec_mut(c, 0, rx * 0.1)
+		vec_mut(c, 1, ry * 0.1)
 
 		i = 0
 
-		acc = vecnew()
-		acc = vecset(acc, 0, 0)
-		acc = vecset(acc, 1, 0)
+		acc = vec_new()
+		vec_mut(acc, 0, 0)
+		vec_mut(acc, 1, 0)
 
 		isstable = 1
 
 		while i < 50 {
 			acc = complexadd(complexmul(acc, acc), c)
-			if sqrt(vecget(acc, 0) * vecget(acc, 0) + vecget(acc, 1) * vecget(acc, 1)) > 2 {
+			if sqrt(vec_get(acc, 0) * vec_get(acc, 0) + vec_get(acc, 1) * vec_get(acc, 1)) > 2 {
 				isstable = 0
 			}
-			if sqrt(vecget(acc, 0) * vecget(acc, 0) + vecget(acc, 1) * vecget(acc, 1)) < -2 {
+			if sqrt(vec_get(acc, 0) * vec_get(acc, 0) + vec_get(acc, 1) * vec_get(acc, 1)) < -2 {
 				isstable = 0
 			}
 			i = i + 1

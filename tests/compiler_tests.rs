@@ -116,7 +116,7 @@ fn it_compiles_new_vec_being_passed_as_fun_arg() {
             Expression::FuncCall(FuncCall {
                 calee: Box::new(Expression::Identifier("f".to_string())),
                 args: vec![Expression::FuncCall(FuncCall {
-                    calee: Box::new(Expression::Identifier("vecnew".to_string())),
+                    calee: Box::new(Expression::Identifier("vec_new".to_string())),
                     args: vec![],
                 })],
             }),
@@ -162,7 +162,7 @@ fn it_compiles_len_function_when_pass_new_vec() {
         body: vec![Expression::FuncCall(FuncCall {
             calee: Box::new(Expression::Identifier("len".to_string())),
             args: vec![Expression::FuncCall(FuncCall {
-                calee: Box::new(Expression::Identifier("vecnew".to_string())),
+                calee: Box::new(Expression::Identifier("vec_new".to_string())),
                 args: vec![],
             })],
         })],
@@ -173,44 +173,18 @@ fn it_compiles_len_function_when_pass_new_vec() {
 }
 
 #[test]
-fn it_compiles_vecset_function() {
+fn it_compiles_vec_get_function() {
     let program = Program {
         body: vec![
             Expression::Assignment(Assignment {
                 left: Box::new(Expression::Identifier("z".to_string())),
                 right: Box::new(Expression::FuncCall(FuncCall {
-                    calee: Box::new(Expression::Identifier("vecnew".to_string())),
+                    calee: Box::new(Expression::Identifier("vec_new".to_string())),
                     args: vec![],
                 })),
             }),
             Expression::FuncCall(FuncCall {
-                calee: Box::new(Expression::Identifier("vecset".to_string())),
-                args: vec![
-                    Expression::Identifier("z".to_string()),
-                    Expression::Numeric(0.0),
-                    Expression::Numeric(1.0),
-                ],
-            }),
-        ],
-    };
-
-    let mut compiler = Compiler::new(program);
-    compiler.compile().unwrap();
-}
-
-#[test]
-fn it_compiles_vecget_function() {
-    let program = Program {
-        body: vec![
-            Expression::Assignment(Assignment {
-                left: Box::new(Expression::Identifier("z".to_string())),
-                right: Box::new(Expression::FuncCall(FuncCall {
-                    calee: Box::new(Expression::Identifier("vecnew".to_string())),
-                    args: vec![],
-                })),
-            }),
-            Expression::FuncCall(FuncCall {
-                calee: Box::new(Expression::Identifier("vecget".to_string())),
+                calee: Box::new(Expression::Identifier("vec_get".to_string())),
                 args: vec![
                     Expression::Identifier("z".to_string()),
                     Expression::Numeric(0.0),
@@ -313,7 +287,7 @@ fn it_compiles_new_vec_being_passed_as_variable() {
             Expression::Assignment(Assignment {
                 left: Box::new(Expression::Identifier("vecinvar".to_string())),
                 right: Box::new(Expression::FuncCall(FuncCall {
-                    calee: Box::new(Expression::Identifier("vecnew".to_string())),
+                    calee: Box::new(Expression::Identifier("vec_new".to_string())),
                     args: vec![],
                 })),
             }),

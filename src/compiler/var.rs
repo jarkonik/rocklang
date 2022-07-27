@@ -18,7 +18,7 @@ pub enum Var {
 }
 
 impl Var {
-    pub fn dealloc(&self, context: &llvm::Context, builder: &llvm::Builder) {
+    pub fn release(&self, context: &llvm::Context, builder: &llvm::Builder) {
         if let Var::Vec(v) = self {
             let fun_type = context.function_type(
                 context.void_type(),
@@ -26,7 +26,7 @@ impl Var {
                 false,
             );
 
-            let fun_addr = stdlib::vecfree as usize;
+            let fun_addr = stdlib::vec_release as usize;
             let ptr = context.const_u64_to_ptr(
                 context.const_u64(fun_addr.try_into().unwrap()),
                 fun_type.pointer_type(0),
