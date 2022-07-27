@@ -303,6 +303,12 @@ impl Type {
     }
 }
 
+impl Drop for PassManager {
+    fn drop(&mut self) {
+        unsafe { LLVMDisposePassManager(self.0) };
+    }
+}
+
 pub struct PassManager(*mut llvm::LLVMPassManager);
 impl PassManager {
     pub fn new(module: &Module) -> Self {
