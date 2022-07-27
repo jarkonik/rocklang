@@ -206,17 +206,12 @@ impl Parser {
     fn assignment(&mut self) -> Result<Expression> {
         let mut expr = self.equality()?;
 
-        loop {
-            match self.peek() {
-                Token::Equal => {
-                    self.advance();
-                    expr = Expression::Assignment(expression::Assignment {
-                        left: Box::new(expr),
-                        right: Box::new(self.equality()?),
-                    });
-                }
-                _ => break,
-            }
+        while let Token::Equal = self.peek() {
+            self.advance();
+            expr = Expression::Assignment(expression::Assignment {
+                left: Box::new(expr),
+                right: Box::new(self.equality()?),
+            });
         }
 
         Ok(expr)
@@ -554,42 +549,39 @@ impl Parser {
     fn func_call(&mut self) -> Result<Expression> {
         let mut expr = self.load()?;
 
-        loop {
-            match self.peek() {
-                Token::LeftParen => match expr {
-                    Expression::Identifier { .. } => {
-                        self.advance();
-                        let mut args: Vec<Expression> = Vec::new();
+        while let Token::LeftParen = self.peek() {
+            match expr {
+                Expression::Identifier { .. } => {
+                    self.advance();
+                    let mut args: Vec<Expression> = Vec::new();
 
-                        loop {
-                            match self.peek() {
-                                Token::Comma => {
-                                    self.advance();
-                                }
-                                Token::RightParen => {
-                                    self.advance();
-                                    break;
-                                }
-                                _ => {
-                                    args.push(self.expression()?);
-                                }
+                    loop {
+                        match self.peek() {
+                            Token::Comma => {
+                                self.advance();
+                            }
+                            Token::RightParen => {
+                                self.advance();
+                                break;
+                            }
+                            _ => {
+                                args.push(self.expression()?);
                             }
                         }
+                    }
 
-                        expr = Expression::FuncCall(expression::FuncCall {
-                            calee: Box::new(expr),
-                            args,
-                        });
-                    }
-                    _ => {
-                        return Err(ParserError::SyntaxError {
-                            token: self.peek().clone(),
-                            backtrace: Backtrace::new(),
-                        })
-                    }
-                },
-                _ => break,
-            }
+                    expr = Expression::FuncCall(expression::FuncCall {
+                        calee: Box::new(expr),
+                        args,
+                    });
+                }
+                _ => {
+                    return Err(ParserError::SyntaxError {
+                        token: self.peek().clone(),
+                        backtrace: Backtrace::new(),
+                    })
+                }
+            };
         }
         Ok(expr)
     }
