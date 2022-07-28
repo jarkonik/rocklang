@@ -230,7 +230,7 @@ impl Compiler {
         }
     }
 
-    fn init_builtins(&mut self) {
+    fn init_print_fn(&mut self) {
         let scope = self.scopes.last_mut().unwrap();
 
         self.context
@@ -249,6 +249,10 @@ impl Compiler {
                 return_type: parser::Type::Null,
             },
         );
+    }
+
+    fn init_string_fn(&mut self) {
+        let scope = self.scopes.last_mut().unwrap();
 
         self.context
             .add_symbol("string", stdlib::string as *mut c_void);
@@ -266,5 +270,10 @@ impl Compiler {
                 return_type: parser::Type::String,
             },
         );
+    }
+
+    fn init_builtins(&mut self) {
+        self.init_print_fn();
+        self.init_string_fn();
     }
 }
