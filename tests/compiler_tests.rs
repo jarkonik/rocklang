@@ -1,10 +1,12 @@
+#[macro_use]
+extern crate test_utils;
+
 use rocklang::compiler::{Compile, Compiler};
 
 use rocklang::expression::{
     self, Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Operator, Unary, While,
 };
 use rocklang::parser::{Param, Program, Type};
-use rocklang::{assert_eq_ir, remove_whitespace};
 
 #[test]
 fn it_compiles_numeric_asignment() {

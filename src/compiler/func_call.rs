@@ -42,7 +42,9 @@ impl FuncCallVisitor<CompilerResult<Value>> for Compiler {
 
         let args = self.compile_args(&expr.args)?;
 
-        if let Some(var) = self.get_var(&name) {
+        let scope = self.scopes.last_mut().unwrap();
+
+        if let Some(var) = scope.get(&name) {
             if let Value::Function {
                 return_type, val, ..
             } = var
@@ -57,7 +59,9 @@ impl FuncCallVisitor<CompilerResult<Value>> for Compiler {
                     parser::Type::Function => todo!(),
                     parser::Type::Ptr => todo!(),
                     parser::Type::String => {
-                        Ok(Value::String(self.builder.build_call(&val, &args, "")))
+                        let value = Value::String(self.builder.build_call(&val, &args, ""));
+                        scope.track_reference(value);
+                        Ok(value)
                     }
                 }
             } else {
@@ -72,10 +76,8 @@ impl FuncCallVisitor<CompilerResult<Value>> for Compiler {
 #[cfg(test)]
 mod test {
     use crate::{
-        assert_eq_ir,
         compiler::{scope::Scope, Compiler, Value, MAIN_FUNCTION},
         expression::{Expression, FuncCall},
-        remove_whitespace,
         visitor::FuncCallVisitor,
     };
 
@@ -85,7 +87,9 @@ mod test {
             calee: Box::new(Expression::Identifier("test_fun".to_string())),
             args: vec![],
         };
+
         let mut compiler = Compiler::default();
+
         compiler.scopes.push(Scope::new());
 
         let fun_type = compiler
@@ -102,18 +106,11 @@ mod test {
             },
         );
 
-        let main_fun = compiler.module.add_function(
-            MAIN_FUNCTION,
-            compiler
-                .context
-                .function_type(compiler.context.void_type(), &[], false),
-        );
-        let block = compiler.context.append_basic_block(&main_fun, "");
-        compiler.builder.position_builder_at_end(&block);
-        compiler.visit_func_call(&func_call).unwrap();
-        compiler.builder.build_ret_void();
+        in_main_function!(compiler, {
+            let val = compiler.visit_func_call(&func_call).unwrap();
+            assert!(matches!(val, Value::Null));
+        });
 
-        compiler.turn_off_optimization();
         assert_eq_ir!(
             compiler.ir_string(),
             r#"

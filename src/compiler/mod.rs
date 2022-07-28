@@ -1,3 +1,4 @@
+mod assignment;
 mod binary;
 mod func_call;
 mod numeric;
@@ -11,6 +12,7 @@ use crate::expression::Expression;
 use crate::expression::FuncDecl;
 use crate::llvm;
 use crate::llvm::BasicBlock;
+use crate::llvm::Function;
 use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
@@ -63,10 +65,6 @@ impl Visitor<CompilerResult<Value>> for Compiler {
         todo!()
     }
 
-    fn visit_assignment(&mut self, expr: &expression::Assignment) -> CompilerResult<Value> {
-        todo!()
-    }
-
     fn visit_unary(&mut self, expr: &expression::Unary) -> CompilerResult<Value> {
         todo!()
     }
@@ -105,8 +103,6 @@ impl Visitor<CompilerResult<Value>> for Compiler {
 
 impl Compile for Compiler {
     fn compile(&mut self) -> CompilerResult<Value> {
-        self.scopes.push(Scope::new());
-        self.init_builtins();
         self.visit_program(self.program.clone())
     }
 }
@@ -183,16 +179,20 @@ impl Compiler {
 
         self.builder.position_builder_at_end(&curr);
 
-        fun.verify_function().unwrap_or_else(|_x| {
-            println!("IR Dump:");
-            self.dump_ir();
-            panic!("Function verification failed")
-        });
+        self.verify_function(fun);
 
         if self.optimization {
             self.pass_manager.run(&fun);
         };
         Ok(())
+    }
+
+    fn verify_function(&mut self, fun: Function) {
+        fun.verify_function().unwrap_or_else(|_x| {
+            println!("IR Dump:");
+            self.dump_ir();
+            panic!("Function verification failed")
+        });
     }
 
     pub fn dump_ir(&self) {
@@ -237,8 +237,8 @@ impl Compiler {
             .add_symbol("print", stdlib::print as *mut c_void);
         let fun_type = self.context.function_type(
             self.context.void_type(),
-            &[self.context.i8_type().pointer_type(0)],
-            true,
+            &[self.context.void_type().pointer_type(0)],
+            false,
         );
         let print = self.module.add_function("print", fun_type);
         scope.set(
@@ -257,7 +257,7 @@ impl Compiler {
         self.context
             .add_symbol("string", stdlib::string as *mut c_void);
         let fun_type = self.context.function_type(
-            self.context.double_type().pointer_type(0),
+            self.context.void_type().pointer_type(0),
             &[self.context.double_type()],
             false,
         );

@@ -1,7 +1,9 @@
+#[cfg(test)]
+#[macro_use]
+extern crate test_utils;
+
 mod llvm;
 mod visitor;
-
-pub mod test_utils;
 
 pub mod compiler;
 pub mod expression;

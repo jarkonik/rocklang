@@ -21,11 +21,19 @@ pub trait ProgramVisitor<T> {
     fn visit_program(&mut self, program: Program) -> T;
 }
 
+pub trait AssignmentVisitor<T> {
+    fn visit_assignment(&mut self, expr: &expression::Assignment) -> T;
+}
+
 pub trait Visitor<T>:
-    BinaryVisitor<T> + FuncCallVisitor<T> + NumericVisitor<T> + StringVisitor<T> + ProgramVisitor<T>
+    BinaryVisitor<T>
+    + FuncCallVisitor<T>
+    + NumericVisitor<T>
+    + StringVisitor<T>
+    + ProgramVisitor<T>
+    + AssignmentVisitor<T>
 {
     fn visit_conditional(&mut self, expr: &expression::Conditional) -> T;
-    fn visit_assignment(&mut self, expr: &expression::Assignment) -> T;
     fn visit_unary(&mut self, expr: &expression::Unary) -> T;
     fn visit_grouping(&mut self, expr: &expression::Expression) -> T;
     fn visit_while(&mut self, expr: &expression::While) -> T;

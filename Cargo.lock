@@ -300,6 +300,7 @@ dependencies = [
  "serde",
  "serde_json",
  "stdlib",
+ "test_utils",
 ]
 
 [[package]]
@@ -383,6 +384,10 @@ name = "termtree"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13a4ec180a2de59b57434704ccfad967f789b12737738798fa08798cd5824c16"
+
+[[package]]
+name = "test_utils"
+version = "0.1.0"
 
 [[package]]
 name = "ucd-trie"
