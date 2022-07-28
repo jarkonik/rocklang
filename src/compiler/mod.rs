@@ -141,30 +141,6 @@ impl Default for Compiler {
 }
 
 impl Compiler {
-    fn compile_args(&mut self, args: &Vec<Expression>) -> Result<Vec<llvm::Value>, CompilerError> {
-        args.iter()
-            .map(|arg| {
-                let val = match self.walk(arg)? {
-                    Value::Null => todo!(),
-                    Value::String(n) => n,
-                    Value::ConstString(str) => str,
-                    Value::Numeric(n) => n,
-                    Value::Bool(_) => todo!(),
-                    Value::Function {
-                        val,
-                        typ,
-                        return_type,
-                    } => todo!(),
-                    Value::Vec(_) => todo!(),
-                    Value::Break => todo!(),
-                    Value::Ptr(_) => todo!(),
-                };
-
-                Ok(val)
-            })
-            .collect()
-    }
-
     fn get_var(&self, name: &str) -> Option<&Value> {
         self.scopes.last().unwrap().get(name)
     }
