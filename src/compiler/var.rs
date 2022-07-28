@@ -10,6 +10,9 @@ pub enum Var {
     Vec(llvm::Value),
     GlobalString(llvm::Value),
     Bool(llvm::Value),
+    Struct {
+        typ: llvm::Type
+    },
     Function {
         val: llvm::Value,
         typ: llvm::Type,

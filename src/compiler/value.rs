@@ -13,6 +13,9 @@ pub enum Value {
         typ: llvm::Type,
         return_type: parser::Type,
     },
+    Struct {
+        typ: llvm::Type,
+    },
     Vec(llvm::Value),
     Break,
     Ptr(llvm::Value),

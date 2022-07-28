@@ -76,7 +76,7 @@
           "kind": "bin"
         }
       },
-      "args": ["examples/struct.rc", "--ast"],
+      "args": ["examples/struct.rc"],
       "cwd": "${workspaceFolder}"
     },
     {

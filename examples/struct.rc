@@ -1,8 +1,4 @@
-struct user {
+struct User {
   name: string
   age: number
-}
-
-struct admin_panel {
-  user: user
 }

@@ -366,6 +366,17 @@ impl Context {
         })
     }
 
+    pub fn struct_type(&self, field_types: &[Type], is_var_arg: bool) -> Type {
+        let mut args: Vec<*mut llvm::LLVMType> = field_types.iter().map(|t| t.0).collect();
+        Type(unsafe {
+            LLVMStructType(
+                args.as_mut_ptr(),
+                field_types.len().try_into().unwrap(),
+                if is_var_arg { 1 } else { 0 },
+            )
+        })
+    }
+
     pub fn array_type(&self, el_type: Type, el_count: u32) -> Type {
         Type(unsafe { LLVMArrayType(el_type.0, el_count) })
     }
