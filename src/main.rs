@@ -52,12 +52,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
-    // let mut evaluator = Evaluator::new(ast);
-    // evaluator.evaluate();
-
     let mut compiler = Compiler::new(ast);
     if no_opt {
-        compiler.no_opt();
+        compiler.turn_off_optimization();
     }
 
     compiler.compile()?;

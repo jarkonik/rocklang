@@ -4,18 +4,7 @@ use rocklang::expression::{
     self, Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Operator, Unary, While,
 };
 use rocklang::parser::{Param, Program, Type};
-
-fn remove_whitespace(s: &str) -> String {
-    s.chars().filter(|c| !c.is_whitespace()).collect()
-}
-
-macro_rules! assert_eq_ir {
-    ($expression1:expr, $expression2:expr) => {
-        if (!remove_whitespace($expression1).eq(&remove_whitespace($expression2))) {
-            panic!("result: {}\n valid: {}", $expression1, $expression2);
-        }
-    };
-}
+use rocklang::{assert_eq_ir, remove_whitespace};
 
 #[test]
 fn it_compiles_numeric_asignment() {
@@ -27,12 +16,12 @@ fn it_compiles_numeric_asignment() {
     };
 
     let mut compiler = Compiler::new(program);
-    compiler.no_opt();
+    compiler.turn_off_optimization();
     compiler.compile().unwrap();
 
     assert_eq!(
-        remove_whitespace(&compiler.ir_string()),
-        remove_whitespace(
+        remove_whitespace!(&compiler.ir_string()),
+        remove_whitespace!(
             "
             ;ModuleID='main'source_filename=\"main\"targetdatalayout=\"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"
             @x= global double 0.000000e+00
@@ -62,12 +51,12 @@ fn it_compiles_numeric_to_numeric_asignment() {
     };
 
     let mut compiler = Compiler::new(program);
-    compiler.no_opt();
+    compiler.turn_off_optimization();
     compiler.compile().unwrap();
 
     assert_eq!(
-        remove_whitespace(&compiler.ir_string()),
-        remove_whitespace(
+        remove_whitespace!(&compiler.ir_string()),
+        remove_whitespace!(
             "
             ;ModuleID='main'source_filename=\"main\"targetdatalayout=\"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"
             @x = global double 0.000000e+00

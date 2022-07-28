@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, ffi::CString, rc::Rc};
 
 pub extern "C" fn vec_new() -> *const RefCell<Vec<f64>> {
     let vec: Vec<f64> = Vec::new();
@@ -6,6 +6,8 @@ pub extern "C" fn vec_new() -> *const RefCell<Vec<f64>> {
     Rc::into_raw(rc)
 }
 
+/// # Safety
+/// Accesses raw pointer
 pub unsafe extern "C" fn vec_reference(vec: *mut RefCell<Vec<f64>>) {
     Rc::increment_strong_count(vec);
 }
@@ -14,9 +16,11 @@ pub extern "C" fn sqrt(x: f64) -> f64 {
     x.sqrt()
 }
 
-#[allow(clippy::missing_safety_doc)]
+/// # Safety
+/// Accesses raw pointer
 pub unsafe extern "C" fn vec_mut(vec: *const RefCell<Vec<f64>>, idx: f64, value: f64) {
     let rc = Rc::from_raw(vec);
+
     {
         let mut v = rc.borrow_mut();
         while v.len() <= idx as usize {
@@ -27,6 +31,8 @@ pub unsafe extern "C" fn vec_mut(vec: *const RefCell<Vec<f64>>, idx: f64, value:
     Rc::into_raw(rc);
 }
 
+/// # Safety
+/// Accesses raw pointer
 pub unsafe extern "C" fn vec_get(vec: *mut RefCell<Vec<f64>>, idx: f64) -> f64 {
     let rc = Rc::from_raw(vec);
     let val = {
@@ -38,7 +44,8 @@ pub unsafe extern "C" fn vec_get(vec: *mut RefCell<Vec<f64>>, idx: f64) -> f64 {
     val
 }
 
-#[allow(clippy::missing_safety_doc)]
+/// # Safety
+/// Accesses raw pointer
 pub unsafe extern "C" fn len(vec: *mut RefCell<Vec<f64>>) -> f64 {
     let rc = Rc::from_raw(vec);
     let len = {
@@ -49,14 +56,18 @@ pub unsafe extern "C" fn len(vec: *mut RefCell<Vec<f64>>) -> f64 {
     len as f64
 }
 
-#[allow(clippy::missing_safety_doc)]
+/// # Safety
+/// Accesses raw pointer
 pub unsafe extern "C" fn vec_release(vec: *mut RefCell<Vec<f64>>) {
     Rc::decrement_strong_count(vec);
 }
 
-// pub extern "C" fn vec_copy(vec: *mut Vec<f64>) -> *mut std::vec::Vec<f64> {
-// let v = unsafe { Box::from_raw(vec as *mut Vec<f64>) };
-// let new_vec = v.to_vec();
-// Box::into_raw(Box::new(v));
-// Box::into_raw(Box::new(new_vec))
-// }
+#[no_mangle]
+pub extern "C" fn hello() {
+    println!("hello");
+}
+
+#[no_mangle]
+pub extern "C" fn string(num: f64) -> *const i8 {
+    CString::into_raw(CString::new(num.to_string()).unwrap())
+}

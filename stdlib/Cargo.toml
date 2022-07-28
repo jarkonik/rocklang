@@ -9,4 +9,3 @@ edition = "2021"
 
 [lib]
 name = "stdlib"
-# crate-type = ["staticlib", "cdylib"]

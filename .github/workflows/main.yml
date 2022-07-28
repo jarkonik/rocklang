@@ -18,6 +18,18 @@ jobs:
         with:
           command: check
 
+  # valgrind_test:
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Install valgrind
+  #       run: sudo apt install valgrind
+  #     - name: Install cargo valgrind
+  #       run: cargo install cargo-valgrind
+  #     - name: Run tests
+  #       run: cargo valgrind test
+
   test:
     name: Test Suite
     runs-on: ubuntu-latest

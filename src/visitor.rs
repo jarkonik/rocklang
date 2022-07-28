@@ -1,19 +1,24 @@
-use crate::expression;
-use crate::expression::Expression;
+use crate::expression::{self, Expression};
 use crate::parser::Program;
 
-pub trait Visitor<T> {
-    fn visit_binary(&mut self, n: &expression::Binary) -> T;
-    fn visit_numeric(&mut self, n: &f64) -> T;
-    fn visit_conditional(&mut self, n: &expression::Conditional) -> T;
-    fn visit_assignment(&mut self, n: &expression::Assignment) -> T;
-    fn visit_unary(&mut self, n: &expression::Unary) -> T;
-    fn visit_grouping(&mut self, n: &expression::Expression) -> T;
-    fn visit_func_call(&mut self, n: &expression::FuncCall) -> T;
-    fn visit_while(&mut self, n: &expression::While) -> T;
-    fn visit_identifier(&mut self, n: &str) -> T;
-    fn visit_string(&mut self, n: &str) -> T;
-    fn visit_bool(&mut self, n: &bool) -> T;
+pub trait BinaryVisitor<T> {
+    fn visit_binary(&mut self, expr: &expression::Binary) -> T;
+}
+
+pub trait FuncCallVisitor<T> {
+    fn visit_func_call(&mut self, expr: &expression::FuncCall) -> T;
+}
+
+pub trait Visitor<T>: BinaryVisitor<T> + FuncCallVisitor<T> {
+    fn visit_numeric(&mut self, expr: &f64) -> T;
+    fn visit_conditional(&mut self, expr: &expression::Conditional) -> T;
+    fn visit_assignment(&mut self, expr: &expression::Assignment) -> T;
+    fn visit_unary(&mut self, expr: &expression::Unary) -> T;
+    fn visit_grouping(&mut self, expr: &expression::Expression) -> T;
+    fn visit_while(&mut self, expr: &expression::While) -> T;
+    fn visit_identifier(&mut self, expr: &str) -> T;
+    fn visit_string(&mut self, expr: &str) -> T;
+    fn visit_bool(&mut self, expr: &bool) -> T;
     fn visit_break(&mut self) -> T;
     fn visit_program(&mut self, program: Program) -> T;
     fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> T;

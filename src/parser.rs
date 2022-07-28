@@ -59,7 +59,7 @@ pub struct Param {
     pub name: String,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Default, Serialize, Clone)]
 pub struct Program {
     pub body: Vec<Expression>,
 }

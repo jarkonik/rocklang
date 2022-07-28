@@ -5,11 +5,11 @@ use crate::parser;
 pub enum Value {
     Null,
     String(llvm::Value),
-    GlobalString(llvm::Value),
+    ConstString(llvm::Value),
     Numeric(llvm::Value),
     Bool(llvm::Value),
     Function {
-        val: llvm::Value,
+        val: llvm::Function,
         typ: llvm::Type,
         return_type: parser::Type,
     },
