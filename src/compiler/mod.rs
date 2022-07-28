@@ -2,6 +2,7 @@ mod binary;
 mod func_call;
 mod numeric;
 mod scope;
+mod string;
 mod value;
 
 use crate::expression;
@@ -78,14 +79,6 @@ impl Visitor<CompilerResult<Value>> for Compiler {
 
     fn visit_identifier(&mut self, expr: &str) -> CompilerResult<Value> {
         todo!()
-    }
-
-    fn visit_string(&mut self, expr: &str) -> CompilerResult<Value> {
-        let with_newlines = expr.to_string().replace("\\n", "\n");
-        Ok(Value::ConstString(
-            self.builder
-                .build_global_string_ptr(with_newlines.as_str(), ""),
-        ))
     }
 
     fn visit_bool(&mut self, expr: &bool) -> CompilerResult<Value> {
