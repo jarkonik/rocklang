@@ -1,3 +1,8 @@
 struct user {
-  name: String
+  name: string
+  age: number
+}
+
+struct admin_panel {
+  user: user
 }

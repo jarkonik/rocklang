@@ -192,6 +192,7 @@ impl Tokenizer {
             "else" => self.add_token(Token::Else),
             "load" => self.add_token(Token::Load),
             "extern" => self.add_token(Token::Extern),
+            "struct" => self.add_token(Token::Struct),
             _ => self.add_token(Token::Identifier(literal)),
         };
     }

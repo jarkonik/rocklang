@@ -370,32 +370,44 @@ impl Parser {
 
     fn struct_declr(&mut self) -> Result<Expression> {
         match self.peek().clone() {
-            Token::Identifier(ref name) => {
+            Token::Struct => {
                 self.advance();
 
-                match self.peek() {
-                    Token::LCurly => {
+                match self.peek().clone() {
+                    Token::Identifier(ref name) => {
                         self.advance();
 
-                        let mut fields: Vec<StructField> = Vec::new();
-
-                        while match self.peek().clone() {
-                            Token::Identifier(ref field_name) => {
+                        match self.peek() {
+                            Token::LCurly => {
                                 self.advance();
-                                
-                                match self.peek() {
-                                    Token::Colon => {
-                                        self.advance();
 
-                                        match self.peek().clone() {
-                                            Token::Identifier(ref field_type) => {
+                                let mut fields: Vec<StructField> = Vec::new();
+
+                                while match self.peek().clone() {
+                                    Token::Identifier(ref field_name) => {
+                                        self.advance();
+                                        
+                                        match self.peek() {
+                                            Token::Colon => {
                                                 self.advance();
 
-                                                fields.push(StructField {
-                                                    name: field_name.clone(),
-                                                    field_type: self.type_from_literal(&field_type)?,
-                                                });
-                                            }
+                                                match self.peek().clone() {
+                                                    Token::Identifier(ref field_type) => {
+                                                        self.advance();
+
+                                                        fields.push(StructField {
+                                                            name: field_name.clone(),
+                                                            field_type: self.type_from_literal(&field_type)?,
+                                                        });
+                                                    }
+                                                    _ => {
+                                                        return Err(ParserError::SyntaxError {
+                                                            token: self.previous().clone(),
+                                                            backtrace: Backtrace::new(),
+                                                        })
+                                                    }
+                                                }
+                                            },
                                             _ => {
                                                 return Err(ParserError::SyntaxError {
                                                     token: self.previous().clone(),
@@ -403,25 +415,28 @@ impl Parser {
                                                 })
                                             }
                                         }
+
+                                        true
                                     },
-                                    _ => {
-                                        return Err(ParserError::SyntaxError {
-                                            token: self.previous().clone(),
-                                            backtrace: Backtrace::new(),
-                                        })
+                                    Token::RCurly => {
+                                        self.advance();
+                                        false
                                     }
-                                }
+                                    _ => false
+                                } {}
 
-
-                                true
-                            },
-                            _ => false
-                        } {}
-
-                        Ok(Expression::Struct(expression::Struct {
-                            fields,
-                            name: name.clone(),
-                        }))
+                                Ok(Expression::Struct(expression::Struct {
+                                    fields,
+                                    name: name.clone(),
+                                }))
+                            }
+                            _ => {
+                                return Err(ParserError::SyntaxError {
+                                    token: self.previous().clone(),
+                                    backtrace: Backtrace::new(),
+                                })
+                            }
+                        }
                     }
                     _ => {
                         return Err(ParserError::SyntaxError {
@@ -431,7 +446,7 @@ impl Parser {
                     }
                 }
             }
-            _ => self.extern_stmt(),
+            _ => self.func_declr(),
         }
     }
 
@@ -507,7 +522,7 @@ impl Parser {
                     name,
                 }))
             }
-            _ => self.func_declr(),
+            _ => self.struct_declr(),
         }
     }
 

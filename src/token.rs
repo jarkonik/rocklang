@@ -36,6 +36,7 @@ pub enum Token {
     Numeric(f64),
     Load,
     Extern,
+    Struct,
     Eof,
 }
 
@@ -75,6 +76,7 @@ fn token_name(token: &Token) -> &str {
         Token::Colon => "Colon",
         Token::Load => "Load",
         Token::Extern => "Extern",
+        Token::Struct => "Struct",
     }
 }
 
