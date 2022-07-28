@@ -9,8 +9,11 @@ pub trait FuncCallVisitor<T> {
     fn visit_func_call(&mut self, expr: &expression::FuncCall) -> T;
 }
 
-pub trait Visitor<T>: BinaryVisitor<T> + FuncCallVisitor<T> {
+pub trait NumericVisitor<T> {
     fn visit_numeric(&mut self, expr: &f64) -> T;
+}
+
+pub trait Visitor<T>: BinaryVisitor<T> + FuncCallVisitor<T> + NumericVisitor<T> {
     fn visit_conditional(&mut self, expr: &expression::Conditional) -> T;
     fn visit_assignment(&mut self, expr: &expression::Assignment) -> T;
     fn visit_unary(&mut self, expr: &expression::Unary) -> T;

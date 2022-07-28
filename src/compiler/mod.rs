@@ -1,5 +1,6 @@
 mod binary;
 mod func_call;
+mod numeric;
 mod scope;
 mod value;
 
@@ -55,10 +56,6 @@ pub struct Compiler {
 }
 
 impl Visitor<CompilerResult<Value>> for Compiler {
-    fn visit_numeric(&mut self, expr: &f64) -> CompilerResult<Value> {
-        Ok(Value::Numeric(self.context.const_double(*expr)))
-    }
-
     fn visit_conditional(&mut self, expr: &expression::Conditional) -> CompilerResult<Value> {
         todo!()
     }
