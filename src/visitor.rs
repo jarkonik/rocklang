@@ -17,8 +17,12 @@ pub trait StringVisitor<T> {
     fn visit_string(&mut self, expr: &str) -> T;
 }
 
+pub trait ProgramVisitor<T> {
+    fn visit_program(&mut self, program: Program) -> T;
+}
+
 pub trait Visitor<T>:
-    BinaryVisitor<T> + FuncCallVisitor<T> + NumericVisitor<T> + StringVisitor<T>
+    BinaryVisitor<T> + FuncCallVisitor<T> + NumericVisitor<T> + StringVisitor<T> + ProgramVisitor<T>
 {
     fn visit_conditional(&mut self, expr: &expression::Conditional) -> T;
     fn visit_assignment(&mut self, expr: &expression::Assignment) -> T;
@@ -28,7 +32,6 @@ pub trait Visitor<T>:
     fn visit_identifier(&mut self, expr: &str) -> T;
     fn visit_bool(&mut self, expr: &bool) -> T;
     fn visit_break(&mut self) -> T;
-    fn visit_program(&mut self, program: Program) -> T;
     fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> T;
     fn visit_load(&mut self, name: &str) -> T;
     fn visit_extern(&mut self, name: &expression::Extern) -> T;

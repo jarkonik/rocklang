@@ -1,6 +1,7 @@
 mod binary;
 mod func_call;
 mod numeric;
+mod program;
 mod scope;
 mod string;
 mod value;
@@ -13,6 +14,7 @@ use crate::llvm::BasicBlock;
 use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
+use crate::visitor::ProgramVisitor;
 use crate::visitor::Visitor;
 use std::convert::TryInto;
 use std::error::Error;
@@ -41,7 +43,7 @@ type CompilerResult<T> = Result<T, CompilerError>;
 
 const MAIN_FUNCTION: &str = "main";
 
-pub trait Compile {
+pub trait Compile: ProgramVisitor<CompilerResult<Value>> {
     fn compile(&mut self) -> CompilerResult<Value>;
 }
 
@@ -88,24 +90,6 @@ impl Visitor<CompilerResult<Value>> for Compiler {
     fn visit_break(&mut self) -> CompilerResult<Value> {
         todo!()
     }
-
-    fn visit_program(&mut self, program: Program) -> CompilerResult<Value> {
-        let main_fun = self.module.add_function(
-            MAIN_FUNCTION,
-            self.context
-                .function_type(self.context.void_type(), &[], false),
-        );
-        let block = self.context.append_basic_block(&main_fun, "");
-        self.builder.position_builder_at_end(&block);
-
-        for stmt in program.body {
-            self.walk(&stmt)?;
-        }
-
-        self.builder.build_ret_void();
-        Ok(Value::Null)
-    }
-
     fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> CompilerResult<Value> {
         todo!()
     }
