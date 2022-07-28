@@ -1586,7 +1586,7 @@ fn it_parses_grouping_expression_with_identifiers() {
 
 #[test]
 fn it_parses_load_expression() {
-    let mut parser = Parser::new(&vec![
+    let mut parser = Parser::new(&[
         Token::Load,
         Token::LeftParen,
         Token::String(String::from("somelib.so")),
@@ -1600,6 +1600,45 @@ fn it_parses_load_expression() {
     assert_json_eq!(
         json!([{
             "Load": "somelib.so"
+        }]),
+        json
+    )
+}
+
+#[test]
+fn it_parse_struct_declaration() {
+    let mut parser = Parser::new(&vec![
+        Token::Struct,
+        Token::Identifier("User".to_string()),
+        Token::LCurly,
+        Token::Identifier("name".to_string()),
+        Token::Colon,
+        Token::Identifier("string".to_string()),
+        Token::Identifier("age".to_string()),
+        Token::Colon,
+        Token::Identifier("number".to_string()),
+        Token::RCurly,
+        Token::Eof,
+    ]);
+
+    let ast = parser.parse().unwrap().body;
+    let json = serde_json::to_value(&ast).unwrap();
+
+    assert_json_eq!(
+        json!([{
+            "Struct": {
+                "name": "User",
+                "fields": [
+                    {
+                        "name": "name",
+                        "field_type": "String"
+                    },
+                    {
+                        "name": "age",
+                        "field_type": "Numeric"
+                    }
+                ]
+            }
         }]),
         json
     )

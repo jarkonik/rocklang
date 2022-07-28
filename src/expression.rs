@@ -1,5 +1,5 @@
-use crate::parser::{Param, StructField};
 use crate::parser::Type;
+use crate::parser::{Param, StructField};
 use serde::Serialize;
 
 #[derive(Serialize, Debug, Clone)]
@@ -92,5 +92,5 @@ pub enum Expression {
     FuncDecl(FuncDecl),
     Load(String),
     Extern(Extern),
-    Struct(Struct)
+    Struct(Struct),
 }

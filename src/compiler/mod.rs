@@ -692,9 +692,7 @@ impl Visitor<Value> for Compiler {
 
         let struct_type = self.context.struct_type(&types, false);
 
-        Value::Struct {
-            typ: struct_type
-        }
+        Value::Struct { typ: struct_type }
     }
 }
 
@@ -743,7 +741,7 @@ impl Compiler {
         if self.get_var(literal).is_none() && self.stack.len() <= 1 {
             let ptr = match val {
                 Value::Null => unreachable!(),
-                Value::Struct{ typ } => unreachable!(),
+                Value::Struct { typ: _ } => unreachable!(),
                 Value::Numeric(_)
                 | Value::Ptr(_)
                 | Value::String(_)
@@ -762,7 +760,7 @@ impl Compiler {
                     ptr.set_initializer(self.context.const_double(0.0));
                 }
                 Value::Null => unreachable!(),
-                Value::Struct{ typ } => unreachable!(),
+                Value::Struct { typ: _ } => unreachable!(),
                 Value::String(_) => todo!(),
                 Value::Function { .. } => (),
                 Value::Break => unreachable!(),
@@ -773,7 +771,7 @@ impl Compiler {
 
             let var = match val {
                 Value::Numeric(_) => Var::Numeric(ptr),
-                Value::Struct { typ } => todo!(),
+                Value::Struct { typ: _ } => todo!(),
                 Value::Ptr(_) => Var::Ptr(ptr),
                 Value::Null => Var::Null,
                 Value::String(_) => Var::String(ptr),
@@ -813,7 +811,7 @@ impl Compiler {
 
             let var = match val {
                 Value::Numeric(_) => Var::Numeric(ptr),
-                Value::Struct { typ } => todo!(),
+                Value::Struct { typ: _ } => todo!(),
                 Value::Ptr(_) => Var::Ptr(ptr),
                 Value::Null => Var::Null,
                 Value::String(_) => Var::String(ptr),

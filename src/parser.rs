@@ -386,7 +386,7 @@ impl Parser {
                                 while match self.peek().clone() {
                                     Token::Identifier(ref field_name) => {
                                         self.advance();
-                                        
+
                                         match self.peek() {
                                             Token::Colon => {
                                                 self.advance();
@@ -397,7 +397,8 @@ impl Parser {
 
                                                         fields.push(StructField {
                                                             name: field_name.clone(),
-                                                            field_type: self.type_from_literal(&field_type)?,
+                                                            field_type: self
+                                                                .type_from_literal(field_type)?,
                                                         });
                                                     }
                                                     _ => {
@@ -407,7 +408,7 @@ impl Parser {
                                                         })
                                                     }
                                                 }
-                                            },
+                                            }
                                             _ => {
                                                 return Err(ParserError::SyntaxError {
                                                     token: self.previous().clone(),
@@ -417,12 +418,12 @@ impl Parser {
                                         }
 
                                         true
-                                    },
+                                    }
                                     Token::RCurly => {
                                         self.advance();
                                         false
                                     }
-                                    _ => false
+                                    _ => false,
                                 } {}
 
                                 Ok(Expression::Struct(expression::Struct {

@@ -11,7 +11,7 @@ pub enum Var {
     GlobalString(llvm::Value),
     Bool(llvm::Value),
     Struct {
-        typ: llvm::Type
+        typ: llvm::Type,
     },
     Function {
         val: llvm::Value,
