@@ -682,6 +682,13 @@ impl Visitor<Value> for Compiler {
             return_type: extern_stmt.return_type,
         }
     }
+
+    fn visit_struct(&mut self, _name: &expression::Struct) -> Value {
+        // let struct_type = self.context.struct_type(&name.name);
+        // let struct_value = self.context.const_named_struct(struct_type, &name.fields);
+
+        Value::Null
+    }
 }
 
 impl Compile for Compiler {

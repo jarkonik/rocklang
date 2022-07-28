@@ -1,0 +1,3 @@
+struct user {
+  name: String
+}

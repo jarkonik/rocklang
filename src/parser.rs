@@ -10,6 +10,7 @@ use std::fmt::Display;
 pub enum ParserError {
     SyntaxError { token: Token, backtrace: Backtrace },
 }
+
 impl Display for ParserError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         match self {
@@ -22,6 +23,7 @@ impl Display for ParserError {
         }
     }
 }
+
 impl Error for ParserError {}
 
 impl PartialEq for ParserError {
@@ -57,6 +59,12 @@ pub enum Type {
 pub struct Param {
     pub typ: Type,
     pub name: String,
+}
+
+#[derive(Clone, Serialize, Debug)]
+pub struct StructField {
+    pub name: String,
+    pub field_type: Type,
 }
 
 #[derive(Serialize, Clone)]
@@ -355,6 +363,73 @@ impl Parser {
                     operator: Operator::Minus,
                     right: Box::new(self.unary()?),
                 }))
+            }
+            _ => self.extern_stmt(),
+        }
+    }
+
+    fn struct_declr(&mut self) -> Result<Expression> {
+        match self.peek().clone() {
+            Token::Identifier(ref name) => {
+                self.advance();
+
+                match self.peek() {
+                    Token::LCurly => {
+                        self.advance();
+
+                        let mut fields: Vec<StructField> = Vec::new();
+
+                        while match self.peek().clone() {
+                            Token::Identifier(ref field_name) => {
+                                self.advance();
+                                
+                                match self.peek() {
+                                    Token::Colon => {
+                                        self.advance();
+
+                                        match self.peek().clone() {
+                                            Token::Identifier(ref field_type) => {
+                                                self.advance();
+
+                                                fields.push(StructField {
+                                                    name: field_name.clone(),
+                                                    field_type: self.type_from_literal(&field_type)?,
+                                                });
+                                            }
+                                            _ => {
+                                                return Err(ParserError::SyntaxError {
+                                                    token: self.previous().clone(),
+                                                    backtrace: Backtrace::new(),
+                                                })
+                                            }
+                                        }
+                                    },
+                                    _ => {
+                                        return Err(ParserError::SyntaxError {
+                                            token: self.previous().clone(),
+                                            backtrace: Backtrace::new(),
+                                        })
+                                    }
+                                }
+
+
+                                true
+                            },
+                            _ => false
+                        } {}
+
+                        Ok(Expression::Struct(expression::Struct {
+                            fields,
+                            name: name.clone(),
+                        }))
+                    }
+                    _ => {
+                        return Err(ParserError::SyntaxError {
+                            token: self.previous().clone(),
+                            backtrace: Backtrace::new(),
+                        })
+                    }
+                }
             }
             _ => self.extern_stmt(),
         }

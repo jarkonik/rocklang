@@ -19,6 +19,7 @@ pub trait Visitor<T> {
     fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> T;
     fn visit_load(&mut self, name: &str) -> T;
     fn visit_extern(&mut self, name: &expression::Extern) -> T;
+    fn visit_struct(&mut self, name: &expression::Struct) -> T;
 
     fn walk(&mut self, expr: &Expression) -> T {
         match expr {
@@ -37,6 +38,7 @@ pub trait Visitor<T> {
             Expression::FuncDecl(expr) => self.visit_func_decl(expr),
             Expression::Load(expr) => self.visit_load(expr),
             Expression::Extern(expr) => self.visit_extern(expr),
+            Expression::Struct(expr) => self.visit_struct(expr),
         }
     }
 }

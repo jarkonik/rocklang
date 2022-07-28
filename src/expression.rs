@@ -1,4 +1,4 @@
-use crate::parser::Param;
+use crate::parser::{Param, StructField};
 use crate::parser::Type;
 use serde::Serialize;
 
@@ -70,6 +70,12 @@ pub struct Extern {
 }
 
 #[derive(Serialize, Debug, Clone)]
+pub struct Struct {
+    pub fields: Vec<StructField>,
+    pub name: String,
+}
+
+#[derive(Serialize, Debug, Clone)]
 pub enum Expression {
     Break,
     Bool(bool),
@@ -86,4 +92,5 @@ pub enum Expression {
     FuncDecl(FuncDecl),
     Load(String),
     Extern(Extern),
+    Struct(Struct)
 }
