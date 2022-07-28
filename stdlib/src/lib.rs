@@ -1,4 +1,8 @@
-use std::{cell::RefCell, ffi::CString, rc::Rc};
+use std::{
+    cell::RefCell,
+    ffi::{CStr, CString},
+    rc::Rc,
+};
 
 pub extern "C" fn vec_new() -> *const RefCell<Vec<f64>> {
     let vec: Vec<f64> = Vec::new();
@@ -65,4 +69,11 @@ pub unsafe extern "C" fn vec_release(vec: *mut RefCell<Vec<f64>>) {
 #[no_mangle]
 pub extern "C" fn string(num: f64) -> *const i8 {
     CString::into_raw(CString::new(num.to_string()).unwrap())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn print(ptr: *mut i8) {
+    let c_str = CStr::from_ptr(ptr);
+    let str = c_str.to_str().unwrap();
+    print!("{}", str);
 }

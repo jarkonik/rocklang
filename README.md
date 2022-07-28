@@ -21,7 +21,7 @@ JIT-compiled functional programming language.
 1. [Download and run the installer.](https://github.com/jarkonik/rocklang/releases/latest/download/rocklang-windows-latest.msi)
 2. At this point, if you haven't changed the default installer options,
    `rocklang.exe` should be installed and added to your `PATH`.
-3. Create a file named `main.rc` in a directory of your choice, with following
+3. Create a file named `main.rck` in a directory of your choice, with following
    content:
 ```
 print("Hello from rocklang")
@@ -80,7 +80,7 @@ sieve(100)
 ## Building from source
 1. Install Rust compiler that supports Rust Edition 2021, along with `cargo` tool, in your favorite fashion.
 2. Install llvm 13
-3. Run `cargo build` to build binaries or `cargo run examples/sieve.rc` to run a sample program.
+3. Run `cargo build` to build binaries or `cargo run examples/sieve.rck` to run a sample program.
 
 ## License
 

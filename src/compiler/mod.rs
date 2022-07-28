@@ -232,16 +232,19 @@ impl Compiler {
 
     fn init_builtins(&mut self) {
         let scope = self.scopes.last_mut().unwrap();
+
+        self.context
+            .add_symbol("print", stdlib::print as *mut c_void);
         let fun_type = self.context.function_type(
-            self.context.i32_type(),
+            self.context.void_type(),
             &[self.context.i8_type().pointer_type(0)],
             true,
         );
-        let printf = self.module.add_function("puts", fun_type);
+        let print = self.module.add_function("print", fun_type);
         scope.set(
             "print",
             Value::Function {
-                val: printf,
+                val: print,
                 typ: fun_type,
                 return_type: parser::Type::Null,
             },
