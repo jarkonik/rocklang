@@ -248,21 +248,6 @@ impl Compiler {
         );
 
         self.context
-            .add_symbol("hello", stdlib::hello as *mut c_void);
-        let fun_type = self
-            .context
-            .function_type(self.context.void_type(), &[], false);
-        let hello = self.module.add_function("hello", fun_type);
-        scope.set(
-            "hello",
-            Value::Function {
-                val: hello,
-                typ: fun_type,
-                return_type: parser::Type::Null,
-            },
-        );
-
-        self.context
             .add_symbol("string", stdlib::string as *mut c_void);
         let fun_type = self.context.function_type(
             self.context.double_type().pointer_type(0),

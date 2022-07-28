@@ -63,11 +63,6 @@ pub unsafe extern "C" fn vec_release(vec: *mut RefCell<Vec<f64>>) {
 }
 
 #[no_mangle]
-pub extern "C" fn hello() {
-    println!("hello");
-}
-
-#[no_mangle]
 pub extern "C" fn string(num: f64) -> *const i8 {
     CString::into_raw(CString::new(num.to_string()).unwrap())
 }
