@@ -1,11 +1,11 @@
 use crate::{
-    expression::{self, Expression, FuncDecl},
+    expression::{self, Expression},
     llvm, parser,
     visitor::FuncCallVisitor,
     visitor::Visitor,
 };
 
-use super::{scope::Scope, Compiler, CompilerError, CompilerResult, Value};
+use super::{Compiler, CompilerError, CompilerResult, Value};
 
 impl Compiler {
     fn compile_args(&mut self, args: &Vec<Expression>) -> Result<Vec<llvm::Value>, CompilerError> {

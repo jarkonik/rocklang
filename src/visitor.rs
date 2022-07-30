@@ -41,6 +41,30 @@ pub trait WhileVisitor<T> {
     fn visit_while(&mut self, expr: &expression::While) -> T;
 }
 
+pub trait IdentifierVisitor<T> {
+    fn visit_identifier(&mut self, expr: &str) -> T;
+}
+
+pub trait BoolVisitor<T> {
+    fn visit_bool(&mut self, expr: &bool) -> T;
+}
+
+pub trait BreakVisitor<T> {
+    fn visit_break(&mut self) -> T;
+}
+
+pub trait FuncDeclVisitor<T> {
+    fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> T;
+}
+
+pub trait LoadVisitor<T> {
+    fn visit_load(&mut self, name: &str) -> T;
+}
+
+pub trait ExternVisitor<T> {
+    fn visit_extern(&mut self, name: &expression::Extern) -> T;
+}
+
 pub trait Visitor<T>:
     BinaryVisitor<T>
     + FuncCallVisitor<T>
@@ -52,14 +76,13 @@ pub trait Visitor<T>:
     + UnaryVisitor<T>
     + GroupingVisitor<T>
     + WhileVisitor<T>
+    + IdentifierVisitor<T>
+    + BoolVisitor<T>
+    + BreakVisitor<T>
+    + FuncDeclVisitor<T>
+    + LoadVisitor<T>
+    + ExternVisitor<T>
 {
-    fn visit_identifier(&mut self, expr: &str) -> T;
-    fn visit_bool(&mut self, expr: &bool) -> T;
-    fn visit_break(&mut self) -> T;
-    fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> T;
-    fn visit_load(&mut self, name: &str) -> T;
-    fn visit_extern(&mut self, name: &expression::Extern) -> T;
-
     fn walk(&mut self, expr: &Expression) -> T {
         match expr {
             Expression::Binary(expr) => self.visit_binary(expr),

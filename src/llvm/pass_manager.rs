@@ -9,7 +9,7 @@ use llvm_sys::{
     transforms::{scalar::*, util::LLVMAddPromoteMemoryToRegisterPass},
 };
 
-use super::{Function, Module, Value};
+use super::{Function, Module};
 
 pub struct PassManager(*mut llvm::LLVMPassManager);
 

@@ -1,6 +1,4 @@
-use std::ffi::c_void;
-
-use crate::{visitor::StringVisitor, llvm::Function};
+use crate::{visitor::StringVisitor};
 
 use super::{Compiler, CompilerResult, Value, CompilerError};
 

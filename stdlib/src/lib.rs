@@ -1,8 +1,6 @@
 use std::{
-    arch::x86_64::_mm_store_sd,
-    borrow::Borrow,
     cell::RefCell,
-    ffi::{c_void, CStr, CString},
+    ffi::{CStr},
     rc::Rc,
 };
 

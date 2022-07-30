@@ -1,8 +1,12 @@
 mod assignment;
 mod binary;
+mod break_visitor;
 mod conditional;
+mod extern_visitor;
 mod func_call;
+mod func_decl_vistor;
 mod grouping;
+mod load;
 mod numeric;
 mod program;
 mod scope;
@@ -10,19 +14,16 @@ mod string;
 mod unary;
 mod value;
 mod while_visitor;
+mod identifier;
+mod bool;
 
-use crate::expression;
-use crate::expression::Expression;
 use crate::expression::FuncDecl;
 use crate::llvm;
-use crate::llvm::BasicBlock;
 use crate::llvm::Function;
-use crate::llvm::PassManager;
 use crate::parser;
 use crate::parser::Program;
 use crate::visitor::ProgramVisitor;
 use crate::visitor::Visitor;
-use std::convert::TryInto;
 use std::error::Error;
 use std::ffi::c_void;
 use std::fmt;
@@ -64,30 +65,7 @@ pub struct Compiler {
     scopes: Vec<Scope>,
 }
 
-impl Visitor<CompilerResult<Value>> for Compiler {
-    fn visit_identifier(&mut self, expr: &str) -> CompilerResult<Value> {
-        todo!()
-    }
-
-    fn visit_bool(&mut self, expr: &bool) -> CompilerResult<Value> {
-        todo!()
-    }
-
-    fn visit_break(&mut self) -> CompilerResult<Value> {
-        todo!()
-    }
-    fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> CompilerResult<Value> {
-        todo!()
-    }
-
-    fn visit_load(&mut self, name: &str) -> CompilerResult<Value> {
-        todo!()
-    }
-
-    fn visit_extern(&mut self, name: &expression::Extern) -> CompilerResult<Value> {
-        todo!()
-    }
-}
+impl Visitor<CompilerResult<Value>> for Compiler {}
 
 impl Compile for Compiler {
     fn compile(&mut self) -> CompilerResult<Value> {

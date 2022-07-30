@@ -1,8 +1,5 @@
-use std::error::Error;
-
 use llvm::{
-    analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction},
-    core::{LLVMGetParam, LLVMSetInitializer},
+    core::{LLVMSetInitializer},
 };
 
 extern crate llvm_sys as llvm;

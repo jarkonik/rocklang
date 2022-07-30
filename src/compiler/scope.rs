@@ -1,5 +1,5 @@
-use crate::llvm::{self, Builder, Context, Module};
-use std::{collections::HashMap, ffi::c_void};
+use crate::llvm::{Builder, Context, Module};
+use std::{collections::HashMap};
 
 use super::{CompilerError, CompilerResult, Value};
 
