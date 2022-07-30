@@ -1,5 +1,6 @@
 mod assignment;
 mod binary;
+mod conditional;
 mod func_call;
 mod numeric;
 mod program;
@@ -61,10 +62,6 @@ pub struct Compiler {
 }
 
 impl Visitor<CompilerResult<Value>> for Compiler {
-    fn visit_conditional(&mut self, expr: &expression::Conditional) -> CompilerResult<Value> {
-        todo!()
-    }
-
     fn visit_unary(&mut self, expr: &expression::Unary) -> CompilerResult<Value> {
         todo!()
     }
