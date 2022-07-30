@@ -2,6 +2,7 @@ mod assignment;
 mod binary;
 mod conditional;
 mod func_call;
+mod grouping;
 mod numeric;
 mod program;
 mod scope;
@@ -63,10 +64,6 @@ pub struct Compiler {
 }
 
 impl Visitor<CompilerResult<Value>> for Compiler {
-    fn visit_grouping(&mut self, expr: &expression::Expression) -> CompilerResult<Value> {
-        todo!()
-    }
-
     fn visit_while(&mut self, expr: &expression::While) -> CompilerResult<Value> {
         todo!()
     }

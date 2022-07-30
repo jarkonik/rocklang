@@ -33,6 +33,10 @@ pub trait UnaryVisitor<T> {
     fn visit_unary(&mut self, expr: &expression::Unary) -> T;
 }
 
+pub trait GroupingVisitor<T> {
+    fn visit_grouping(&mut self, expr: &expression::Expression) -> T;
+}
+
 pub trait Visitor<T>:
     BinaryVisitor<T>
     + FuncCallVisitor<T>
@@ -42,8 +46,8 @@ pub trait Visitor<T>:
     + AssignmentVisitor<T>
     + ConditionalVisitor<T>
     + UnaryVisitor<T>
+    + GroupingVisitor<T>
 {
-    fn visit_grouping(&mut self, expr: &expression::Expression) -> T;
     fn visit_while(&mut self, expr: &expression::While) -> T;
     fn visit_identifier(&mut self, expr: &str) -> T;
     fn visit_bool(&mut self, expr: &bool) -> T;
