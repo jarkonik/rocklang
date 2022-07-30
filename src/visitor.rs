@@ -37,6 +37,10 @@ pub trait GroupingVisitor<T> {
     fn visit_grouping(&mut self, expr: &expression::Expression) -> T;
 }
 
+pub trait WhileVisitor<T> {
+    fn visit_while(&mut self, expr: &expression::While) -> T;
+}
+
 pub trait Visitor<T>:
     BinaryVisitor<T>
     + FuncCallVisitor<T>
@@ -47,8 +51,8 @@ pub trait Visitor<T>:
     + ConditionalVisitor<T>
     + UnaryVisitor<T>
     + GroupingVisitor<T>
+    + WhileVisitor<T>
 {
-    fn visit_while(&mut self, expr: &expression::While) -> T;
     fn visit_identifier(&mut self, expr: &str) -> T;
     fn visit_bool(&mut self, expr: &bool) -> T;
     fn visit_break(&mut self) -> T;

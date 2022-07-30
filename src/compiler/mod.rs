@@ -9,6 +9,7 @@ mod scope;
 mod string;
 mod unary;
 mod value;
+mod while_visitor;
 
 use crate::expression;
 use crate::expression::Expression;
@@ -64,10 +65,6 @@ pub struct Compiler {
 }
 
 impl Visitor<CompilerResult<Value>> for Compiler {
-    fn visit_while(&mut self, expr: &expression::While) -> CompilerResult<Value> {
-        todo!()
-    }
-
     fn visit_identifier(&mut self, expr: &str) -> CompilerResult<Value> {
         todo!()
     }
