@@ -6,6 +6,7 @@ mod numeric;
 mod program;
 mod scope;
 mod string;
+mod unary;
 mod value;
 
 use crate::expression;
@@ -62,10 +63,6 @@ pub struct Compiler {
 }
 
 impl Visitor<CompilerResult<Value>> for Compiler {
-    fn visit_unary(&mut self, expr: &expression::Unary) -> CompilerResult<Value> {
-        todo!()
-    }
-
     fn visit_grouping(&mut self, expr: &expression::Expression) -> CompilerResult<Value> {
         todo!()
     }
