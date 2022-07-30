@@ -68,6 +68,12 @@ use std::{
 //     Rc::decrement_strong_count(vec);
 // }
 
+pub unsafe extern "C" fn string_from_c_string(ptr: *const i8) -> *const RefCell<String> {
+    let c_str = CStr::from_ptr(ptr);
+    let rc = Rc::new(RefCell::new(c_str.to_str().unwrap().to_string()));
+    Rc::into_raw(rc)
+}
+
 pub extern "C" fn string(num: f64) -> *const RefCell<String> {
     let rc = Rc::new(RefCell::new(num.to_string()));
     Rc::into_raw(rc)
