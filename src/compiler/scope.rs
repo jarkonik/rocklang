@@ -1,7 +1,7 @@
 use crate::llvm::{self, Builder, Context, Module};
 use std::{collections::HashMap, ffi::c_void};
 
-use super::Value;
+use super::{CompilerError, CompilerResult, Value};
 
 pub struct Scope {
     env: HashMap<String, Value>,
@@ -28,24 +28,25 @@ impl Scope {
         self.references.push(value);
     }
 
-    pub fn release_references(&self, module: &Module, context: &Context, builder: &Builder) {
+    pub fn release_references(
+        &self,
+        module: &Module,
+        context: &Context,
+        builder: &Builder,
+    ) -> CompilerResult<()> {
         for reference in self.references.iter() {
             match reference {
                 Value::Null => todo!(),
                 Value::String(val) => {
-                    context.add_symbol(
-                        "release_string_reference",
-                        stdlib::release_string_reference as *mut c_void,
-                    );
-                    let fun_type = context.function_type(
-                        context.void_type(),
-                        &[context.void_type().pointer_type(0)],
-                        false,
-                    );
-                    let fun = module.add_function("release_string_reference", fun_type);
+                    let fun = if let Value::Function { val, .. } =
+                        self.get("release_string_reference").unwrap()
+                    {
+                        val
+                    } else {
+                        Err(CompilerError::TypeError)?
+                    };
                     builder.build_call(&fun, &[*val], "");
                 }
-                Value::ConstString(_) => todo!(),
                 Value::Numeric(_) => todo!(),
                 Value::Bool(_) => todo!(),
                 Value::Function {
@@ -59,5 +60,6 @@ impl Scope {
                 Value::Ptr(_) => todo!(),
             }
         }
+        Ok(())
     }
 }

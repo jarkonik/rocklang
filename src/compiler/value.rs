@@ -5,7 +5,6 @@ use crate::parser;
 pub enum Value {
     Null,
     String(llvm::Value),
-    ConstString(llvm::Value),
     Numeric(llvm::Value),
     Bool(llvm::Value),
     Function {

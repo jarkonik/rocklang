@@ -158,7 +158,6 @@ impl Compiler {
 
         let ret_val = match last_val {
             Value::String(_) => todo!(),
-            Value::ConstString(_) => todo!(),
             Value::Bool(_) => todo!(),
             Value::Function {
                 val,
@@ -275,5 +274,46 @@ impl Compiler {
     fn init_builtins(&mut self) {
         self.init_print_fn();
         self.init_string_fn();
+
+        let scope = self.scopes.last_mut().unwrap();
+        self.context.add_symbol(
+            "release_string_reference",
+            stdlib::release_string_reference as *mut c_void,
+        );
+        let fun_type = self.context.function_type(
+            self.context.void_type(),
+            &[self.context.void_type().pointer_type(0)],
+            false,
+        );
+        let fun = self
+            .module
+            .add_function("release_string_reference", fun_type);
+        scope.set(
+            "release_string_reference",
+            Value::Function {
+                val: fun,
+                typ: fun_type,
+                return_type: parser::Type::String,
+            },
+        );
+
+        self.context.add_symbol(
+            "string_from_c_string",
+            stdlib::string_from_c_string as *mut c_void,
+        );
+        let fun_type = self.context.function_type(
+            self.context.void_type().pointer_type(0),
+            &[self.context.i8_type().pointer_type(0)],
+            false,
+        );
+        let fun = self.module.add_function("string_from_c_string", fun_type);
+        scope.set(
+            "string_from_c_string",
+            Value::Function {
+                val: fun,
+                typ: fun_type,
+                return_type: parser::Type::String,
+            },
+        );
     }
 }

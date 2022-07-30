@@ -14,7 +14,6 @@ impl Compiler {
                 let val = match self.walk(arg)? {
                     Value::Null => todo!(),
                     Value::String(n) => n,
-                    Value::ConstString(str) => str,
                     Value::Numeric(n) => n,
                     Value::Bool(_) => todo!(),
                     Value::Function {
