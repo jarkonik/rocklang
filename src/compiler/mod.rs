@@ -17,13 +17,13 @@ mod unary;
 mod value;
 mod while_visitor;
 
+use crate::expression::Expression;
 use crate::expression::FuncDecl;
 use crate::llvm;
 use crate::llvm::Function;
 use crate::parser;
 use crate::parser::Program;
-use crate::visitor::ProgramVisitor;
-use crate::visitor::Visitor;
+use crate::visitor::*;
 use std::error::Error;
 use std::ffi::c_void;
 use std::fmt;
@@ -65,7 +65,27 @@ pub struct Compiler {
     scopes: Vec<Scope>,
 }
 
-impl Visitor<CompilerResult<Value>> for Compiler {}
+impl Visitor<CompilerResult<Value>> for Compiler {
+    fn walk(&mut self, expr: &crate::expression::Expression) -> CompilerResult<Value> {
+        match expr {
+            Expression::Binary(expr) => self.visit_binary(expr),
+            Expression::Unary(expr) => self.visit_unary(expr),
+            Expression::FuncCall(expr) => self.visit_func_call(expr),
+            Expression::Numeric(expr) => self.visit_numeric(expr),
+            Expression::Assignment(expr) => self.visit_assignment(expr),
+            Expression::Identifier(expr) => self.visit_identifier(expr),
+            Expression::Conditional(expr) => self.visit_conditional(expr),
+            Expression::String(expr) => self.visit_string(expr),
+            Expression::Bool(expr) => self.visit_bool(expr),
+            Expression::Break => self.visit_break(),
+            Expression::While(expr) => self.visit_while(expr),
+            Expression::FuncDecl(expr) => self.visit_func_decl(expr),
+            Expression::Load(expr) => self.visit_load(expr),
+            Expression::Extern(expr) => self.visit_extern(expr),
+            Expression::Grouping(expr) => self.visit_grouping(expr),
+        }
+    }
+}
 
 impl Compile for Compiler {
     fn compile(&mut self) -> CompilerResult<Value> {
