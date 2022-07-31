@@ -30,8 +30,8 @@ mod test {
             assert!(matches!(val, Value::Null));
         });
 
-        assert_eq_ir!(
-            compiler.ir_string(),
+        assert_eq!(
+            &compiler.ir_string(),
             r#"
         "#
         );

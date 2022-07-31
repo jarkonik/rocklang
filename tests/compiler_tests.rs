@@ -778,7 +778,7 @@ fn it_compiles_ffi_calls() {
     let mut compiler = Compiler::new(program);
     compiler.compile().unwrap();
 
-    assert_eq_ir!(
+    assert_eq!(
         &compiler.ir_string(),
         "
             ; ModuleID = 'main'

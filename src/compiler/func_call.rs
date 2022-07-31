@@ -110,20 +110,19 @@ mod test {
             assert!(matches!(val, Value::Null));
         });
 
-        assert_eq_ir!(
-            compiler.ir_string(),
+        assert_eq!(
+            &compiler.ir_string(),
             r#"
-            ; ModuleID = 'main'
-            source_filename = "main"
-            target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+; ModuleID = 'main'
+source_filename = "main"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 
-            declare void @0()
+declare void @0()
 
-            define void @main() {
-                call void @0()
-                ret void
-            }
-        "#
+define void @main() {
+call void @0()
+ret void
+}"#
         );
     }
 }

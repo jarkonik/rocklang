@@ -1,6 +1,4 @@
-use llvm::{
-    core::{LLVMSetInitializer},
-};
+use llvm::core::LLVMSetInitializer;
 
 extern crate llvm_sys as llvm;
 

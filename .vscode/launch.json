@@ -1,0 +1,154 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'stdlib'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=stdlib"],
+        "filter": {
+          "name": "stdlib",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'rocklang'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=rocklang"],
+        "filter": {
+          "name": "rocklang",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'rocklang'",
+      "cargo": {
+        "args": ["build", "--bin=rocklang", "--package=rocklang"],
+        "filter": {
+          "name": "rocklang",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'rocklang'",
+      "cargo": {
+        "args": ["test", "--no-run", "--bin=rocklang", "--package=rocklang"],
+        "filter": {
+          "name": "rocklang",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug integration test 'tokenizer_tests'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--test=tokenizer_tests",
+          "--package=rocklang"
+        ],
+        "filter": {
+          "name": "tokenizer_tests",
+          "kind": "test"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug integration test 'compiler_tests'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--test=compiler_tests",
+          "--package=rocklang"
+        ],
+        "filter": {
+          "name": "compiler_tests",
+          "kind": "test"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug integration test 'integration_tests'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--test=integration_tests",
+          "--package=rocklang"
+        ],
+        "filter": {
+          "name": "integration_tests",
+          "kind": "test"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug integration test 'parser_tests'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--test=parser_tests",
+          "--package=rocklang"
+        ],
+        "filter": {
+          "name": "parser_tests",
+          "kind": "test"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug integration test 'token_test'",
+      "cargo": {
+        "args": ["test", "--no-run", "--test=token_test", "--package=rocklang"],
+        "filter": {
+          "name": "token_test",
+          "kind": "test"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

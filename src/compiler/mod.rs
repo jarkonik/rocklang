@@ -1,11 +1,13 @@
 mod assignment;
 mod binary;
+mod bool;
 mod break_visitor;
 mod conditional;
 mod extern_visitor;
 mod func_call;
 mod func_decl_vistor;
 mod grouping;
+mod identifier;
 mod load;
 mod numeric;
 mod program;
@@ -14,8 +16,6 @@ mod string;
 mod unary;
 mod value;
 mod while_visitor;
-mod identifier;
-mod bool;
 
 use crate::expression::FuncDecl;
 use crate::llvm;

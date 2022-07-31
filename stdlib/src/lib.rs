@@ -1,8 +1,4 @@
-use std::{
-    cell::RefCell,
-    ffi::{CStr},
-    rc::Rc,
-};
+use std::{cell::RefCell, ffi::CStr, rc::Rc};
 
 // pub extern "C" fn vec_new() -> *const RefCell<Vec<f64>> {
 //     let vec: Vec<f64> = Vec::new();

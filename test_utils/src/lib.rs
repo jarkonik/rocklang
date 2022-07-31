@@ -10,9 +10,12 @@ macro_rules! remove_whitespace {
 #[macro_export]
 macro_rules! assert_eq_ir {
     ($result:expr, $valid:expr) => {
-        if (!remove_whitespace!($result).eq(&remove_whitespace!($valid))) {
-            panic!("\nresult:\n{}\n valid:\n{}", $result, $valid);
-        }
+        assert_eq!($result, concat!(indoc!(r#"
+            ; ModuleID = 'main'
+            source_filename = "main"
+            target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+        "#,
+        ), "\n", indoc!($valid)))
     };
 }
 
