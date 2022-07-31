@@ -138,39 +138,39 @@ mod test {
         }
 
         impl StringVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_string(&mut self, expr: &str) -> CompilerResult<Value> ;
+            fn visit_string(&mut self, expr: &str) -> CompilerResult<Value>;
         }
 
         impl ProgramVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_program(&mut self, program: crate::parser::Program) -> CompilerResult<Value> ;
+            fn visit_program(&mut self, program: crate::parser::Program) -> CompilerResult<Value>;
         }
 
         impl AssignmentVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_assignment(&mut self, expr: &expression::Assignment) -> CompilerResult<Value> ;
+            fn visit_assignment(&mut self, expr: &expression::Assignment) -> CompilerResult<Value>;
         }
 
         impl ConditionalVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_conditional(&mut self, expr: &expression::Conditional) -> CompilerResult<Value> ;
+            fn visit_conditional(&mut self, expr: &expression::Conditional) -> CompilerResult<Value>;
         }
 
         impl UnaryVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_unary(&mut self, expr: &expression::Unary) -> CompilerResult<Value> ;
+            fn visit_unary(&mut self, expr: &expression::Unary) -> CompilerResult<Value>;
         }
 
         impl GroupingVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_grouping(&mut self, expr: &expression::Expression) -> CompilerResult<Value> ;
+            fn visit_grouping(&mut self, expr: &expression::Expression) -> CompilerResult<Value>;
         }
 
         impl WhileVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_while(&mut self, expr: &expression::While) -> CompilerResult<Value> ;
+            fn visit_while(&mut self, expr: &expression::While) -> CompilerResult<Value>;
         }
 
         impl BoolVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_bool(&mut self, expr: &bool) -> CompilerResult<Value> ;
+            fn visit_bool(&mut self, expr: &bool) -> CompilerResult<Value>;
         }
 
         impl BreakVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_break(&mut self) -> CompilerResult<Value> ;
+            fn visit_break(&mut self) -> CompilerResult<Value>;
         }
 
         impl LoadVisitor<CompilerResult<Value>> for MockCompiler {
@@ -178,11 +178,11 @@ mod test {
         }
 
         impl ExternVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_extern(&mut self, name: &expression::Extern) -> CompilerResult<Value> ;
+            fn visit_extern(&mut self, name: &expression::Extern) -> CompilerResult<Value>;
         }
 
         impl Visitor<CompilerResult<Value>> for MockCompiler {
-            fn walk(&mut self, expr: &expression::Expression) -> CompilerResult<Value> ;
+            fn walk(&mut self, expr: &expression::Expression) -> CompilerResult<Value>;
         }
 
         impl<'a> LLVMCompiler<'a> for MockCompiler {
