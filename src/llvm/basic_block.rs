@@ -7,6 +7,7 @@ extern crate llvm_sys as llvm;
 #[derive(Clone, Copy, Debug)]
 pub struct BasicBlock(pub *mut llvm::LLVMBasicBlock);
 
+#[allow(dead_code)]
 impl BasicBlock {
     pub fn new(block: *mut llvm::LLVMBasicBlock) -> Self {
         BasicBlock(block)

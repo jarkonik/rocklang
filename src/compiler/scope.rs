@@ -1,4 +1,4 @@
-use crate::llvm::{Builder, Context, Module};
+use crate::llvm::Builder;
 use std::collections::HashMap;
 
 use super::{CompilerError, CompilerResult, Value};
@@ -28,12 +28,7 @@ impl Scope {
         self.references.push(value);
     }
 
-    pub fn release_references(
-        &self,
-        module: &Module,
-        context: &Context,
-        builder: &Builder,
-    ) -> CompilerResult<()> {
+    pub fn release_references(&self, builder: &Builder) -> CompilerResult<()> {
         for reference in self.references.iter() {
             match reference {
                 Value::Null => todo!(),
@@ -50,13 +45,12 @@ impl Scope {
                 Value::Numeric(_) => todo!(),
                 Value::Bool(_) => todo!(),
                 Value::Function {
-                    val,
-                    typ,
-                    return_type,
+                    val: _,
+                    typ: _,
+                    return_type: _,
                 } => todo!(),
                 Value::Vec(_) => todo!(),
                 Value::Break => todo!(),
-                Value::Ptr(_) => todo!(),
                 Value::Ptr(_) => todo!(),
             }
         }

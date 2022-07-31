@@ -2,6 +2,7 @@ extern crate llvm_sys as llvm;
 
 use std::{ffi::CStr, fmt::Display, mem};
 
+use libc::c_void;
 use llvm::{
     core::{LLVMCreateModuleProviderForExistingModule, LLVMDumpModule, LLVMPrintModuleToString},
     execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInMCJIT},
@@ -13,6 +14,7 @@ use super::{utils::c_str, Context, Engine, Function, Type, Value};
 
 pub struct Module(*mut llvm::LLVMModule);
 
+#[allow(dead_code)]
 impl Module {
     pub fn new(name: &str, context: &Context) -> Self {
         context.create_module(name)
@@ -68,8 +70,10 @@ impl Module {
 
 impl Display for Module {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        let str = unsafe { CStr::from_ptr(LLVMPrintModuleToString(self.0)).to_str() };
+        let raw_ptr = unsafe { LLVMPrintModuleToString(self.0) };
+        let str = unsafe { CStr::from_ptr(raw_ptr).to_str() };
         fmt.write_str(str.unwrap())?;
+        unsafe { libc::free(raw_ptr as *mut c_void) };
         Ok(())
     }
 }

@@ -17,9 +17,9 @@ impl Compiler {
                     Value::Numeric(n) => n,
                     Value::Bool(_) => todo!(),
                     Value::Function {
-                        val,
-                        typ,
-                        return_type,
+                        val: _,
+                        typ: _,
+                        return_type: _,
                     } => todo!(),
                     Value::Vec(_) => todo!(),
                     Value::Break => todo!(),
@@ -74,12 +74,6 @@ impl FuncCallVisitor<CompilerResult<Value>> for Compiler {
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        compiler::{scope::Scope, Compiler, Value, MAIN_FUNCTION},
-        expression::{Expression, FuncCall},
-        visitor::FuncCallVisitor,
-    };
-
     //     #[test]
     //     fn test_func_void_no_args_call() {
     //         let func_call = FuncCall {

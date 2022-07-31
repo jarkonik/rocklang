@@ -1,18 +1,12 @@
 use crate::{
-    expression::{self, Operator},
-    llvm::{self, Builder, Context},
-    visitor::{BinaryVisitor, Visitor},
+    expression::{self},
+    visitor::BinaryVisitor,
 };
 
-use super::{value::Value, Compiler, CompilerError, CompilerResult};
+use super::{value::Value, Compiler, CompilerError, CompilerResult, LLVMCompiler};
 
-trait LLVMCompiler<'a>: Visitor<CompilerResult<Value>> {
-    fn builder(&'a self) -> &'a Builder;
-    fn context(&'a self) -> &'a Context;
-}
-
-fn compile_binary<'a>(
-    compiler: &'a mut dyn LLVMCompiler<'a>,
+fn compile_binary<'a, T: LLVMCompiler<'a>>(
+    compiler: &'a mut T,
     expr: &expression::Binary,
 ) -> CompilerResult<Value> {
     let lhs = if let Value::Numeric(n) = compiler.walk(&expr.left)? {
@@ -40,7 +34,9 @@ fn compile_binary<'a>(
         expression::Operator::Slash => {
             Ok(Value::Numeric(compiler.builder().build_fdiv(lhs, rhs, "")))
         }
-        expression::Operator::Mod => todo!(),
+        expression::Operator::Mod => {
+            Ok(Value::Numeric(compiler.builder().build_frem(lhs, rhs, "")))
+        }
         expression::Operator::Equal => Ok(Value::Bool(compiler.builder().build_fcmp(
             lhs,
             rhs,
@@ -80,16 +76,6 @@ fn compile_binary<'a>(
     }
 }
 
-impl<'a> LLVMCompiler<'a> for Compiler {
-    fn builder(&'a self) -> &'a Builder {
-        &self.builder
-    }
-
-    fn context(&'a self) -> &'a Context {
-        &self.context
-    }
-}
-
 impl BinaryVisitor<CompilerResult<Value>> for Compiler {
     fn visit_binary(&mut self, expr: &expression::Binary) -> CompilerResult<Value> {
         compile_binary(self, expr)
@@ -98,6 +84,8 @@ impl BinaryVisitor<CompilerResult<Value>> for Compiler {
 
 #[cfg(test)]
 mod test {
+    use std::error::Error;
+
     use mockall::{mock, predicate::*};
 
     use indoc::indoc;
@@ -105,128 +93,57 @@ mod test {
 
     use super::*;
     use crate::compiler::MAIN_FUNCTION;
-    use crate::expression::Expression;
-    use crate::llvm::Module;
+    use crate::llvm::{Builder, Context};
     use crate::visitor::*;
 
-    struct MockCompiler {
-        builder: Builder,
-        context: Context,
-    }
+    mock_compiler!();
 
-    mock! {
-        MockCompiler { }
-
-        impl NumericVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_numeric(&mut self, expr: &f64) -> CompilerResult<Value>;
-        }
-
-        impl BinaryVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_binary(&mut self, expr: &expression::Binary) -> CompilerResult<Value>;
-        }
-
-        impl IdentifierVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_identifier(&mut self, expr: &str) -> CompilerResult<Value>;
-        }
-
-        impl FuncCallVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_func_call(&mut self, expr: &expression::FuncCall) -> CompilerResult<Value>;
-        }
-
-        impl FuncDeclVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> CompilerResult<Value>;
-        }
-
-        impl StringVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_string(&mut self, expr: &str) -> CompilerResult<Value>;
-        }
-
-        impl ProgramVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_program(&mut self, program: crate::parser::Program) -> CompilerResult<Value>;
-        }
-
-        impl AssignmentVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_assignment(&mut self, expr: &expression::Assignment) -> CompilerResult<Value>;
-        }
-
-        impl ConditionalVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_conditional(&mut self, expr: &expression::Conditional) -> CompilerResult<Value>;
-        }
-
-        impl UnaryVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_unary(&mut self, expr: &expression::Unary) -> CompilerResult<Value>;
-        }
-
-        impl GroupingVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_grouping(&mut self, expr: &expression::Expression) -> CompilerResult<Value>;
-        }
-
-        impl WhileVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_while(&mut self, expr: &expression::While) -> CompilerResult<Value>;
-        }
-
-        impl BoolVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_bool(&mut self, expr: &bool) -> CompilerResult<Value>;
-        }
-
-        impl BreakVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_break(&mut self) -> CompilerResult<Value>;
-        }
-
-        impl LoadVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_load(&mut self, name: &str) -> CompilerResult<Value>;
-        }
-
-        impl ExternVisitor<CompilerResult<Value>> for MockCompiler {
-            fn visit_extern(&mut self, name: &expression::Extern) -> CompilerResult<Value>;
-        }
-
-        impl Visitor<CompilerResult<Value>> for MockCompiler {
-            fn walk(&mut self, expr: &expression::Expression) -> CompilerResult<Value>;
-        }
-
-        impl<'a> LLVMCompiler<'a> for MockCompiler {
-            fn builder(&'a self) -> &Builder;
-            fn context(&'a self) -> &Context;
-        }
-    }
-
-    #[test]
-    fn test_addition() -> CompilerResult<()> {
+    fn test_binary_operation(operator: expression::Operator) -> Result<String, Box<dyn Error>> {
         let context = Context::new();
         let module = context.create_module("main");
         let builder = context.create_builder();
-        let mut compiler = MockMockCompiler::new();
-
-        compiler
-            .expect_walk()
-            .return_const_st(Ok(Value::Numeric(context.const_double(3.0))));
+        let mut compiler = MockCompiler::new();
         compiler.expect_context().return_const(context);
         compiler.expect_builder().return_const(builder);
 
+        let const_double = Value::Numeric(compiler.context().const_double(3.0));
+        compiler.expect_walk().return_const_st(Ok(const_double));
+
         in_main_function!(compiler.context(), module, compiler.builder(), {
-            let ptr = compiler
-                .builder()
-                .build_alloca(compiler.context().double_type(), "");
             let val = compile_binary(
                 &mut compiler,
                 &expression::Binary {
                     left: Box::new(expression::Expression::Numeric(6.0)),
-                    operator: expression::Operator::Plus,
+                    operator,
                     right: Box::new(expression::Expression::Numeric(2.0)),
                 },
-            )
-            .unwrap();
+            )?;
 
-            if let Value::Numeric(val) = val {
-                compiler.builder().create_store(val, &ptr);
-            } else {
-                panic!()
+            match val {
+                Value::Numeric(val) => {
+                    let ptr = compiler
+                        .builder()
+                        .build_alloca(compiler.context().double_type(), "");
+                    compiler.builder().create_store(val, &ptr);
+                }
+                Value::Bool(val) => {
+                    let ptr = compiler
+                        .builder()
+                        .build_alloca(compiler.context().i1_type(), "");
+                    compiler.builder().create_store(val, &ptr);
+                }
+                _ => panic!(),
             }
         });
 
+        Ok(module.to_string())
+    }
+
+    #[test]
+    fn test_addition() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::Plus)?;
         assert_eq_ir!(
-            format!("{}", module),
+            ir,
             r#"
             define void @main() {
               %1 = alloca double, align 8
@@ -235,46 +152,30 @@ mod test {
             }
             "#
         );
-
         Ok(())
     }
 
     #[test]
-    fn test_multiplication() -> CompilerResult<()> {
-        let context = Context::new();
-        let module = context.create_module("main");
-        let builder = context.create_builder();
-        let mut compiler = MockMockCompiler::new();
-
-        compiler
-            .expect_walk()
-            .return_const_st(Ok(Value::Numeric(context.const_double(3.0))));
-        compiler.expect_context().return_const(context);
-        compiler.expect_builder().return_const(builder);
-
-        in_main_function!(compiler.context(), module, compiler.builder(), {
-            let ptr = compiler
-                .builder()
-                .build_alloca(compiler.context().double_type(), "");
-            let val = compile_binary(
-                &mut compiler,
-                &expression::Binary {
-                    left: Box::new(expression::Expression::Numeric(6.0)),
-                    operator: expression::Operator::Asterisk,
-                    right: Box::new(expression::Expression::Numeric(2.0)),
-                },
-            )
-            .unwrap();
-
-            if let Value::Numeric(val) = val {
-                compiler.builder().create_store(val, &ptr);
-            } else {
-                panic!()
-            }
-        });
-
+    fn test_subtraction() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::Minus)?;
         assert_eq_ir!(
-            format!("{}", module),
+            ir,
+            r#"
+            define void @main() {
+              %1 = alloca double, align 8
+              store double 0.000000e+00, double* %1, align 8
+              ret void
+            }
+            "#
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_multiplication() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::Asterisk)?;
+        assert_eq_ir!(
+            ir,
             r#"
             define void @main() {
               %1 = alloca double, align 8
@@ -283,7 +184,134 @@ mod test {
             }
             "#
         );
+        Ok(())
+    }
 
+    #[test]
+    fn test_division() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::Slash)?;
+        assert_eq_ir!(
+            ir,
+            r#"
+            define void @main() {
+              %1 = alloca double, align 8
+              store double 1.000000e+00, double* %1, align 8
+              ret void
+            }
+            "#
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_remainder() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::Mod)?;
+        assert_eq_ir!(
+            ir,
+            r#"
+            define void @main() {
+              %1 = alloca double, align 8
+              store double 0.000000e+00, double* %1, align 8
+              ret void
+            }
+            "#
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_equality() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::Equal)?;
+        assert_eq_ir!(
+            ir,
+            r#"
+            define void @main() {
+              %1 = alloca i1, align 1
+              store i1 true, i1* %1, align 1
+              ret void
+            }
+            "#
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_not_equal() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::NotEqual)?;
+        assert_eq_ir!(
+            ir,
+            r#"
+            define void @main() {
+              %1 = alloca i1, align 1
+              store i1 false, i1* %1, align 1
+              ret void
+            }
+            "#
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_less() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::Less)?;
+        assert_eq_ir!(
+            ir,
+            r#"
+            define void @main() {
+              %1 = alloca i1, align 1
+              store i1 false, i1* %1, align 1
+              ret void
+            }
+            "#
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_less_or_equal() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::LessOrEqual)?;
+        assert_eq_ir!(
+            ir,
+            r#"
+            define void @main() {
+              %1 = alloca i1, align 1
+              store i1 true, i1* %1, align 1
+              ret void
+            }
+            "#
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_greater() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::Greater)?;
+        assert_eq_ir!(
+            ir,
+            r#"
+            define void @main() {
+              %1 = alloca i1, align 1
+              store i1 false, i1* %1, align 1
+              ret void
+            }
+            "#
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_greater_or_equal() -> Result<(), Box<dyn Error>> {
+        let ir = test_binary_operation(expression::Operator::GreaterOrEqual)?;
+        assert_eq_ir!(
+            ir,
+            r#"
+            define void @main() {
+              %1 = alloca i1, align 1
+              store i1 true, i1* %1, align 1
+              ret void
+            }
+            "#
+        );
         Ok(())
     }
 }

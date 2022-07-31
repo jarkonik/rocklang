@@ -26,6 +26,7 @@ stdlib = { path = "./stdlib" }
 llvm-sys = "130"
 backtrace = "0.3"
 test_utils = { path = "./test_utils" }
+libc = "0.2"
 
 [dev-dependencies]
 assert_cmd = "0.10"

@@ -83,7 +83,5 @@ pub trait Visitor<T>:
     + LoadVisitor<T>
     + ExternVisitor<T>
 {
-    fn walk(&mut self, expr: &Expression) -> T {
-        unimplemented!()
-    }
+    fn walk(&mut self, expr: &Expression) -> T;
 }

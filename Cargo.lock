@@ -387,6 +387,7 @@ dependencies = [
  "assert_cmd",
  "backtrace",
  "indoc",
+ "libc",
  "llvm-sys",
  "mockall",
  "predicates 2.1.0",

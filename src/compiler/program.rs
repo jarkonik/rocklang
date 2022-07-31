@@ -25,7 +25,7 @@ impl ProgramVisitor<CompilerResult<Value>> for Compiler {
         self.scopes
             .pop()
             .unwrap()
-            .release_references(&self.module, &self.context, &self.builder);
+            .release_references(&self.builder)?;
 
         self.builder.build_ret_void();
 

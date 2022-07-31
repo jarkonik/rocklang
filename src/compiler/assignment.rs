@@ -3,18 +3,13 @@ use crate::visitor::AssignmentVisitor;
 use super::{Compiler, CompilerResult, Value};
 
 impl AssignmentVisitor<CompilerResult<Value>> for Compiler {
-    fn visit_assignment(&mut self, expr: &crate::expression::Assignment) -> CompilerResult<Value> {
+    fn visit_assignment(&mut self, _expr: &crate::expression::Assignment) -> CompilerResult<Value> {
         todo!()
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::compiler::scope::Scope;
-    use crate::compiler::MAIN_FUNCTION;
-    use crate::expression::{self, Assignment};
-
     // #[test]
     // fn test_assignment() -> CompilerResult<()> {
     //     let mut compiler = Compiler::default();

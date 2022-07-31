@@ -72,6 +72,10 @@ impl Builder {
         Value::from(unsafe { LLVMBuildFDiv(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
     }
 
+    pub fn build_frem(&self, lhs: Value, rhs: Value, name: &str) -> Value {
+        Value::from(unsafe { LLVMBuildFRem(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
+    }
+
     pub fn build_fmul(&self, lhs: Value, rhs: Value, name: &str) -> Value {
         Value::from(unsafe { LLVMBuildFMul(self.0, lhs.0, rhs.0, c_str(name).as_ptr()) })
     }

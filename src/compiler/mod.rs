@@ -18,8 +18,9 @@ mod value;
 mod while_visitor;
 
 use crate::expression::Expression;
-use crate::expression::FuncDecl;
 use crate::llvm;
+use crate::llvm::Builder;
+use crate::llvm::Context;
 use crate::llvm::Function;
 use crate::parser;
 use crate::parser::Program;
@@ -100,77 +101,77 @@ impl Default for Compiler {
 }
 
 impl Compiler {
-    fn get_var(&self, name: &str) -> Option<&Value> {
-        self.scopes.last().unwrap().get(name)
-    }
+    // fn get_var(&self, name: &str) -> Option<&Value> {
+    //     self.scopes.last().unwrap().get(name)
+    // }
 
-    fn set_var(&mut self, name: &str, val: Value) {
-        self.scopes.last_mut().unwrap().set(name, val);
-    }
+    // fn set_var(&mut self, name: &str, val: Value) {
+    //     self.scopes.last_mut().unwrap().set(name, val);
+    // }
 
-    fn build_function(&mut self, fun_compiler_val: Value, expr: FuncDecl) -> CompilerResult<()> {
-        let fun = match fun_compiler_val {
-            Value::Function { val, .. } => val,
-            _ => panic!(),
-        };
+    // fn build_function(&mut self, fun_compiler_val: Value, expr: FuncDecl) -> CompilerResult<()> {
+    //     let fun = match fun_compiler_val {
+    //         Value::Function { val, .. } => val,
+    //         _ => panic!(),
+    //     };
 
-        let curr = self.builder.get_insert_block();
+    //     let curr = self.builder.get_insert_block();
 
-        let block = self.context.append_basic_block(&fun, "entry");
-        self.builder.position_builder_at_end(&block);
+    //     let block = self.context.append_basic_block(&fun, "entry");
+    //     self.builder.position_builder_at_end(&block);
 
-        self.scopes.push(Scope::new());
+    //     self.scopes.push(Scope::new());
 
-        for (i, param) in expr.params.iter().enumerate() {
-            self.set_var(
-                param.name.as_str(),
-                match param.typ {
-                    parser::Type::Numeric => todo!(),
-                    parser::Type::Vector => todo!(),
-                    parser::Type::Null => todo!(),
-                    parser::Type::Function => todo!(),
-                    parser::Type::Ptr => todo!(),
-                    parser::Type::String => todo!(),
-                },
-            )
-        }
+    //     for (i, param) in expr.params.iter().enumerate() {
+    //         self.set_var(
+    //             param.name.as_str(),
+    //             match param.typ {
+    //                 parser::Type::Numeric => todo!(),
+    //                 parser::Type::Vector => todo!(),
+    //                 parser::Type::Null => todo!(),
+    //                 parser::Type::Function => todo!(),
+    //                 parser::Type::Ptr => todo!(),
+    //                 parser::Type::String => todo!(),
+    //             },
+    //         )
+    //     }
 
-        let mut last_val = Value::Null;
-        for stmt in expr.body.clone() {
-            last_val = self.walk(&stmt)?;
-        }
+    //     let mut last_val = Value::Null;
+    //     for stmt in expr.body.clone() {
+    //         last_val = self.walk(&stmt)?;
+    //     }
 
-        self.scopes.pop().unwrap();
+    //     self.scopes.pop().unwrap();
 
-        let ret_val = match last_val {
-            Value::String(_) => todo!(),
-            Value::Bool(_) => todo!(),
-            Value::Function {
-                val,
-                typ,
-                return_type,
-            } => todo!(),
-            Value::Vec(_) => todo!(),
-            Value::Break => todo!(),
-            Value::Ptr(_) => todo!(),
-            Value::Null => todo!(),
-            Value::Numeric(_) => todo!(),
-        };
+    //     let ret_val = match last_val {
+    //         Value::String(_) => todo!(),
+    //         Value::Bool(_) => todo!(),
+    //         Value::Function {
+    //             val,
+    //             typ,
+    //             return_type,
+    //         } => todo!(),
+    //         Value::Vec(_) => todo!(),
+    //         Value::Break => todo!(),
+    //         Value::Ptr(_) => todo!(),
+    //         Value::Null => todo!(),
+    //         Value::Numeric(_) => todo!(),
+    //     };
 
-        match ret_val {
-            Some(v) => self.builder.build_ret(v),
-            None => self.builder.build_ret_void(),
-        };
+    //     match ret_val {
+    //         Some(v) => self.builder.build_ret(v),
+    //         None => self.builder.build_ret_void(),
+    //     };
 
-        self.builder.position_builder_at_end(&curr);
+    //     self.builder.position_builder_at_end(&curr);
 
-        self.verify_function(fun);
+    //     self.verify_function(fun);
 
-        if self.optimization {
-            self.pass_manager.run(&fun);
-        };
-        Ok(())
-    }
+    //     if self.optimization {
+    //         self.pass_manager.run(&fun);
+    //     };
+    //     Ok(())
+    // }
 
     fn verify_function(&mut self, fun: Function) {
         fun.verify_function().unwrap_or_else(|_x| {
@@ -301,5 +302,20 @@ impl Compiler {
                 return_type: parser::Type::String,
             },
         );
+    }
+}
+
+trait LLVMCompiler<'a>: Visitor<CompilerResult<Value>> {
+    fn builder(&'a self) -> &'a Builder;
+    fn context(&'a self) -> &'a Context;
+}
+
+impl<'a> LLVMCompiler<'a> for Compiler {
+    fn builder(&'a self) -> &'a Builder {
+        &self.builder
+    }
+
+    fn context(&'a self) -> &'a Context {
+        &self.context
     }
 }
