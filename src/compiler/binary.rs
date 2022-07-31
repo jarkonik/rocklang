@@ -204,9 +204,6 @@ mod test {
         compiler.expect_context().return_const(context);
         compiler.expect_builder().return_const(builder);
 
-        let lhs = compiler.context().const_double(2.);
-        let rhs = compiler.context().const_double(3.);
-
         in_main_function!(compiler.context(), module, compiler.builder(), {
             let ptr = compiler
                 .builder()
@@ -254,9 +251,6 @@ mod test {
             .return_const_st(Ok(Value::Numeric(context.const_double(3.0))));
         compiler.expect_context().return_const(context);
         compiler.expect_builder().return_const(builder);
-
-        let lhs = compiler.context().const_double(2.);
-        let rhs = compiler.context().const_double(3.);
 
         in_main_function!(compiler.context(), module, compiler.builder(), {
             let ptr = compiler
