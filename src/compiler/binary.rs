@@ -98,6 +98,8 @@ impl BinaryVisitor<CompilerResult<Value>> for Compiler {
 
 #[cfg(test)]
 mod test {
+    use mockall::{mock, predicate::*};
+
     use indoc::indoc;
     use pretty_assertions::assert_eq;
 
@@ -112,117 +114,80 @@ mod test {
         context: Context,
     }
 
-    impl NumericVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_numeric(&mut self, expr: &f64) -> CompilerResult<Value> {
-            unimplemented!()
-        }
-    }
+    mock! {
+        MockCompiler { }
 
-    impl BinaryVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_binary(&mut self, expr: &expression::Binary) -> CompilerResult<Value> {
-            unimplemented!()
+        impl NumericVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_numeric(&mut self, expr: &f64) -> CompilerResult<Value>;
         }
-    }
 
-    impl IdentifierVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_identifier(&mut self, expr: &str) -> CompilerResult<Value> {
-            unimplemented!()
+        impl BinaryVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_binary(&mut self, expr: &expression::Binary) -> CompilerResult<Value>;
         }
-    }
 
-    impl FuncCallVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_func_call(&mut self, expr: &expression::FuncCall) -> CompilerResult<Value> {
-            unimplemented!()
+        impl IdentifierVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_identifier(&mut self, expr: &str) -> CompilerResult<Value>;
         }
-    }
 
-    impl FuncDeclVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> CompilerResult<Value> {
-            unimplemented!()
+        impl FuncCallVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_func_call(&mut self, expr: &expression::FuncCall) -> CompilerResult<Value>;
         }
-    }
 
-    impl StringVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_string(&mut self, expr: &str) -> CompilerResult<Value> {
-            unimplemented!()
+        impl FuncDeclVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_func_decl(&mut self, body: &expression::FuncDecl) -> CompilerResult<Value>;
         }
-    }
 
-    impl ProgramVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_program(&mut self, program: crate::parser::Program) -> CompilerResult<Value> {
-            unimplemented!()
+        impl StringVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_string(&mut self, expr: &str) -> CompilerResult<Value> ;
         }
-    }
 
-    impl AssignmentVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_assignment(&mut self, expr: &expression::Assignment) -> CompilerResult<Value> {
-            unimplemented!()
+        impl ProgramVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_program(&mut self, program: crate::parser::Program) -> CompilerResult<Value> ;
         }
-    }
 
-    impl ConditionalVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_conditional(&mut self, expr: &expression::Conditional) -> CompilerResult<Value> {
-            unimplemented!()
+        impl AssignmentVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_assignment(&mut self, expr: &expression::Assignment) -> CompilerResult<Value> ;
         }
-    }
 
-    impl UnaryVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_unary(&mut self, expr: &expression::Unary) -> CompilerResult<Value> {
-            unimplemented!()
+        impl ConditionalVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_conditional(&mut self, expr: &expression::Conditional) -> CompilerResult<Value> ;
         }
-    }
 
-    impl GroupingVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_grouping(&mut self, expr: &expression::Expression) -> CompilerResult<Value> {
-            unimplemented!()
+        impl UnaryVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_unary(&mut self, expr: &expression::Unary) -> CompilerResult<Value> ;
         }
-    }
 
-    impl WhileVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_while(&mut self, expr: &expression::While) -> CompilerResult<Value> {
-            unimplemented!()
+        impl GroupingVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_grouping(&mut self, expr: &expression::Expression) -> CompilerResult<Value> ;
         }
-    }
 
-    impl BoolVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_bool(&mut self, expr: &bool) -> CompilerResult<Value> {
-            unimplemented!()
+        impl WhileVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_while(&mut self, expr: &expression::While) -> CompilerResult<Value> ;
         }
-    }
 
-    impl BreakVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_break(&mut self) -> CompilerResult<Value> {
-            unimplemented!()
+        impl BoolVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_bool(&mut self, expr: &bool) -> CompilerResult<Value> ;
         }
-    }
 
-    impl LoadVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_load(&mut self, name: &str) -> CompilerResult<Value> {
-            unimplemented!()
+        impl BreakVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_break(&mut self) -> CompilerResult<Value> ;
         }
-    }
 
-    impl ExternVisitor<CompilerResult<Value>> for MockCompiler {
-        fn visit_extern(&mut self, name: &expression::Extern) -> CompilerResult<Value> {
-            unimplemented!()
+        impl LoadVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_load(&mut self, name: &str) -> CompilerResult<Value>;
         }
-    }
 
-    impl Visitor<CompilerResult<Value>> for MockCompiler {
-        fn walk(&mut self, expr: &Expression) -> CompilerResult<Value> {
-            match expr {
-                Expression::Numeric(n) => Ok(Value::Numeric(self.context.const_double(4.0))),
-                _ => unimplemented!(),
-            }
+        impl ExternVisitor<CompilerResult<Value>> for MockCompiler {
+            fn visit_extern(&mut self, name: &expression::Extern) -> CompilerResult<Value> ;
         }
-    }
 
-    impl<'a> LLVMCompiler<'a> for MockCompiler {
-        fn builder(&'a self) -> &'a Builder {
-            &self.builder
+        impl Visitor<CompilerResult<Value>> for MockCompiler {
+            fn walk(&mut self, expr: &expression::Expression) -> CompilerResult<Value> ;
         }
-        fn context(&'a self) -> &'a Context {
-            &self.context
+
+        impl<'a> LLVMCompiler<'a> for MockCompiler {
+            fn builder(&'a self) -> &Builder;
+            fn context(&'a self) -> &Context;
         }
     }
 
@@ -231,7 +196,13 @@ mod test {
         let context = Context::new();
         let module = context.create_module("main");
         let builder = context.create_builder();
-        let mut compiler = MockCompiler { context, builder };
+        let mut compiler = MockMockCompiler::new();
+
+        compiler
+            .expect_walk()
+            .return_const_st(Ok(Value::Numeric(context.const_float(3.0))));
+        compiler.expect_context().return_const(context);
+        compiler.expect_builder().return_const(builder);
 
         let lhs = compiler.context().const_double(2.);
         let rhs = compiler.context().const_double(3.);
@@ -276,7 +247,13 @@ mod test {
         let context = Context::new();
         let module = context.create_module("main");
         let builder = context.create_builder();
-        let mut compiler = MockCompiler { context, builder };
+        let mut compiler = MockMockCompiler::new();
+
+        compiler
+            .expect_walk()
+            .return_const_st(Ok(Value::Numeric(context.const_float(3.0))));
+        compiler.expect_context().return_const(context);
+        compiler.expect_builder().return_const(builder);
 
         let lhs = compiler.context().const_double(2.);
         let rhs = compiler.context().const_double(3.);
