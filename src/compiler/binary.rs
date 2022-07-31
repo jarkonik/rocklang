@@ -200,7 +200,7 @@ mod test {
 
         compiler
             .expect_walk()
-            .return_const_st(Ok(Value::Numeric(context.const_float(3.0))));
+            .return_const_st(Ok(Value::Numeric(context.const_double(3.0))));
         compiler.expect_context().return_const(context);
         compiler.expect_builder().return_const(builder);
 
@@ -233,7 +233,7 @@ mod test {
             r#"
             define void @main() {
               %1 = alloca double, align 8
-              store double 8.000000e+00, double* %1, align 8
+              store double 6.000000e+00, double* %1, align 8
               ret void
             }
             "#
@@ -251,7 +251,7 @@ mod test {
 
         compiler
             .expect_walk()
-            .return_const_st(Ok(Value::Numeric(context.const_float(3.0))));
+            .return_const_st(Ok(Value::Numeric(context.const_double(3.0))));
         compiler.expect_context().return_const(context);
         compiler.expect_builder().return_const(builder);
 
@@ -284,7 +284,7 @@ mod test {
             r#"
             define void @main() {
               %1 = alloca double, align 8
-              store double 1.600000e+01, double* %1, align 8
+              store double 9.000000e+00, double* %1, align 8
               ret void
             }
             "#
