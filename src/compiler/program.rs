@@ -35,6 +35,6 @@ impl ProgramVisitor<CompilerResult<Value>> for Compiler {
             self.pass_manager.run(&main_fun);
         };
 
-        Ok(Value::Null)
+        Ok(Value::Void)
     }
 }

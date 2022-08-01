@@ -1,5 +1,6 @@
 extern crate llvm_sys as llvm;
 
+use core::panic;
 use std::{ffi::CStr, fmt::Display, mem};
 
 use libc::c_void;
@@ -46,24 +47,24 @@ impl Module {
         Module(ptr)
     }
 
-    #[allow(clippy::uninit_assumed_init)]
     pub fn create_engine(&self) -> Engine {
-        let mut ee;
         Engine::from(unsafe {
-            ee = mem::MaybeUninit::uninit().assume_init();
+            let mut ee = mem::zeroed();
             let mut out = mem::zeroed();
 
             LLVMLinkInMCJIT();
             LLVM_InitializeNativeTarget();
             LLVM_InitializeNativeAsmPrinter();
 
-            LLVMCreateExecutionEngineForModule(&mut ee, self.0, &mut out);
+            if LLVMCreateExecutionEngineForModule(&mut ee, self.0, &mut out) != 0 {
+                panic!()
+            };
 
             ee
         })
     }
 
-    pub(crate) fn create_module_provider(&self) -> *mut llvm::LLVMModuleProvider {
+    pub fn create_module_provider(&self) -> *mut llvm::LLVMModuleProvider {
         unsafe { LLVMCreateModuleProviderForExistingModule(self.0) }
     }
 }

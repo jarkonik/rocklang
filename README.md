@@ -38,7 +38,7 @@ Sample implementation of Sieve of Eratosthenes written in Rock
 memset = (vec: vec, val: number, n: number): vec => {
 	i = 0
 	while i < n {
-		vec_mut(vec, i, val)
+		vec_set(vec, i, val)
 		i = i + 1
 	}
 	vec
@@ -54,7 +54,7 @@ sieve = (n: number): void => {
 		if vec_get(prime, p) == 1 {
 			i = p * p
 			while i <= n {
-				prime = vec_mut(prime, i, 0)
+				prime = vec_set(prime, i, 0)
 				i = i + p
 			}
 		}

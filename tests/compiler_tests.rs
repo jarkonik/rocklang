@@ -97,7 +97,7 @@ fn it_compiles_new_vec_being_passed_as_fun_arg() {
                 left: Box::new(Expression::Identifier("f".to_string())),
                 right: Box::new(Expression::FuncDecl(FuncDecl {
                     body: vec![],
-                    return_type: Type::Null,
+                    return_type: Type::Void,
                     params: vec![Param {
                         name: "v".to_string(),
                         typ: Type::Vector,
@@ -268,7 +268,7 @@ fn it_compiles_new_vec_being_passed_as_variable() {
                 left: Box::new(Expression::Identifier("f".to_string())),
                 right: Box::new(Expression::FuncDecl(FuncDecl {
                     body: vec![],
-                    return_type: Type::Null,
+                    return_type: Type::Void,
                     params: vec![Param {
                         name: "v".to_string(),
                         typ: Type::Vector,
@@ -299,7 +299,7 @@ fn it_compiles_recursive_fun() {
         body: vec![Expression::Assignment(Assignment {
             left: Box::new(Expression::Identifier("f".to_string())),
             right: Box::new(Expression::FuncDecl(FuncDecl {
-                return_type: Type::Null,
+                return_type: Type::Void,
                 params: vec![],
                 body: vec![Expression::FuncCall(FuncCall {
                     calee: Box::new(Expression::Identifier("f".to_string())),
@@ -744,7 +744,7 @@ fn it_compiles_ffi_calls() {
                 left: Box::new(Expression::Identifier(String::from("passptr"))),
                 right: Box::new(Expression::Extern(expression::Extern {
                     types: [Type::Ptr].to_vec(),
-                    return_type: Type::Null,
+                    return_type: Type::Void,
                     name: String::from("passptr"),
                 })),
             }),
@@ -752,7 +752,7 @@ fn it_compiles_ffi_calls() {
                 left: Box::new(Expression::Identifier(String::from("passstr"))),
                 right: Box::new(Expression::Extern(expression::Extern {
                     types: [Type::String].to_vec(),
-                    return_type: Type::Null,
+                    return_type: Type::Void,
                     name: String::from("passstr"),
                 })),
             }),

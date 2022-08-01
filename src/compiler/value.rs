@@ -3,7 +3,7 @@ use crate::parser;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Value {
-    Null,
+    Void,
     String(llvm::Value),
     Numeric(llvm::Value),
     Bool(llvm::Value),

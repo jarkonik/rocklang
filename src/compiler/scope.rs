@@ -31,7 +31,7 @@ impl Scope {
     pub fn release_references(&self, builder: &Builder) -> CompilerResult<()> {
         for reference in self.references.iter() {
             match reference {
-                Value::Null => todo!(),
+                Value::Void => todo!(),
                 Value::String(val) => {
                     let fun = if let Value::Function { val, .. } =
                         self.get("release_string_reference").unwrap()
@@ -40,15 +40,11 @@ impl Scope {
                     } else {
                         Err(CompilerError::TypeError)?
                     };
-                    builder.build_call(&fun, &[*val], "");
+                    builder.build_call(fun, &[*val], "");
                 }
                 Value::Numeric(_) => todo!(),
                 Value::Bool(_) => todo!(),
-                Value::Function {
-                    val: _,
-                    typ: _,
-                    return_type: _,
-                } => todo!(),
+                Value::Function { .. } => todo!(),
                 Value::Vec(_) => todo!(),
                 Value::Break => todo!(),
                 Value::Ptr(_) => todo!(),

@@ -1,0 +1,8 @@
+name: "Install valgrind"
+runs:
+  using: "composite"
+  steps:
+    - name: Install valgrind
+      run: sudo apt install valgrind
+    - name: Install cargo valgrind
+      run: cargo install cargo-valgrind

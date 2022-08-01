@@ -24,30 +24,14 @@ impl Display for ParserError {
 }
 impl Error for ParserError {}
 
-impl PartialEq for ParserError {
-    fn eq(&self, rhs: &ParserError) -> bool {
-        match (self, rhs) {
-            (
-                ParserError::SyntaxError {
-                    token: a,
-                    backtrace: _,
-                },
-                ParserError::SyntaxError {
-                    token: b,
-                    backtrace: _,
-                },
-            ) => a == b,
-        }
-    }
-}
-
 type Result<T> = std::result::Result<T, ParserError>;
 
 #[derive(Copy, Clone, Serialize, Debug)]
 pub enum Type {
     Numeric,
+    Bool,
     Vector,
-    Null,
+    Void,
     Function,
     Ptr,
     String,
@@ -486,7 +470,7 @@ impl Parser {
                     Token::Identifier(type_literal) => match type_literal.as_str() {
                         "number" => Type::Numeric,
                         "vec" => Type::Vector,
-                        "void" => Type::Null,
+                        "void" => Type::Void,
                         _ => {
                             return Err(ParserError::SyntaxError {
                                 token: self.previous().clone(),
@@ -667,7 +651,7 @@ impl Parser {
 
     fn type_from_literal(&mut self, type_literal: &str) -> Result<Type> {
         match type_literal {
-            "void" => Ok(Type::Null),
+            "void" => Ok(Type::Void),
             "string" => Ok(Type::String),
             "number" => Ok(Type::Numeric),
             "vec" => Ok(Type::Vector),

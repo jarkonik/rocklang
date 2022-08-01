@@ -153,13 +153,13 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_while() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
-                    token: Token::String("hello".to_string()),
-                    backtrace: Backtrace::new(),
-                },
-                e
-            );
+                    token: Token::String(_),
+                    ..
+                }
+            ));
         }
     };
 }
@@ -320,13 +320,13 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_if() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
-                    token: Token::String("hello".to_string()),
-                    backtrace: Backtrace::new(),
+                    token: Token::String(_),
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }
@@ -344,13 +344,13 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_else() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
-                    token: Token::String("hello".to_string()),
-                    backtrace: Backtrace::new(),
+                    token: Token::String(_),
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }
@@ -1059,13 +1059,13 @@ fn it_returns_an_error_when_func_has_unknown_arg_type() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
-                    token: Token::Identifier("wrongtype".to_string()),
-                    backtrace: Backtrace::new(),
-                },
-                e
-            );
+                    token: Token::Identifier(_),
+                    ..
+                }
+            ));
         }
     };
 }
@@ -1097,13 +1097,13 @@ fn it_returns_an_error_when_func_has_non_type_expression_as_arg_type() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
-                    token: Token::String("string".to_string()),
-                    backtrace: Backtrace::new(),
+                    token: Token::String(_),
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }
@@ -1133,13 +1133,13 @@ fn it_returns_an_error_when_func_has_no_arg_type_after_arg_name() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
                     token: Token::Colon,
-                    backtrace: Backtrace::new()
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }
@@ -1165,13 +1165,13 @@ fn it_returns_an_error_when_func_has_no_return_type() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
                     token: Token::Arrow,
-                    backtrace: Backtrace::new()
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }
@@ -1199,13 +1199,13 @@ fn it_returns_an_error_when_func_has_unknown_return_type() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
-                    token: Token::Identifier("wrongtype".to_string()),
-                    backtrace: Backtrace::new()
+                    token: Token::Identifier(_),
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }
@@ -1233,13 +1233,13 @@ fn it_returns_an_error_when_func_has_non_type_expression_as_return_type() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
-                    token: Token::String("string".to_string()),
-                    backtrace: Backtrace::new()
+                    token: Token::String(_),
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }
@@ -1266,13 +1266,13 @@ fn it_returns_error_when_func_decl_has_no_arrow() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
                     token: Token::LCurly,
-                    backtrace: Backtrace::new()
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }
@@ -1295,13 +1295,13 @@ fn it_returns_error_when_func_decl_has_no_body() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
-                    token: Token::String("hello".to_string()),
-                    backtrace: Backtrace::new()
+                    token: Token::String(_),
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }
@@ -1426,13 +1426,13 @@ fn it_returns_error_for_call_syntax_on_non_identifiers() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
                     token: Token::LeftParen,
-                    backtrace: Backtrace::new()
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }
@@ -1474,13 +1474,13 @@ fn it_returns_error_for_unterminated_grouping_expresions() {
     match parser.parse() {
         Ok(_) => assert!(false, "should return an error"),
         Err(e) => {
-            assert_eq!(
+            assert!(matches!(
+                e,
                 ParserError::SyntaxError {
-                    token: Token::String("hello".to_string()),
-                    backtrace: Backtrace::new()
+                    token: Token::String(_),
+                    ..
                 },
-                e
-            );
+            ));
         }
     };
 }

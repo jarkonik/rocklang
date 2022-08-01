@@ -139,7 +139,7 @@ impl Context {
         Builder::from(unsafe { LLVMCreateBuilderInContext(self.0) })
     }
 
-    pub(crate) fn create_module(&self, name: &str) -> Module {
+    pub fn create_module(&self, name: &str) -> Module {
         Module::from_context(unsafe {
             LLVMModuleCreateWithNameInContext(c_str(name).as_ptr(), self.0)
         })

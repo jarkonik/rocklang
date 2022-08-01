@@ -5,8 +5,8 @@ use crate::{
 
 use super::{value::Value, Compiler, CompilerError, CompilerResult, LLVMCompiler};
 
-fn compile_binary<'a, T: LLVMCompiler<'a>>(
-    compiler: &'a mut T,
+fn compile_binary<T: LLVMCompiler>(
+    compiler: &mut T,
     expr: &expression::Binary,
 ) -> CompilerResult<Value> {
     let lhs = if let Value::Numeric(n) = compiler.walk(&expr.left)? {
@@ -84,8 +84,6 @@ impl BinaryVisitor<CompilerResult<Value>> for Compiler {
 
 #[cfg(test)]
 mod test {
-    use std::error::Error;
-
     use mockall::{mock, predicate::*};
 
     use indoc::indoc;
@@ -93,12 +91,15 @@ mod test {
 
     use super::*;
     use crate::compiler::MAIN_FUNCTION;
-    use crate::llvm::{Builder, Context};
+    use crate::llvm::{Builder, Context, Module};
+    use crate::parser;
     use crate::visitor::*;
 
     mock_compiler!();
 
-    fn test_binary_operation(operator: expression::Operator) -> Result<String, Box<dyn Error>> {
+    fn test_binary_operation(
+        operator: expression::Operator,
+    ) -> Result<(String, Value), CompilerError> {
         let context = Context::new();
         let module = context.create_module("main");
         let builder = context.create_builder();
@@ -109,8 +110,9 @@ mod test {
         let const_double = Value::Numeric(compiler.context().const_double(3.0));
         compiler.expect_walk().return_const_st(Ok(const_double));
 
+        let val: Value;
         in_main_function!(compiler.context(), module, compiler.builder(), {
-            let val = compile_binary(
+            val = compile_binary(
                 &mut compiler,
                 &expression::Binary {
                     left: Box::new(expression::Expression::Numeric(6.0)),
@@ -136,12 +138,13 @@ mod test {
             }
         });
 
-        Ok(module.to_string())
+        Ok((module.to_string(), val))
     }
 
     #[test]
-    fn test_addition() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::Plus)?;
+    fn test_addition() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::Plus)?;
+        assert!(matches!(val, Value::Numeric(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -156,8 +159,9 @@ mod test {
     }
 
     #[test]
-    fn test_subtraction() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::Minus)?;
+    fn test_subtraction() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::Minus)?;
+        assert!(matches!(val, Value::Numeric(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -172,8 +176,9 @@ mod test {
     }
 
     #[test]
-    fn test_multiplication() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::Asterisk)?;
+    fn test_multiplication() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::Asterisk)?;
+        assert!(matches!(val, Value::Numeric(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -188,8 +193,9 @@ mod test {
     }
 
     #[test]
-    fn test_division() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::Slash)?;
+    fn test_division() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::Slash)?;
+        assert!(matches!(val, Value::Numeric(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -204,8 +210,9 @@ mod test {
     }
 
     #[test]
-    fn test_remainder() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::Mod)?;
+    fn test_remainder() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::Mod)?;
+        assert!(matches!(val, Value::Numeric(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -220,8 +227,9 @@ mod test {
     }
 
     #[test]
-    fn test_equality() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::Equal)?;
+    fn test_equality() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::Equal)?;
+        assert!(matches!(val, Value::Bool(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -236,8 +244,9 @@ mod test {
     }
 
     #[test]
-    fn test_not_equal() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::NotEqual)?;
+    fn test_not_equal() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::NotEqual)?;
+        assert!(matches!(val, Value::Bool(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -252,8 +261,9 @@ mod test {
     }
 
     #[test]
-    fn test_less() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::Less)?;
+    fn test_less() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::Less)?;
+        assert!(matches!(val, Value::Bool(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -268,8 +278,9 @@ mod test {
     }
 
     #[test]
-    fn test_less_or_equal() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::LessOrEqual)?;
+    fn test_less_or_equal() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::LessOrEqual)?;
+        assert!(matches!(val, Value::Bool(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -284,8 +295,9 @@ mod test {
     }
 
     #[test]
-    fn test_greater() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::Greater)?;
+    fn test_greater() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::Greater)?;
+        assert!(matches!(val, Value::Bool(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -300,8 +312,9 @@ mod test {
     }
 
     #[test]
-    fn test_greater_or_equal() -> Result<(), Box<dyn Error>> {
-        let ir = test_binary_operation(expression::Operator::GreaterOrEqual)?;
+    fn test_greater_or_equal() -> Result<(), CompilerError> {
+        let (ir, val) = test_binary_operation(expression::Operator::GreaterOrEqual)?;
+        assert!(matches!(val, Value::Bool(_)));
         assert_eq_ir!(
             ir,
             r#"

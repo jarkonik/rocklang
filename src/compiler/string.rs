@@ -16,7 +16,7 @@ impl StringVisitor<CompilerResult<Value>> for Compiler {
         let ptr = self
             .builder
             .build_global_string_ptr(with_newlines.as_str(), "");
-        let string = Value::String(self.builder.build_call(&fun, &[ptr], ""));
+        let string = Value::String(self.builder.build_call(fun, &[ptr], ""));
         scope.track_reference(string);
 
         Ok(string)

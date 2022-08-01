@@ -28,7 +28,7 @@ impl Function {
         }
     }
 
-    pub(crate) fn from(ptr: *mut llvm_sys::LLVMValue) -> Function {
+    pub fn from(ptr: *mut llvm_sys::LLVMValue) -> Function {
         Function(ptr)
     }
 }

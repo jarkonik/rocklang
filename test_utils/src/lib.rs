@@ -50,8 +50,6 @@ macro_rules! in_main_function {
 macro_rules! mock_compiler {
     () => {
         struct Compiler {
-            builder: Builder,
-            context: Context,
         }
 
         mock! {
@@ -82,7 +80,7 @@ macro_rules! mock_compiler {
             }
 
             impl ProgramVisitor<CompilerResult<Value>> for Compiler {
-                fn visit_program(&mut self, program: crate::parser::Program) -> CompilerResult<Value>;
+                fn visit_program(&mut self, program: parser::Program) -> CompilerResult<Value>;
             }
 
             impl AssignmentVisitor<CompilerResult<Value>> for Compiler {
@@ -125,9 +123,15 @@ macro_rules! mock_compiler {
                 fn walk(&mut self, expr: &expression::Expression) -> CompilerResult<Value>;
             }
 
-            impl<'a> LLVMCompiler<'a> for Compiler {
-                fn builder(&'a self) -> &Builder;
-                fn context(&'a self) -> &Context;
+            impl LLVMCompiler for Compiler {
+                fn builder(&self) -> &Builder;
+                fn context(&self) -> &Context;
+                fn module(&self) -> &Module;
+                fn enter_scope(&mut self);
+                fn exit_scope(&mut self) -> CompilerResult<()>;
+                fn get_var(&self, name: &str) -> CompilerResult<Value>;
+                fn track_reference(&mut self, val: Value);
+                fn set_var(&mut self, name: &str, val: Value);
             }
         }
     }
