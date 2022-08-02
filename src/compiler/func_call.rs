@@ -133,8 +133,12 @@ mod test {
                 .times(1)
                 .return_const_st(Ok(fun_value));
 
-            let const_double = Value::Numeric(compiler.context().const_double(3.0));
-            compiler.expect_walk().return_const_st(Ok(const_double));
+            let const_double = Value::Numeric(compiler.context().const_double(3.));
+
+            compiler.expect_walk().returning_st(move |x| match x {
+                Expression::Numeric(_) => Ok(const_double),
+                _ => todo!(),
+            });
 
             let val: Value;
             in_main_function!(compiler.context(), compiler.module(), compiler.builder(), {
@@ -248,7 +252,10 @@ mod test {
         let (ir, return_value) = test_func_call!(
             Type::Void,
             vec![Type::Numeric, Type::Numeric],
-            vec![Expression::Numeric(3.), Expression::Numeric(3.)]
+            vec![
+                Expression::Numeric(3.),
+                Expression::String("abc".to_string())
+            ]
         );
         assert!(matches!(return_value, Value::Void));
         assert_eq_ir!(
