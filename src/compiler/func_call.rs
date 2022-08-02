@@ -118,7 +118,16 @@ mod test {
                     Type::Ptr => compiler.context().void_type().pointer_type(0),
                     _ => todo!(),
                 },
-                &$arg_types,
+                &$arg_types
+                    .iter()
+                    .map(|t| match t {
+                        Type::Void => compiler.context().void_type(),
+                        Type::Numeric => compiler.context().double_type(),
+                        Type::Bool => compiler.context().i1_type(),
+                        Type::Ptr => compiler.context().void_type().pointer_type(0),
+                        _ => todo!(),
+                    })
+                    .collect::<Vec<_>>(),
                 false,
             );
             let fun = compiler.module().add_function("", fun_type);
@@ -216,6 +225,28 @@ mod test {
 
             define void @main() {
               %1 = call void* @0()
+              ret void
+            }
+            "#
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_func_ptr_one_arg() -> Result<(), CompilerError> {
+        let (ir, return_value) = test_func_call!(
+            Type::Void,
+            vec![Type::Numeric],
+            vec![Expression::Numeric(3.0)]
+        );
+        assert!(matches!(return_value, Value::Void));
+        assert_eq_ir!(
+            ir,
+            r#"
+            declare void @0(double)
+
+            define void @main() {
+              call void @0(double 3.000000e+00)
               ret void
             }
             "#
