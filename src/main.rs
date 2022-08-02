@@ -47,12 +47,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ast = parser.parse()?;
 
     if dump_ast {
-        let json = serde_json::to_string_pretty(&ast).unwrap();
+        let json = serde_json::to_string_pretty(&ast)?;
         println!("{}", json);
         return Ok(());
     }
 
-    let mut compiler = Compiler::new(ast);
+    let mut compiler = Compiler::new(ast)?;
     if no_opt {
         compiler.turn_off_optimization();
     }

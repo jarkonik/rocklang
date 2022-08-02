@@ -134,7 +134,7 @@ mod test {
                         .build_alloca(compiler.context().i1_type(), "");
                     compiler.builder().create_store(val, &ptr);
                 }
-                _ => panic!(),
+                _ => assert!(false, "Unexpected value"),
             }
         });
 

@@ -4,7 +4,7 @@ use llvm::execution_engine::{
     LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMOpaqueExecutionEngine,
 };
 
-use super::{utils::c_str, Module};
+use super::{utils::c_str, LLVMError, Module};
 
 extern crate llvm_sys as llvm;
 
@@ -17,7 +17,7 @@ impl Drop for Engine {
 }
 
 impl Engine {
-    pub fn new(module: &Module) -> Self {
+    pub fn new(module: &Module) -> Result<Self, LLVMError> {
         module.create_engine()
     }
 

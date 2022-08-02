@@ -7,10 +7,10 @@ use llvm::support::LLVMAddSymbol;
 use llvm::support::LLVMLoadLibraryPermanently;
 
 use super::utils::c_str;
-use super::value::I32;
 use super::BasicBlock;
 use super::Builder;
 use super::Function;
+use super::LLVMError;
 use super::Module;
 use super::Type;
 use super::Value;
@@ -111,10 +111,6 @@ impl Context {
         unsafe { LLVMAddSymbol(c_str(name).as_ptr(), f) };
     }
 
-    pub fn const_i32(&self, value: i32) -> I32 {
-        I32::from(unsafe { LLVMConstInt(self.i32_type().0, value as u64, 0) })
-    }
-
     pub fn const_i8(&self, value: i8) -> Value {
         Value::from(unsafe { LLVMConstInt(self.i8_type().0, value as u64, 0) })
     }
@@ -127,12 +123,13 @@ impl Context {
         Value::from(unsafe { LLVMConstInt(self.i1_type().0, if value { 1 } else { 0 }, 0) })
     }
 
-    pub fn load_libary_permanently(&self, name: &str) {
+    pub fn load_libary_permanently(&self, name: &str) -> Result<(), LLVMError> {
         unsafe {
-            if LLVMLoadLibraryPermanently(c_str(name).as_ptr()) == 1 {
-                panic!("library {} load error", name);
+            if LLVMLoadLibraryPermanently(c_str(name).as_ptr()) != 0 {
+                Err(LLVMError {})?;
             }
         }
+        Ok(())
     }
 
     pub fn create_builder(&self) -> Builder {

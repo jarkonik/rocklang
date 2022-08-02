@@ -4,6 +4,6 @@ use super::{Compiler, CompilerResult, Value};
 
 impl BreakVisitor<CompilerResult<Value>> for Compiler {
     fn visit_break(&mut self) -> CompilerResult<Value> {
-        todo!()
+        Ok(Value::Break)
     }
 }

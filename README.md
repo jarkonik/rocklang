@@ -12,7 +12,7 @@ Discord](https://badgen.net/discord/members/NK3baHRTve)](https://discord.gg/NK3b
 
 <img src="./rock.svg" width="100" height="100">
 
-JIT-compiled functional programming language.
+JIT-compiled programming language.
 
 ## Getting started
 
@@ -35,7 +35,7 @@ print("Hello from rocklang")
 Sample implementation of Sieve of Eratosthenes written in Rock
 
 ```c
-memset = (vec: vec, val: number, n: number): vec => {
+mem_set = (vec: vec, val: number, n: number): vec => {
 	i = 0
 	while i < n {
 		vec_set(vec, i, val)
@@ -45,8 +45,8 @@ memset = (vec: vec, val: number, n: number): vec => {
 }
 
 sieve = (n: number): void => {
-	v = vec_new()
-	prime = memset(v, 1, n + 1)
+	v = vecnew()
+	prime = mem_set(v, 1, n + 1)
 
 	p = 2
 
@@ -54,7 +54,7 @@ sieve = (n: number): void => {
 		if vec_get(prime, p) == 1 {
 			i = p * p
 			while i <= n {
-				prime = vec_set(prime, i, 0)
+				vec_set(prime, i, 0)
 				i = i + p
 			}
 		}
@@ -74,7 +74,7 @@ sieve = (n: number): void => {
 	}
 }
 
-sieve(100)
+sieve(10)
 ```
 
 ## Building from source

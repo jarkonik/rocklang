@@ -18,6 +18,7 @@ mod utils;
 mod value;
 mod while_visitor;
 
+use crate::expression;
 use crate::expression::Expression;
 use crate::llvm;
 use crate::llvm::Builder;
@@ -37,10 +38,11 @@ pub use self::value::Value;
 
 #[derive(Clone, Debug)]
 pub enum CompilerError {
-    UnkownError,
     TypeError,
+    EngineInitError,
     UndefinedIdentifier(String),
     LLVMError(String),
+    LoadLibaryError(String),
 }
 
 impl fmt::Display for CompilerError {
@@ -98,17 +100,12 @@ impl Compile for Compiler {
     }
 }
 
-impl Default for Compiler {
-    fn default() -> Self {
-        Compiler::new(Program::default())
-    }
-}
-
 impl Compiler {
     fn verify_function(&mut self, fun: Function) -> CompilerResult<()> {
-        if let Ok(fun) = fun.verify_function() {
+        if fun.verify_function().is_ok() {
             Ok(())
         } else {
+            println!("{}", self.ir_string());
             Err(CompilerError::LLVMError(self.ir_string()))
         }
     }
@@ -129,14 +126,17 @@ impl Compiler {
         self.optimization = false;
     }
 
-    pub fn new(program: Program) -> Self {
+    pub fn new(program: Program) -> CompilerResult<Self> {
         let context = llvm::Context::new();
         let module = llvm::Module::new("main", &context);
         let builder = llvm::Builder::new(&context);
-        let engine = llvm::Engine::new(&module);
+        let engine = match llvm::Engine::new(&module) {
+            Ok(e) => e,
+            Err(_) => Err(CompilerError::EngineInitError {})?,
+        };
         let pass_manager = llvm::PassManager::new(&module);
 
-        Compiler {
+        Ok(Compiler {
             scopes: vec![],
             program,
             context,
@@ -145,49 +145,7 @@ impl Compiler {
             engine,
             pass_manager,
             optimization: true,
-        }
-    }
-
-    fn init_print_fn(&mut self) {
-        let scope = self.scopes.last_mut().unwrap();
-
-        self.context
-            .add_symbol("print", stdlib::print as *mut c_void);
-        let fun_type = self.context.function_type(
-            self.context.void_type(),
-            &[self.context.void_type().pointer_type(0)],
-            false,
-        );
-        let print = self.module.add_function("print", fun_type);
-        scope.set(
-            "print",
-            Value::Function {
-                val: print,
-                typ: fun_type,
-                return_type: parser::Type::Void,
-            },
-        );
-    }
-
-    fn init_string_fn(&mut self) {
-        let scope = self.scopes.last_mut().unwrap();
-
-        self.context
-            .add_symbol("string", stdlib::string as *mut c_void);
-        let fun_type = self.context.function_type(
-            self.context.void_type().pointer_type(0),
-            &[self.context.double_type()],
-            false,
-        );
-        let string_fun = self.module.add_function("string", fun_type);
-        scope.set(
-            "string",
-            Value::Function {
-                val: string_fun,
-                typ: fun_type,
-                return_type: parser::Type::String,
-            },
-        );
+        })
     }
 
     fn init_builtin(&self, name: &str, function_type: Type, fun: *mut c_void) -> Function {
@@ -196,6 +154,21 @@ impl Compiler {
     }
 
     fn init_builtins(&mut self) {
+        let string_type = self.context.function_type(
+            self.context.void_type().pointer_type(0),
+            &[self.context.double_type()],
+            false,
+        );
+        let string = self.init_builtin("string", string_type, stdlib::string as *mut c_void);
+        self.set_var(
+            "string",
+            Value::Function {
+                val: string,
+                typ: string_type,
+                return_type: parser::Type::String,
+            },
+        );
+
         let print_type = self.context.function_type(
             self.context.void_type(),
             &[self.context.void_type().pointer_type(0)],
@@ -284,6 +257,11 @@ trait LLVMCompiler: Visitor<CompilerResult<Value>> {
     fn get_var(&self, name: &str) -> CompilerResult<Value>;
     fn track_reference(&mut self, val: Value);
     fn set_var(&mut self, name: &str, val: Value);
+    fn build_function(
+        &mut self,
+        fun_compiler_val: Value,
+        expr: &expression::FuncDecl,
+    ) -> Result<(), CompilerError>;
 }
 
 impl LLVMCompiler for Compiler {
@@ -323,5 +301,78 @@ impl LLVMCompiler for Compiler {
 
     fn track_reference(&mut self, val: Value) {
         self.scopes.last_mut().unwrap().track_reference(val);
+    }
+
+    fn build_function(
+        &mut self,
+        fun_compiler_val: Value,
+        expr: &expression::FuncDecl,
+    ) -> Result<(), CompilerError> {
+        let fun = match fun_compiler_val {
+            Value::Function { val, .. } => val,
+            Value::Void => todo!(),
+            Value::String(_) => todo!(),
+            Value::Numeric(_) => todo!(),
+            Value::Bool(_) => todo!(),
+            Value::Vec(_) => todo!(),
+            Value::Break => todo!(),
+            Value::Ptr(_) => todo!(),
+        };
+
+        let curr = self.builder.get_insert_block();
+
+        let block = self.context.append_basic_block(&fun, "entry");
+        self.builder.position_builder_at_end(&block);
+
+        self.enter_scope();
+
+        for (i, param) in expr.params.iter().enumerate() {
+            self.set_var(
+                param.name.as_str(),
+                match param.typ {
+                    parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Ptr => Value::Ptr(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::String => Value::String(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Void => Value::Void,
+                    parser::Type::Function => todo!(),
+                    parser::Type::Bool => todo!(),
+                },
+            )
+        }
+
+        let mut last_val = Value::Void;
+
+        for stmt in expr.body.clone() {
+            last_val = self.walk(&stmt)?;
+        }
+
+        let ret_val = match last_val {
+            Value::Void => None,
+            Value::Numeric(n) => Some(n),
+            Value::Vec(n) => Some(n),
+            Value::String(_) => todo!(),
+            Value::Bool(_) => todo!(),
+            Value::Function { .. } => todo!(),
+            Value::Break => todo!(),
+            Value::Ptr(_) => todo!(),
+        };
+
+        self.exit_scope()?;
+
+        match ret_val {
+            Some(v) => self.builder.build_ret(v),
+            None => self.builder.build_ret_void(),
+        };
+
+        self.builder.position_builder_at_end(&curr);
+
+        self.verify_function(fun)?;
+
+        if self.optimization {
+            self.pass_manager.run(&fun);
+        }
+
+        Ok(())
     }
 }

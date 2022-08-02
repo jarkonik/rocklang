@@ -1,11 +1,10 @@
-// TODO: Move to a crate
+// TODO: Move to a crate ,remove allow(dead_code)
 
 mod basic_block;
 mod builder;
 mod context;
 mod engine;
 mod function;
-mod function_type;
 mod llvm_error;
 mod module;
 mod pass_manager;
@@ -19,7 +18,6 @@ pub use builder::Cmp;
 pub use context::Context;
 pub use engine::Engine;
 pub use function::Function;
-pub use function_type::FunctionType;
 pub use llvm_error::LLVMError;
 pub use module::Module;
 pub use pass_manager::PassManager;

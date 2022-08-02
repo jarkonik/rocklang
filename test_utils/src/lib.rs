@@ -41,7 +41,7 @@ macro_rules! in_main_function {
         main_fun.verify_function().unwrap_or_else(|_x| {
             println!("IR Dump:");
             println!("{}", $module);
-            panic!("Function verification failed")
+            assert!(false, "Function verification failed")
         });
     };
 }
@@ -132,6 +132,11 @@ macro_rules! mock_compiler {
                 fn get_var(&self, name: &str) -> CompilerResult<Value>;
                 fn track_reference(&mut self, val: Value);
                 fn set_var(&mut self, name: &str, val: Value);
+                fn build_function(
+                    &mut self,
+                    fun_compiler_val: Value,
+                    expr: &expression::FuncDecl,
+                ) -> Result<(), CompilerError>;
             }
         }
     }

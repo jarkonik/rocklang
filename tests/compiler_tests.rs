@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate test_utils;
 
+use std::error::Error;
+
 use rocklang::compiler::{Compile, Compiler};
 
 use rocklang::expression::{
@@ -9,7 +11,7 @@ use rocklang::expression::{
 use rocklang::parser::{Param, Program, Type};
 
 #[test]
-fn it_compiles_numeric_asignment() {
+fn it_compiles_numeric_asignment() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::Assignment(Assignment {
             left: Box::new(Expression::Identifier("x".to_string())),
@@ -17,7 +19,7 @@ fn it_compiles_numeric_asignment() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.turn_off_optimization();
     compiler.compile().unwrap();
 
@@ -35,10 +37,11 @@ fn it_compiles_numeric_asignment() {
 	"
         )
     );
+    Ok(())
 }
 
 #[test]
-fn it_compiles_numeric_to_numeric_asignment() {
+fn it_compiles_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
             Expression::Assignment(Assignment {
@@ -52,7 +55,7 @@ fn it_compiles_numeric_to_numeric_asignment() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.turn_off_optimization();
     compiler.compile().unwrap();
 
@@ -73,11 +76,12 @@ fn it_compiles_numeric_to_numeric_asignment() {
 	"
         )
     );
+
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panic_numeric_to_numeric_asignment() {
+fn it_panic_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::Assignment(Assignment {
             left: Box::new(Expression::String("x".to_string())),
@@ -85,12 +89,14 @@ fn it_panic_numeric_to_numeric_asignment() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+
+    Ok(())
 }
 
 #[test]
-fn it_compiles_new_vec_being_passed_as_fun_arg() {
+fn it_compiles_new_vec_being_passed_as_fun_arg() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
             Expression::Assignment(Assignment {
@@ -114,12 +120,13 @@ fn it_compiles_new_vec_being_passed_as_fun_arg() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_print_function_with_global_string() {
+fn it_compiles_print_function_with_global_string() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::FuncCall(FuncCall {
             calee: Box::new(Expression::Identifier("print".to_string())),
@@ -127,12 +134,13 @@ fn it_compiles_print_function_with_global_string() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_print_function_with_string() {
+fn it_compiles_print_function_with_string() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::FuncCall(FuncCall {
             calee: Box::new(Expression::Identifier("print".to_string())),
@@ -143,12 +151,13 @@ fn it_compiles_print_function_with_string() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_len_function_when_pass_new_vec() {
+fn it_compiles_len_function_when_pass_new_vec() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::FuncCall(FuncCall {
             calee: Box::new(Expression::Identifier("len".to_string())),
@@ -159,12 +168,13 @@ fn it_compiles_len_function_when_pass_new_vec() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_vec_get_function() {
+fn it_compiles_vec_get_function() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
             Expression::Assignment(Assignment {
@@ -184,12 +194,13 @@ fn it_compiles_vec_get_function() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_sqrt_funcion() {
+fn it_compiles_sqrt_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::FuncCall(FuncCall {
             calee: Box::new(Expression::Identifier("sqrt".to_string())),
@@ -197,13 +208,13 @@ fn it_compiles_sqrt_funcion() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panic_when_more_then_one_arg_pass_to_print_funcion() {
+fn it_panic_when_more_then_one_arg_pass_to_print_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::FuncCall(FuncCall {
             calee: Box::new(Expression::Identifier("print".to_string())),
@@ -214,13 +225,13 @@ fn it_panic_when_more_then_one_arg_pass_to_print_funcion() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_non_sring_type_pass_to_print_funcions() {
+fn it_panics_when_non_sring_type_pass_to_print_funcions() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::FuncCall(FuncCall {
             calee: Box::new(Expression::Identifier("print".to_string())),
@@ -228,13 +239,13 @@ fn it_panics_when_non_sring_type_pass_to_print_funcions() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panic_when_zero_args_pass_to_string_funcion() {
+fn it_panic_when_zero_args_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::FuncCall(FuncCall {
             calee: Box::new(Expression::Identifier("string".to_string())),
@@ -242,13 +253,13 @@ fn it_panic_when_zero_args_pass_to_string_funcion() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panic_when_bool_arg_pass_to_string_funcion() {
+fn it_panic_when_bool_arg_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::FuncCall(FuncCall {
             calee: Box::new(Expression::Identifier("string".to_string())),
@@ -256,12 +267,13 @@ fn it_panic_when_bool_arg_pass_to_string_funcion() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_new_vec_being_passed_as_variable() {
+fn it_compiles_new_vec_being_passed_as_variable() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
             Expression::Assignment(Assignment {
@@ -289,12 +301,13 @@ fn it_compiles_new_vec_being_passed_as_variable() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_recursive_fun() {
+fn it_compiles_recursive_fun() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::Assignment(Assignment {
             left: Box::new(Expression::Identifier("f".to_string())),
@@ -309,12 +322,13 @@ fn it_compiles_recursive_fun() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_while_statment() {
+fn it_compiles_while_statment() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::While(While {
             predicate: Box::new(Expression::Bool(false)),
@@ -322,12 +336,13 @@ fn it_compiles_while_statment() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_test_visit_func_decl() {
+fn it_test_visit_func_decl() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
             Expression::FuncDecl(FuncDecl {
@@ -349,12 +364,13 @@ fn it_test_visit_func_decl() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_grouping_expressions() {
+fn it_compiles_grouping_expressions() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::Assignment(Assignment {
             left: Box::new(Expression::Identifier("x".to_string())),
@@ -366,12 +382,13 @@ fn it_compiles_grouping_expressions() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_coditional() {
+fn it_compiles_coditional() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::Conditional(Conditional {
             predicate: Box::new(Expression::Binary(Binary {
@@ -384,8 +401,9 @@ fn it_compiles_coditional() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 macro_rules! compile_operator {
@@ -401,13 +419,13 @@ macro_rules! compile_operator {
             })],
         };
 
-        let mut compiler = Compiler::new(program);
-        compiler.compile().unwrap()
+        let mut compiler = Compiler::new(program)?;
+        compiler.compile().unwrap();
     };
 }
 
 #[test]
-fn it_compiles_operators() {
+fn it_compiles_operators() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Plus,
@@ -463,210 +481,211 @@ fn it_compiles_operators() {
         Operator::NotEqual,
         Box::new(Expression::Numeric(2.0))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_adding_numeric_to_string() {
+fn it_panics_when_adding_numeric_to_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Plus,
         Box::new(Expression::String("test".to_string()))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_plus_string_to_numeric() {
+fn it_panics_when_plus_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::String("test".to_string())),
         Operator::Plus,
         Box::new(Expression::Numeric(10.0))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_substract_string_from_numeric() {
+fn it_panics_when_substract_string_from_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Minus,
         Box::new(Expression::String("test".to_string()))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_substract_numeric_from_string() {
+fn it_panics_when_substract_numeric_from_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::String("test".to_string())),
         Operator::Minus,
         Box::new(Expression::Numeric(10.0))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_multiple_numeric_by_string() {
+fn it_panics_when_multiple_numeric_by_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Asterisk,
         Box::new(Expression::String("test".to_string()))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_multiple_string_to_numeric() {
+fn it_panics_when_multiple_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::String("test".to_string())),
         Operator::Asterisk,
         Box::new(Expression::Numeric(10.0))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_less_or_equal_numeric_and_string() {
+fn it_panics_when_less_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::LessOrEqual,
         Box::new(Expression::String("test".to_string()))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_less_or_equal_string_to_numeric() {
+fn it_panics_when_less_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::String("test".to_string())),
         Operator::LessOrEqual,
         Box::new(Expression::Numeric(10.0))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_less_numeric_and_string() {
+fn it_panics_when_less_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Less,
         Box::new(Expression::String("test".to_string()))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_less_string_to_numeric() {
+fn it_panics_when_less_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::String("test".to_string())),
         Operator::Less,
         Box::new(Expression::Numeric(10.0))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_greater_numeric_and_string() {
+fn it_panics_when_greater_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Greater,
         Box::new(Expression::String("test".to_string()))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_greater_string_to_numeric() {
+fn it_panics_when_greater_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::String("test".to_string())),
         Operator::Greater,
         Box::new(Expression::Numeric(10.0))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_greater_or_equal_numeric_and_string() {
+fn it_panics_when_greater_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::GreaterOrEqual,
         Box::new(Expression::String("test".to_string()))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_greater_or_equal_string_to_numeric() {
+fn it_panics_when_greater_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::String("test".to_string())),
         Operator::GreaterOrEqual,
         Box::new(Expression::Numeric(10.0))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_equal_numeric_and_string() {
+fn it_panics_when_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Equal,
         Box::new(Expression::String("test".to_string()))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_equal_string_to_numeric() {
+fn it_panics_when_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::String("test".to_string())),
         Operator::Equal,
         Box::new(Expression::Numeric(10.0))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_slash_numeric_and_string() {
+fn it_panics_when_slash_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::Slash,
         Box::new(Expression::String("test".to_string()))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_slash_string_to_numeric() {
+fn it_panics_when_slash_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::String("test".to_string())),
         Operator::Slash,
         Box::new(Expression::Numeric(10.0))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_not_equal_numeric_and_string() {
+fn it_panics_when_not_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::Numeric(10.0)),
         Operator::NotEqual,
         Box::new(Expression::String("test".to_string()))
     );
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_not_equal_string_to_numeric() {
+fn it_panics_when_not_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         Box::new(Expression::String("test".to_string())),
         Operator::NotEqual,
         Box::new(Expression::Numeric(10.0))
     );
+    Ok(())
 }
 
 #[test]
-fn it_compiles_unary_operator() {
+fn it_compiles_unary_operator() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::Unary(Unary {
             operator: Operator::Minus,
@@ -674,13 +693,13 @@ fn it_compiles_unary_operator() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_pass_string_to_unary() {
+fn it_panics_when_pass_string_to_unary() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::Unary(Unary {
             operator: Operator::Minus,
@@ -688,13 +707,13 @@ fn it_panics_when_pass_string_to_unary() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-#[should_panic]
-fn it_panics_when_wrong_unary_operator() {
+fn it_panics_when_wrong_unary_operator() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::Unary(Unary {
             operator: Operator::Plus,
@@ -702,12 +721,13 @@ fn it_panics_when_wrong_unary_operator() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compile_break_in_while() {
+fn it_compile_break_in_while() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::While(While {
             predicate: Box::new(Expression::Bool(true)),
@@ -715,12 +735,13 @@ fn it_compile_break_in_while() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }
 
 #[test]
-fn it_compiles_ffi_calls() {
+fn it_compiles_ffi_calls() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
             Expression::Load(String::from("./tests/rockffitestlib.so")),
@@ -775,7 +796,7 @@ fn it_compiles_ffi_calls() {
         ],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
 
     assert_eq!(
@@ -805,10 +826,11 @@ declare void @passptr(void*)
 declare void @passstr(i8*)
         "
     );
+    Ok(())
 }
 
 #[test]
-fn it_compile_break_in_while_and_if() {
+fn it_compile_break_in_while_and_if() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![Expression::While(While {
             predicate: Box::new(Expression::Bool(true)),
@@ -820,6 +842,7 @@ fn it_compile_break_in_while_and_if() {
         })],
     };
 
-    let mut compiler = Compiler::new(program);
+    let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
+    Ok(())
 }

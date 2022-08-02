@@ -16,11 +16,11 @@ fn compile_args<T: LLVMCompiler>(
                 Value::Void => Err(CompilerError::TypeError)?,
                 Value::String(n) => n,
                 Value::Numeric(n) => n,
-                Value::Bool(_) => todo!(),
-                Value::Function { .. } => todo!(),
+                Value::Bool(n) => n,
                 Value::Vec(n) => n,
-                Value::Break => todo!(),
-                Value::Ptr(_) => todo!(),
+                Value::Ptr(n) => n,
+                Value::Function { val, .. } => llvm::Value(val.0),
+                Value::Break => Err(CompilerError::TypeError)?,
             };
 
             Ok(val)
@@ -82,8 +82,7 @@ impl FuncCallVisitor<CompilerResult<Value>> for Compiler {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::compiler::utils::llvm_type;
-    use crate::compiler::MAIN_FUNCTION;
+    use crate::compiler::{utils::get_llvm_type, MAIN_FUNCTION};
     use crate::parser::Type;
     use crate::visitor::*;
     use crate::{
@@ -112,10 +111,10 @@ mod test {
             compiler.expect_module().return_const(module);
 
             let fun_type = compiler.context().function_type(
-                llvm_type(&compiler.context(), &$return_type),
+                get_llvm_type(&compiler.context(), &$return_type),
                 &$arg_types
                     .iter()
-                    .map(|t| llvm_type(&compiler.context(), t))
+                    .map(|t| get_llvm_type(&compiler.context(), t))
                     .collect::<Vec<_>>(),
                 false,
             );
@@ -240,31 +239,6 @@ mod test {
 
             define void @main() {
               call void @0(double 3.000000e+00)
-              ret void
-            }
-            "#
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_func_multiple_args() -> Result<(), CompilerError> {
-        let (ir, return_value) = test_func_call!(
-            Type::Void,
-            vec![Type::Numeric, Type::Numeric],
-            vec![
-                Expression::Numeric(3.),
-                Expression::String("abc".to_string())
-            ]
-        );
-        assert!(matches!(return_value, Value::Void));
-        assert_eq_ir!(
-            ir,
-            r#"
-            declare void @0(double, double)
-
-            define void @main() {
-              call void @0(double 3.000000e+00, double 3.000000e+00)
               ret void
             }
             "#

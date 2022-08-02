@@ -1,9 +1,4 @@
-use serde::de::Error;
-
-use crate::{
-    expression,
-    visitor::{ConditionalVisitor, Visitor},
-};
+use crate::{expression, visitor::ConditionalVisitor};
 
 use super::{Compiler, CompilerError, CompilerResult, LLVMCompiler, Value};
 

@@ -1,7 +1,7 @@
 use crate::llvm::{Builder, Module};
 use std::collections::HashMap;
 
-use super::{CompilerError, CompilerResult, Value};
+use super::{CompilerResult, Value};
 
 pub struct Scope {
     env: HashMap<String, Value>,

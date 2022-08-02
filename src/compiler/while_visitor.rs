@@ -23,7 +23,7 @@ impl WhileVisitor<CompilerResult<Value>> for Compiler {
 
         self.enter_scope();
         for stmt in &expr.body {
-            self.walk(&stmt)?;
+            self.walk(stmt)?;
         }
         self.exit_scope().unwrap();
 

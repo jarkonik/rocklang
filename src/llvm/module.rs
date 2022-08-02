@@ -1,6 +1,5 @@
 extern crate llvm_sys as llvm;
 
-use core::panic;
 use std::{ffi::CStr, fmt::Display, mem};
 
 use libc::c_void;
@@ -11,7 +10,7 @@ use llvm::{
 };
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMGetNamedFunction};
 
-use super::{utils::c_str, Context, Engine, Function, Type, Value};
+use super::{utils::c_str, Context, Engine, Function, LLVMError, Type, Value};
 
 pub struct Module(*mut llvm::LLVMModule);
 
@@ -47,8 +46,8 @@ impl Module {
         Module(ptr)
     }
 
-    pub fn create_engine(&self) -> Engine {
-        Engine::from(unsafe {
+    pub fn create_engine(&self) -> Result<Engine, LLVMError> {
+        let engine = Engine::from(unsafe {
             let mut ee = mem::zeroed();
             let mut out = mem::zeroed();
 
@@ -57,11 +56,11 @@ impl Module {
             LLVM_InitializeNativeAsmPrinter();
 
             if LLVMCreateExecutionEngineForModule(&mut ee, self.0, &mut out) != 0 {
-                panic!()
+                Err(LLVMError {})?;
             };
-
             ee
-        })
+        });
+        Ok(engine)
     }
 
     pub fn create_module_provider(&self) -> *mut llvm::LLVMModuleProvider {

@@ -1,6 +1,6 @@
 use crate::visitor::StringVisitor;
 
-use super::{Compiler, CompilerError, CompilerResult, Value};
+use super::{Compiler, CompilerResult, Value};
 use crate::compiler::LLVMCompiler;
 
 impl StringVisitor<CompilerResult<Value>> for Compiler {

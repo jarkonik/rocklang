@@ -15,20 +15,11 @@ trait Initializer<T: LLVMValue = Self>: LLVMValue {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct I32(*mut llvm::LLVMValue);
-
-#[derive(Debug, Clone, Copy)]
 pub struct Value(pub *mut llvm::LLVMValue);
 
 impl From<*mut llvm::LLVMValue> for Value {
     fn from(ptr: *mut llvm::LLVMValue) -> Self {
         Value(ptr)
-    }
-}
-
-impl From<*mut llvm::LLVMValue> for I32 {
-    fn from(ptr: *mut llvm::LLVMValue) -> Self {
-        I32(ptr)
     }
 }
 
@@ -38,11 +29,4 @@ impl LLVMValue for Value {
     }
 }
 
-impl LLVMValue for I32 {
-    fn value(&self) -> *mut llvm::LLVMValue {
-        self.0
-    }
-}
-
-impl Initializer for I32 {}
 impl Initializer for Value {}

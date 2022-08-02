@@ -1,4 +1,8 @@
-use crate::{expression::Expression, visitor::AssignmentVisitor};
+use crate::{
+    expression::{self, Expression},
+    llvm,
+    visitor::AssignmentVisitor,
+};
 
 use super::{Compiler, CompilerError, CompilerResult, LLVMCompiler, Value};
 
@@ -6,36 +10,55 @@ fn compile_assignment<T: LLVMCompiler>(
     compiler: &mut T,
     expr: &crate::expression::Assignment,
 ) -> CompilerResult<Value> {
-    let val = match compiler.walk(&expr.right)? {
-        Value::Numeric(val) => {
-            let ptr = compiler
-                .builder()
-                .build_alloca(compiler.context().double_type(), "");
-            Value::Numeric(compiler.builder().create_store(val, &ptr))
-        }
-        Value::Bool(val) => {
-            let ptr = compiler
-                .builder()
-                .build_alloca(compiler.context().i1_type(), "");
-            Value::Bool(compiler.builder().create_store(val, &ptr))
-        }
+    let right = compiler.walk(&expr.right)?;
+
+    let ptr = compiler
+        .builder()
+        .build_alloca(right.llvm_type(compiler.context()), "");
+
+    let val = match right {
+        Value::Numeric(val) => Value::Numeric(compiler.builder().create_store(val, &ptr)),
+        Value::Bool(val) => Value::Bool(compiler.builder().create_store(val, &ptr)),
+        Value::Vec(val) => Value::Vec(compiler.builder().create_store(val, &ptr)),
+        Value::String(val) => Value::String(compiler.builder().create_store(val, &ptr)),
+        Value::Ptr(val) => Value::Ptr(compiler.builder().create_store(val, &ptr)),
+        Value::Function {
+            val,
+            return_type,
+            typ,
+        } => Value::Function {
+            return_type,
+            typ,
+            val: llvm::Function(val.0),
+        },
         Value::Void => Err(CompilerError::TypeError)?,
-        Value::String(_) => todo!(),
-        Value::Function { .. } => todo!(),
-        Value::Vec(val) => {
-            let ptr = compiler
-                .builder()
-                .build_alloca(compiler.context().void_type().pointer_type(0), "");
-            Value::Vec(compiler.builder().create_store(val, &ptr))
-        }
-        Value::Break => todo!(),
-        Value::Ptr(_) => todo!(),
+        Value::Break => Err(CompilerError::TypeError)?,
     };
 
     if let Expression::Identifier(name) = &*expr.left {
+        let val = match right {
+            Value::Void => unreachable!(),
+            Value::String(_) => Value::String(ptr),
+            Value::Numeric(_) => Value::Numeric(ptr),
+            Value::Bool(_) => Value::Bool(ptr),
+            Value::Function {
+                typ, return_type, ..
+            } => Value::Function {
+                val: llvm::Function(ptr.0),
+                typ,
+                return_type,
+            },
+            Value::Vec(_) => Value::Vec(ptr),
+            Value::Break => unreachable!(),
+            Value::Ptr(_) => Value::Ptr(ptr),
+        };
         compiler.set_var(name, val);
     } else {
         Err(CompilerError::TypeError)?
+    }
+
+    if let expression::Expression::FuncDecl(e) = &*expr.right {
+        compiler.build_function(val, &*e)?
     }
 
     Ok(Value::Void)

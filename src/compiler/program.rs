@@ -1,10 +1,10 @@
+use crate::compiler::LLVMCompiler;
 use crate::{
     parser::Program,
     visitor::{ProgramVisitor, Visitor},
 };
-use crate::compiler::LLVMCompiler;
 
-use super::{scope::Scope, Compiler, CompilerResult, Value, MAIN_FUNCTION};
+use super::{Compiler, CompilerResult, Value, MAIN_FUNCTION};
 
 impl ProgramVisitor<CompilerResult<Value>> for Compiler {
     fn visit_program(&mut self, program: Program) -> CompilerResult<Value> {
@@ -22,12 +22,11 @@ impl ProgramVisitor<CompilerResult<Value>> for Compiler {
         for stmt in program.body {
             self.walk(&stmt)?;
         }
-
-        self.exit_scope();
+        self.exit_scope()?;
 
         self.builder.build_ret_void();
 
-        self.verify_function(main_fun);
+        self.verify_function(main_fun)?;
 
         if self.optimization {
             self.pass_manager.run(&main_fun);
