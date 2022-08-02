@@ -45,6 +45,9 @@ pub unsafe extern "C" fn vec_set(ptr: *const RefCell<Vec<f64>>, idx: f64, val: f
     let rc = Rc::from_raw(ptr);
     {
         let mut vec = rc.try_borrow_mut().unwrap();
+        while vec.len() <= idx as usize {
+            vec.push(0.);
+        }
         vec[idx as usize] = val;
     }
     std::mem::forget(rc);
