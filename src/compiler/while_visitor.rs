@@ -20,9 +20,12 @@ impl WhileVisitor<CompilerResult<Value>> for Compiler {
             .build_cond_br(&predicate, &loop_block, &after_loop_block);
 
         self.builder.position_builder_at_end(&loop_block);
+
+        self.enter_scope();
         for stmt in &expr.body {
             self.walk(&stmt)?;
         }
+        self.exit_scope().unwrap();
 
         self.builder
             .build_cond_br(&predicate, &loop_block, &after_loop_block);
