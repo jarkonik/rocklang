@@ -29,7 +29,7 @@ impl Scope {
     }
 
     pub fn release_references(&self, module: &Module, builder: &Builder) -> CompilerResult<()> {
-        for reference in self.references.iter() {
+        for reference in self.references.iter().rev() {
             match reference {
                 Value::Void => todo!(),
                 Value::String(val) => {
