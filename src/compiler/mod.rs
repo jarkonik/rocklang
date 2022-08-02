@@ -255,7 +255,26 @@ impl Compiler {
             Value::Function {
                 val: fun,
                 typ: fun_type,
-                return_type: parser::Type::String,
+                return_type: parser::Type::Void,
+            },
+        );
+
+        self.context.add_symbol(
+            "release_vec_reference",
+            stdlib::release_vec_reference as *mut c_void,
+        );
+        let fun_type = self.context.function_type(
+            self.context.void_type(),
+            &[self.context.void_type().pointer_type(0)],
+            false,
+        );
+        let fun = self.module.add_function("release_vec_reference", fun_type);
+        scope.set(
+            "release_vec_reference",
+            Value::Function {
+                val: fun,
+                typ: fun_type,
+                return_type: parser::Type::Void,
             },
         );
 

@@ -42,10 +42,19 @@ impl Scope {
                     };
                     builder.build_call(fun, &[*val], "");
                 }
-                Value::Numeric(_) => todo!(),
-                Value::Bool(_) => todo!(),
-                Value::Function { .. } => todo!(),
-                Value::Vec(_) => todo!(),
+                Value::Numeric(_) => unreachable!(),
+                Value::Bool(_) => unreachable!(),
+                Value::Function { .. } => unreachable!(),
+                Value::Vec(val) => {
+                    let fun = if let Value::Function { val, .. } =
+                        self.get("release_vec_reference").unwrap()
+                    {
+                        val
+                    } else {
+                        Err(CompilerError::TypeError)?
+                    };
+                    builder.build_call(fun, &[*val], "");
+                }
                 Value::Break => todo!(),
                 Value::Ptr(_) => todo!(),
             }

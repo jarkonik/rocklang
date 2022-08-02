@@ -51,7 +51,11 @@ fn compile_func_call<T: LLVMCompiler>(
 
         let val = match return_type {
             parser::Type::Numeric => Value::Numeric(llvm_value),
-            parser::Type::Vector => Value::Vec(llvm_value),
+            parser::Type::Vector => {
+                let value = Value::Vec(llvm_value);
+                compiler.track_reference(value);
+                value
+            }
             parser::Type::Void => Value::Void,
             parser::Type::Function => todo!(),
             parser::Type::Ptr => Value::Ptr(llvm_value),
