@@ -201,12 +201,15 @@ impl Compiler {
             &[self.context.void_type().pointer_type(0)],
             false,
         );
-        let print = self.init_builtin(
+        let print = self.init_builtin("print", print_type, stdlib::print as *mut c_void);
+        self.set_var(
             "print",
-            print_type,
-            stdlib::print as *mut c_void,
+            Value::Function {
+                val: print,
+                typ: print_type,
+                return_type: parser::Type::Void,
+            },
         );
-        self.scopes.last_mut().unwrap().set("print", Value::Function { val: print, typ: print_type, return_type: parser::Type::Void });
 
         self.init_builtin(
             "release_string_reference",
@@ -238,25 +241,36 @@ impl Compiler {
             stdlib::string_from_c_string as *mut c_void,
         );
 
-        self.init_builtin(
-            "vec_new",
+        let vec_new_type =
             self.context
-                .function_type(self.context.void_type().pointer_type(0), &[], false),
-            stdlib::vec_new as *mut c_void,
+                .function_type(self.context.void_type().pointer_type(0), &[], false);
+        let vec_new = self.init_builtin("vec_new", vec_new_type, stdlib::vec_new as *mut c_void);
+        self.set_var(
+            "vec_new",
+            Value::Function {
+                val: vec_new,
+                typ: vec_new_type,
+                return_type: parser::Type::Vector,
+            },
         );
 
-        self.init_builtin(
+        let vec_set_type = self.context.function_type(
+            self.context.void_type(),
+            &[
+                self.context.void_type().pointer_type(0),
+                self.context.double_type(),
+                self.context.double_type(),
+            ],
+            false,
+        );
+        let vec_set = self.init_builtin("vec_set", vec_set_type, stdlib::vec_set as *mut c_void);
+        self.set_var(
             "vec_set",
-            self.context.function_type(
-                self.context.void_type(),
-                &[
-                    self.context.void_type().pointer_type(0),
-                    self.context.double_type(),
-                    self.context.double_type(),
-                ],
-                false,
-            ),
-            stdlib::vec_set as *mut c_void,
+            Value::Function {
+                val: vec_set,
+                typ: vec_set_type,
+                return_type: parser::Type::Void,
+            },
         );
     }
 }
