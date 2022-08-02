@@ -31,20 +31,20 @@ impl Scope {
     pub fn release_references(&self, module: &Module, builder: &Builder) -> CompilerResult<()> {
         for reference in self.references.iter().rev() {
             match reference {
-                Value::Void => todo!(),
                 Value::String(val) => {
                     let release = module.get_function("release_string_reference").unwrap();
+                    builder.build_call(&release, &[*val], "");
+                }
+                Value::Vec(val) => {
+                    let release = module.get_function("release_vec_reference").unwrap();
                     builder.build_call(&release, &[*val], "");
                 }
                 Value::Numeric(_) => unreachable!(),
                 Value::Bool(_) => unreachable!(),
                 Value::Function { .. } => unreachable!(),
-                Value::Vec(val) => {
-                    let release = module.get_function("release_vec_reference").unwrap();
-                    builder.build_call(&release, &[*val], "");
-                }
-                Value::Break => todo!(),
-                Value::Ptr(_) => todo!(),
+                Value::Void => unreachable!(),
+                Value::Break => unreachable!(),
+                Value::Ptr(_) => unreachable!(),
             }
         }
         Ok(())
