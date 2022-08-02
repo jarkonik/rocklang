@@ -14,6 +14,7 @@ mod program;
 mod scope;
 mod string;
 mod unary;
+mod utils;
 mod value;
 mod while_visitor;
 
@@ -38,6 +39,7 @@ pub enum CompilerError {
     UnkownError,
     TypeError,
     UndefinedIdentifier(String),
+    LLVMError(String),
 }
 
 impl fmt::Display for CompilerError {
@@ -102,12 +104,12 @@ impl Default for Compiler {
 }
 
 impl Compiler {
-    fn verify_function(&mut self, fun: Function) {
-        fun.verify_function().unwrap_or_else(|_x| {
-            println!("IR Dump:");
-            self.dump_ir();
-            panic!("Function verification failed")
-        });
+    fn verify_function(&mut self, fun: Function) -> CompilerResult<()> {
+        if let Ok(fun) = fun.verify_function() {
+            Ok(())
+        } else {
+            Err(CompilerError::LLVMError(self.ir_string()))
+        }
     }
 
     pub fn dump_ir(&self) {

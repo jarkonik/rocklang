@@ -82,6 +82,7 @@ impl FuncCallVisitor<CompilerResult<Value>> for Compiler {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::compiler::utils::llvm_type;
     use crate::compiler::MAIN_FUNCTION;
     use crate::parser::Type;
     use crate::visitor::*;
@@ -111,22 +112,10 @@ mod test {
             compiler.expect_module().return_const(module);
 
             let fun_type = compiler.context().function_type(
-                match $return_type {
-                    Type::Void => compiler.context().void_type(),
-                    Type::Numeric => compiler.context().double_type(),
-                    Type::Bool => compiler.context().i1_type(),
-                    Type::Ptr => compiler.context().void_type().pointer_type(0),
-                    _ => todo!(),
-                },
+                llvm_type(&compiler.context(), &$return_type),
                 &$arg_types
                     .iter()
-                    .map(|t| match t {
-                        Type::Void => compiler.context().void_type(),
-                        Type::Numeric => compiler.context().double_type(),
-                        Type::Bool => compiler.context().i1_type(),
-                        Type::Ptr => compiler.context().void_type().pointer_type(0),
-                        _ => todo!(),
-                    })
+                    .map(|t| llvm_type(&compiler.context(), t))
                     .collect::<Vec<_>>(),
                 false,
             );
@@ -233,7 +222,7 @@ mod test {
     }
 
     #[test]
-    fn test_func_ptr_one_arg() -> Result<(), CompilerError> {
+    fn test_func_one_arg() -> Result<(), CompilerError> {
         let (ir, return_value) = test_func_call!(
             Type::Void,
             vec![Type::Numeric],
@@ -247,6 +236,28 @@ mod test {
 
             define void @main() {
               call void @0(double 3.000000e+00)
+              ret void
+            }
+            "#
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_func_multiple_args() -> Result<(), CompilerError> {
+        let (ir, return_value) = test_func_call!(
+            Type::Void,
+            vec![Type::Numeric, Type::Numeric],
+            vec![Expression::Numeric(3.), Expression::Numeric(3.)]
+        );
+        assert!(matches!(return_value, Value::Void));
+        assert_eq_ir!(
+            ir,
+            r#"
+            declare void @0(double, double)
+
+            define void @main() {
+              call void @0(double 3.000000e+00, double 3.000000e+00)
               ret void
             }
             "#

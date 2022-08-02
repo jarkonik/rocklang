@@ -17,14 +17,14 @@ impl Function {
         Value::from(unsafe { LLVMGetParam(self.0, idx) })
     }
 
-    pub fn verify_function(&self) -> Result<(), Box<dyn Error>> {
+    pub fn verify_function(&self) -> Result<(), LLVMError> {
         let result = unsafe {
             LLVMVerifyFunction(self.0, LLVMVerifierFailureAction::LLVMPrintMessageAction)
         };
         if result == 0 {
             Ok(())
         } else {
-            Err(Box::new(LLVMError {}))
+            Err(LLVMError {})
         }
     }
 
