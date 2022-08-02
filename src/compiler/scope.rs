@@ -1,4 +1,4 @@
-use crate::llvm::Builder;
+use crate::llvm::{Builder, Module};
 use std::collections::HashMap;
 
 use super::{CompilerError, CompilerResult, Value};
@@ -28,32 +28,20 @@ impl Scope {
         self.references.push(value);
     }
 
-    pub fn release_references(&self, builder: &Builder) -> CompilerResult<()> {
+    pub fn release_references(&self, module: &Module, builder: &Builder) -> CompilerResult<()> {
         for reference in self.references.iter() {
             match reference {
                 Value::Void => todo!(),
                 Value::String(val) => {
-                    let fun = if let Value::Function { val, .. } =
-                        self.get("release_string_reference").unwrap()
-                    {
-                        val
-                    } else {
-                        Err(CompilerError::TypeError)?
-                    };
-                    builder.build_call(fun, &[*val], "");
+                    let release = module.get_function("release_string_reference").unwrap();
+                    builder.build_call(&release, &[*val], "");
                 }
                 Value::Numeric(_) => unreachable!(),
                 Value::Bool(_) => unreachable!(),
                 Value::Function { .. } => unreachable!(),
                 Value::Vec(val) => {
-                    let fun = if let Value::Function { val, .. } =
-                        self.get("release_vec_reference").unwrap()
-                    {
-                        val
-                    } else {
-                        Err(CompilerError::TypeError)?
-                    };
-                    builder.build_call(fun, &[*val], "");
+                    let release = module.get_function("release_vec_reference").unwrap();
+                    builder.build_call(&release, &[*val], "");
                 }
                 Value::Break => todo!(),
                 Value::Ptr(_) => todo!(),

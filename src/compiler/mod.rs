@@ -24,6 +24,7 @@ use crate::llvm::Builder;
 use crate::llvm::Context;
 use crate::llvm::Function;
 use crate::llvm::Module;
+use crate::llvm::Type;
 use crate::parser;
 use crate::parser::Program;
 use crate::visitor::*;
@@ -189,114 +190,73 @@ impl Compiler {
         );
     }
 
-    fn init_vec_new_fn(&mut self) {
-        let scope = self.scopes.last_mut().unwrap();
-
-        self.context
-            .add_symbol("vec_new", stdlib::vec_new as *mut c_void);
-        let fun_type =
-            self.context
-                .function_type(self.context.void_type().pointer_type(0), &[], false);
-        let vec_new_fun = self.module.add_function("vec_new", fun_type);
-        scope.set(
-            "vec_new",
-            Value::Function {
-                val: vec_new_fun,
-                typ: fun_type,
-                return_type: parser::Type::Vector,
-            },
-        );
-    }
-
-    fn init_vec_set_fn(&mut self) {
-        let scope = self.scopes.last_mut().unwrap();
-
-        self.context
-            .add_symbol("vec_set", stdlib::vec_set as *mut c_void);
-        let fun_type = self.context.function_type(
-            self.context.void_type(),
-            &[
-                self.context.void_type().pointer_type(0),
-                self.context.double_type(),
-                self.context.double_type(),
-            ],
-            false,
-        );
-        let vec_new_fun = self.module.add_function("vec_set", fun_type);
-        scope.set(
-            "vec_set",
-            Value::Function {
-                val: vec_new_fun,
-                typ: fun_type,
-                return_type: parser::Type::Void,
-            },
-        );
+    fn init_builtin(&self, name: &str, function_type: Type, fun: *mut c_void) -> Function {
+        self.context.add_symbol(name, fun);
+        self.module.add_function(name, function_type)
     }
 
     fn init_builtins(&mut self) {
-        self.init_print_fn();
-        self.init_string_fn();
-        self.init_vec_new_fn();
-        self.init_vec_set_fn();
+        let print_type = self.context.function_type(
+            self.context.void_type(),
+            &[self.context.void_type().pointer_type(0)],
+            false,
+        );
+        let print = self.init_builtin(
+            "print",
+            print_type,
+            stdlib::print as *mut c_void,
+        );
+        self.scopes.last_mut().unwrap().set("print", Value::Function { val: print, typ: print_type, return_type: parser::Type::Void });
 
-        let scope = self.scopes.last_mut().unwrap();
-        self.context.add_symbol(
+        self.init_builtin(
             "release_string_reference",
+            self.context.function_type(
+                self.context.void_type(),
+                &[self.context.void_type().pointer_type(0)],
+                false,
+            ),
             stdlib::release_string_reference as *mut c_void,
         );
-        let fun_type = self.context.function_type(
-            self.context.void_type(),
-            &[self.context.void_type().pointer_type(0)],
-            false,
-        );
-        let fun = self
-            .module
-            .add_function("release_string_reference", fun_type);
-        scope.set(
-            "release_string_reference",
-            Value::Function {
-                val: fun,
-                typ: fun_type,
-                return_type: parser::Type::Void,
-            },
-        );
 
-        self.context.add_symbol(
+        self.init_builtin(
             "release_vec_reference",
+            self.context.function_type(
+                self.context.void_type(),
+                &[self.context.void_type().pointer_type(0)],
+                false,
+            ),
             stdlib::release_vec_reference as *mut c_void,
         );
-        let fun_type = self.context.function_type(
-            self.context.void_type(),
-            &[self.context.void_type().pointer_type(0)],
-            false,
-        );
-        let fun = self.module.add_function("release_vec_reference", fun_type);
-        scope.set(
-            "release_vec_reference",
-            Value::Function {
-                val: fun,
-                typ: fun_type,
-                return_type: parser::Type::Void,
-            },
-        );
 
-        self.context.add_symbol(
+        self.init_builtin(
             "string_from_c_string",
+            self.context.function_type(
+                self.context.void_type().pointer_type(0),
+                &[self.context.i8_type().pointer_type(0)],
+                false,
+            ),
             stdlib::string_from_c_string as *mut c_void,
         );
-        let fun_type = self.context.function_type(
-            self.context.void_type().pointer_type(0),
-            &[self.context.i8_type().pointer_type(0)],
-            false,
+
+        self.init_builtin(
+            "vec_new",
+            self.context
+                .function_type(self.context.void_type().pointer_type(0), &[], false),
+            stdlib::vec_new as *mut c_void,
         );
-        let fun = self.module.add_function("string_from_c_string", fun_type);
-        scope.set(
-            "string_from_c_string",
-            Value::Function {
-                val: fun,
-                typ: fun_type,
-                return_type: parser::Type::String,
-            },
+
+        self.init_builtin(
+            "vec_set",
+            self.context.function_type(
+                self.context.void_type(),
+                &[
+                    self.context.void_type().pointer_type(0),
+                    self.context.double_type(),
+                    self.context.double_type(),
+                ],
+                false,
+            ),
+            stdlib::vec_set as *mut c_void,
         );
     }
 }
@@ -330,11 +290,12 @@ impl LLVMCompiler for Compiler {
     }
 
     fn get_var(&self, name: &str) -> CompilerResult<Value> {
-        if let Some(val) = self.scopes.last().unwrap().get(name) {
-            Ok(*val)
-        } else {
-            Err(CompilerError::UndefinedIdentifier(name.to_string()))
+        for scope in self.scopes.iter().rev() {
+            if let Some(val) = scope.get(name) {
+                return Ok(*val);
+            }
         }
+        Err(CompilerError::UndefinedIdentifier(name.to_string()))
     }
 
     fn set_var(&mut self, name: &str, val: Value) {
@@ -343,7 +304,7 @@ impl LLVMCompiler for Compiler {
 
     fn exit_scope(&mut self) -> CompilerResult<()> {
         let scope = self.scopes.pop().unwrap();
-        scope.release_references(self.builder())
+        scope.release_references(self.module(), self.builder())
     }
 
     fn track_reference(&mut self, val: Value) {

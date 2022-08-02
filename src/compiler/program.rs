@@ -2,12 +2,13 @@ use crate::{
     parser::Program,
     visitor::{ProgramVisitor, Visitor},
 };
+use crate::compiler::LLVMCompiler;
 
 use super::{scope::Scope, Compiler, CompilerResult, Value, MAIN_FUNCTION};
 
 impl ProgramVisitor<CompilerResult<Value>> for Compiler {
     fn visit_program(&mut self, program: Program) -> CompilerResult<Value> {
-        self.scopes.push(Scope::new());
+        self.enter_scope();
         self.init_builtins();
 
         let main_fun = self.module.add_function(
@@ -22,10 +23,7 @@ impl ProgramVisitor<CompilerResult<Value>> for Compiler {
             self.walk(&stmt)?;
         }
 
-        self.scopes
-            .pop()
-            .unwrap()
-            .release_references(&self.builder)?;
+        self.exit_scope();
 
         self.builder.build_ret_void();
 

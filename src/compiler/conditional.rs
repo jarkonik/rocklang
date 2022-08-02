@@ -27,15 +27,19 @@ fn compile_conditional<T: LLVMCompiler>(
         .build_cond_br(&predicate, &then_block, &else_block);
 
     compiler.builder().position_builder_at_end(&then_block);
+    compiler.enter_scope();
     for stmt in &expr.body {
         compiler.walk(stmt)?;
     }
+    compiler.exit_scope().unwrap();
     compiler.builder().create_br(&after_if_block);
 
     compiler.builder().position_builder_at_end(&else_block);
+    compiler.enter_scope();
     for stmt in &expr.else_body {
         compiler.walk(stmt)?;
     }
+    compiler.exit_scope().unwrap();
     compiler.builder().create_br(&after_if_block);
     compiler.builder().position_builder_at_end(&after_if_block);
 
