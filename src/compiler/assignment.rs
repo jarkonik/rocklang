@@ -4,7 +4,7 @@ use crate::{
     visitor::AssignmentVisitor,
 };
 
-use super::{Compiler, CompilerError, CompilerResult, LLVMCompiler, Value};
+use super::{variable::Variable, Compiler, CompilerError, CompilerResult, LLVMCompiler, Value};
 
 fn compile_assignment<T: LLVMCompiler>(
     compiler: &mut T,
@@ -15,50 +15,32 @@ fn compile_assignment<T: LLVMCompiler>(
     let ptr = compiler
         .builder()
         .build_alloca(right.llvm_type(compiler.context()), "");
+    compiler.builder().create_store(right.into(), &ptr);
 
-    let val = match right {
-        Value::Numeric(val) => Value::Numeric(compiler.builder().create_store(val, &ptr)),
-        Value::Bool(val) => Value::Bool(compiler.builder().create_store(val, &ptr)),
-        Value::Vec(val) => Value::Vec(compiler.builder().create_store(val, &ptr)),
-        Value::String(val) => Value::String(compiler.builder().create_store(val, &ptr)),
-        Value::Ptr(val) => Value::Ptr(compiler.builder().create_store(val, &ptr)),
+    let var = match right {
+        Value::String(_) => Variable::String(ptr),
+        Value::Numeric(_) => Variable::Numeric(ptr),
+        Value::Bool(_) => Variable::Bool(ptr),
         Value::Function {
-            val,
-            return_type,
+            return_type, typ, ..
+        } => Variable::Function {
+            val: llvm::Function(ptr.0),
             typ,
-        } => Value::Function {
             return_type,
-            typ,
-            val: llvm::Function(val.0),
         },
-        Value::Void => Err(CompilerError::TypeError)?,
-        Value::Break => Err(CompilerError::TypeError)?,
+        Value::Vec(_) => Variable::Vec(ptr),
+        Value::Ptr(_) => Variable::Ptr(ptr),
+        Value::Void | Value::Break => Err(CompilerError::TypeError)?,
     };
 
     if let Expression::Identifier(name) = &*expr.left {
-        let val = match right {
-            Value::Void => unreachable!(),
-            Value::String(_) => Value::String(ptr),
-            Value::Numeric(_) => Value::Numeric(ptr),
-            Value::Bool(_) => Value::Bool(ptr),
-            Value::Function {
-                typ, return_type, ..
-            } => Value::Function {
-                val: llvm::Function(ptr.0),
-                typ,
-                return_type,
-            },
-            Value::Vec(_) => Value::Vec(ptr),
-            Value::Break => unreachable!(),
-            Value::Ptr(_) => Value::Ptr(ptr),
-        };
-        compiler.set_var(name, val);
+        compiler.set_var(name, var);
     } else {
         Err(CompilerError::TypeError)?
     }
 
     if let expression::Expression::FuncDecl(e) = &*expr.right {
-        compiler.build_function(val, &*e)?
+        compiler.build_function(right, &*e)?
     }
 
     Ok(Value::Void)
@@ -81,6 +63,7 @@ mod test {
     use pretty_assertions::assert_eq;
 
     use super::*;
+    use crate::compiler::Variable;
     use crate::compiler::MAIN_FUNCTION;
     use crate::llvm::{Builder, Context, Module};
     use crate::parser;
@@ -103,7 +86,7 @@ mod test {
             .expect_set_var()
             .with(
                 predicate::eq("test"),
-                predicate::function(|x| matches!(x, Value::Numeric(_))),
+                predicate::function(|x| matches!(x, Variable::Numeric(_))),
             )
             .return_const(());
 

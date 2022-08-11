@@ -1,5 +1,5 @@
-use crate::llvm;
 use crate::llvm::Context;
+use crate::llvm::{self};
 use crate::parser;
 
 #[derive(Debug, Clone, Copy)]
@@ -18,6 +18,34 @@ pub enum Value {
     Ptr(llvm::Value),
 }
 
+impl From<Value> for llvm::Value {
+    fn from(v: Value) -> Self {
+        match v {
+            Value::Void | Value::Break => unimplemented!(),
+            Value::String(lv) => lv,
+            Value::Numeric(lv) => lv,
+            Value::Bool(lv) => lv,
+            Value::Function { val, .. } => llvm::Value(val.0),
+            Value::Vec(lv) => lv,
+            Value::Ptr(lv) => lv,
+        }
+    }
+}
+
+impl From<&Value> for llvm::Value {
+    fn from(v: &Value) -> Self {
+        match *v {
+            Value::Void | Value::Break => unimplemented!(),
+            Value::String(lv) => lv,
+            Value::Numeric(lv) => lv,
+            Value::Bool(lv) => lv,
+            Value::Function { val, .. } => llvm::Value(val.0),
+            Value::Vec(lv) => lv,
+            Value::Ptr(lv) => lv,
+        }
+    }
+}
+
 impl Value {
     pub fn llvm_type(&self, context: &Context) -> llvm::Type {
         match self {
@@ -27,9 +55,7 @@ impl Value {
             Value::Ptr(_) => context.void_type().pointer_type(0),
             Value::String(_) => context.void_type().pointer_type(0),
             Value::Vec(_) => context.void_type().pointer_type(0),
-            Value::Function { .. } => context
-                .function_type(context.void_type(), &[], false)
-                .pointer_type(0),
+            Value::Function { typ, .. } => *typ,
             Value::Break => unreachable!(),
         }
     }

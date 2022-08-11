@@ -4,7 +4,7 @@ use crate::{
     visitor::FuncCallVisitor,
 };
 
-use super::{Compiler, CompilerError, CompilerResult, LLVMCompiler, Value};
+use super::{variable::Variable, Compiler, CompilerError, CompilerResult, LLVMCompiler, Value};
 
 fn compile_args<T: LLVMCompiler>(
     compiler: &mut T,
@@ -43,7 +43,7 @@ fn compile_func_call<T: LLVMCompiler>(
 
     let builder = compiler.builder();
 
-    if let Value::Function {
+    if let Variable::Function {
         return_type, val, ..
     } = var
     {
@@ -86,7 +86,7 @@ mod test {
     use crate::parser::Type;
     use crate::visitor::*;
     use crate::{
-        compiler::{CompilerError, CompilerResult, LLVMCompiler, Value},
+        compiler::{CompilerError, CompilerResult, LLVMCompiler, Value, Variable},
         expression::{Expression, FuncCall},
         llvm::{Builder, Context, Module},
     };
@@ -120,7 +120,7 @@ mod test {
             );
             let fun = compiler.module().add_function("", fun_type);
 
-            let fun_value = Value::Function {
+            let fun_value = Variable::Function {
                 return_type: $return_type,
                 typ: fun_type,
                 val: fun,

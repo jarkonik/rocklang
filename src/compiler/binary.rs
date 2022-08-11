@@ -90,6 +90,7 @@ mod test {
     use pretty_assertions::assert_eq;
 
     use super::*;
+    use crate::compiler::Variable;
     use crate::compiler::MAIN_FUNCTION;
     use crate::llvm::{Builder, Context, Module};
     use crate::parser;

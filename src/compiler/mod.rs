@@ -16,6 +16,7 @@ mod string;
 mod unary;
 mod utils;
 mod value;
+mod variable;
 mod while_visitor;
 
 use crate::expression;
@@ -35,6 +36,7 @@ use std::fmt;
 
 use self::scope::Scope;
 pub use self::value::Value;
+use self::variable::Variable;
 
 #[derive(Clone, Debug)]
 pub enum CompilerError {
@@ -162,7 +164,7 @@ impl Compiler {
         let string = self.init_builtin("string", string_type, stdlib::string as *mut c_void);
         self.set_var(
             "string",
-            Value::Function {
+            Variable::Function {
                 val: string,
                 typ: string_type,
                 return_type: parser::Type::String,
@@ -177,7 +179,7 @@ impl Compiler {
         let print = self.init_builtin("print", print_type, stdlib::print as *mut c_void);
         self.set_var(
             "print",
-            Value::Function {
+            Variable::Function {
                 val: print,
                 typ: print_type,
                 return_type: parser::Type::Void,
@@ -220,7 +222,7 @@ impl Compiler {
         let vec_new = self.init_builtin("vec_new", vec_new_type, stdlib::vec_new as *mut c_void);
         self.set_var(
             "vec_new",
-            Value::Function {
+            Variable::Function {
                 val: vec_new,
                 typ: vec_new_type,
                 return_type: parser::Type::Vector,
@@ -239,7 +241,7 @@ impl Compiler {
         let vec_set = self.init_builtin("vec_set", vec_set_type, stdlib::vec_set as *mut c_void);
         self.set_var(
             "vec_set",
-            Value::Function {
+            Variable::Function {
                 val: vec_set,
                 typ: vec_set_type,
                 return_type: parser::Type::Void,
@@ -254,9 +256,9 @@ trait LLVMCompiler: Visitor<CompilerResult<Value>> {
     fn module(&self) -> &Module;
     fn enter_scope(&mut self);
     fn exit_scope(&mut self) -> CompilerResult<()>;
-    fn get_var(&self, name: &str) -> CompilerResult<Value>;
+    fn get_var(&self, name: &str) -> CompilerResult<Variable>;
     fn track_reference(&mut self, val: Value);
-    fn set_var(&mut self, name: &str, val: Value);
+    fn set_var(&mut self, name: &str, val: Variable);
     fn build_function(
         &mut self,
         fun_compiler_val: Value,
@@ -281,7 +283,7 @@ impl LLVMCompiler for Compiler {
         self.scopes.push(Scope::new());
     }
 
-    fn get_var(&self, name: &str) -> CompilerResult<Value> {
+    fn get_var(&self, name: &str) -> CompilerResult<Variable> {
         for scope in self.scopes.iter().rev() {
             if let Some(val) = scope.get(name) {
                 return Ok(*val);
@@ -290,7 +292,7 @@ impl LLVMCompiler for Compiler {
         Err(CompilerError::UndefinedIdentifier(name.to_string()))
     }
 
-    fn set_var(&mut self, name: &str, val: Value) {
+    fn set_var(&mut self, name: &str, val: Variable) {
         self.scopes.last_mut().unwrap().set(name, val);
     }
 
@@ -330,11 +332,13 @@ impl LLVMCompiler for Compiler {
             self.set_var(
                 param.name.as_str(),
                 match param.typ {
-                    parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Ptr => Value::Ptr(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::String => Value::String(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Void => Value::Void,
+                    parser::Type::Vector => Variable::Vec(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Numeric => {
+                        Variable::Numeric(fun.get_param(i.try_into().unwrap()))
+                    }
+                    parser::Type::Ptr => Variable::Ptr(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::String => Variable::String(fun.get_param(i.try_into().unwrap())),
+                    parser::Type::Void => Err(CompilerError::TypeError)?,
                     parser::Type::Function => todo!(),
                     parser::Type::Bool => todo!(),
                 },

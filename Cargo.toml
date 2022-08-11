@@ -23,7 +23,7 @@ serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.59"
 assert-json-diff = "2.0.1"
 stdlib = { path = "./stdlib" }
-llvm-sys = "130"
+llvm-sys = "140"
 backtrace = "0.3"
 test_utils = { path = "./test_utils" }
 libc = "0.2"

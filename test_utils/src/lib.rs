@@ -129,9 +129,9 @@ macro_rules! mock_compiler {
                 fn module(&self) -> &Module;
                 fn enter_scope(&mut self);
                 fn exit_scope(&mut self) -> CompilerResult<()>;
-                fn get_var(&self, name: &str) -> CompilerResult<Value>;
+                fn get_var(&self, name: &str) -> CompilerResult<Variable>;
                 fn track_reference(&mut self, val: Value);
-                fn set_var(&mut self, name: &str, val: Value);
+                fn set_var(&mut self, name: &str, val: Variable);
                 fn build_function(
                     &mut self,
                     fun_compiler_val: Value,
