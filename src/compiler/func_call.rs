@@ -123,6 +123,7 @@ mod test {
             compiler.expect_context().return_const(context);
             compiler.expect_builder().return_const(builder);
             compiler.expect_module().return_const(module);
+            compiler.expect_get_builtin().return_const(None);
 
             let fun_type = compiler.context().function_type(
                 get_llvm_type(&compiler.context(), &$return_type),
