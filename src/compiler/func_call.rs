@@ -43,7 +43,7 @@ fn compile_func_call<T: LLVMCompiler>(
     let var = match builtin {
         Some(b) => {
             is_builtin = true;
-            *b
+            b
         }
         None => compiler.get_var(&name)?,
     };
@@ -123,7 +123,6 @@ mod test {
             compiler.expect_context().return_const(context);
             compiler.expect_builder().return_const(builder);
             compiler.expect_module().return_const(module);
-            compiler.expect_get_builtin().return_const_st(None);
 
             let fun_type = compiler.context().function_type(
                 get_llvm_type(&compiler.context(), &$return_type),
@@ -142,10 +141,10 @@ mod test {
             };
 
             compiler
-                .expect_get_var()
+                .expect_get_builtin()
                 .with(predicate::eq("test_fun"))
                 .times(1)
-                .return_const_st(Ok(fun_value));
+                .return_const_st(Some(fun_value.clone()));
 
             let const_double = Value::Numeric(compiler.context().const_double(3.));
 
