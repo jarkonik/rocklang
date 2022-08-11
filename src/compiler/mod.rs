@@ -30,6 +30,7 @@ use crate::llvm::Type;
 use crate::parser;
 use crate::parser::Program;
 use crate::visitor::*;
+use std::collections::HashMap;
 use std::error::Error;
 use std::ffi::c_void;
 use std::fmt;
@@ -72,6 +73,7 @@ pub struct Compiler {
     pass_manager: llvm::PassManager,
     optimization: bool,
     scopes: Vec<Scope>,
+    builtins: HashMap<String, Variable>,
 }
 
 impl Visitor<CompilerResult<Value>> for Compiler {
@@ -139,6 +141,7 @@ impl Compiler {
         let pass_manager = llvm::PassManager::new(&module);
 
         Ok(Compiler {
+            builtins: HashMap::new(),
             scopes: vec![],
             program,
             context,
@@ -150,9 +153,17 @@ impl Compiler {
         })
     }
 
-    fn init_builtin(&self, name: &str, function_type: Type, fun: *mut c_void) -> Function {
+    fn init_builtin(&mut self, name: &str, typ: Type, fun: *mut c_void, return_type: parser::Type) {
         self.context.add_symbol(name, fun);
-        self.module.add_function(name, function_type)
+        let val = self.module.add_function(name, typ);
+        self.builtins.insert(
+            name.to_string(),
+            Variable::Function {
+                val,
+                typ,
+                return_type,
+            },
+        );
     }
 
     fn init_builtins(&mut self) {
@@ -161,14 +172,11 @@ impl Compiler {
             &[self.context.double_type()],
             false,
         );
-        let string = self.init_builtin("string", string_type, stdlib::string as *mut c_void);
-        self.set_var(
+        self.init_builtin(
             "string",
-            Variable::Function {
-                val: string,
-                typ: string_type,
-                return_type: parser::Type::String,
-            },
+            string_type,
+            stdlib::string as *mut c_void,
+            parser::Type::String,
         );
 
         let print_type = self.context.function_type(
@@ -176,14 +184,11 @@ impl Compiler {
             &[self.context.void_type().pointer_type(0)],
             false,
         );
-        let print = self.init_builtin("print", print_type, stdlib::print as *mut c_void);
-        self.set_var(
+        self.init_builtin(
             "print",
-            Variable::Function {
-                val: print,
-                typ: print_type,
-                return_type: parser::Type::Void,
-            },
+            print_type,
+            stdlib::print as *mut c_void,
+            parser::Type::Void,
         );
 
         self.init_builtin(
@@ -194,6 +199,7 @@ impl Compiler {
                 false,
             ),
             stdlib::release_string_reference as *mut c_void,
+            parser::Type::Void,
         );
 
         self.init_builtin(
@@ -204,6 +210,7 @@ impl Compiler {
                 false,
             ),
             stdlib::release_vec_reference as *mut c_void,
+            parser::Type::Void,
         );
 
         self.init_builtin(
@@ -214,19 +221,17 @@ impl Compiler {
                 false,
             ),
             stdlib::string_from_c_string as *mut c_void,
+            parser::Type::String,
         );
 
         let vec_new_type =
             self.context
                 .function_type(self.context.void_type().pointer_type(0), &[], false);
-        let vec_new = self.init_builtin("vec_new", vec_new_type, stdlib::vec_new as *mut c_void);
-        self.set_var(
+        self.init_builtin(
             "vec_new",
-            Variable::Function {
-                val: vec_new,
-                typ: vec_new_type,
-                return_type: parser::Type::Vector,
-            },
+            vec_new_type,
+            stdlib::vec_new as *mut c_void,
+            parser::Type::Vector,
         );
 
         let vec_set_type = self.context.function_type(
@@ -238,14 +243,11 @@ impl Compiler {
             ],
             false,
         );
-        let vec_set = self.init_builtin("vec_set", vec_set_type, stdlib::vec_set as *mut c_void);
-        self.set_var(
+        self.init_builtin(
             "vec_set",
-            Variable::Function {
-                val: vec_set,
-                typ: vec_set_type,
-                return_type: parser::Type::Void,
-            },
+            vec_set_type,
+            stdlib::vec_set as *mut c_void,
+            parser::Type::Void,
         );
     }
 }
@@ -257,6 +259,7 @@ trait LLVMCompiler: Visitor<CompilerResult<Value>> {
     fn enter_scope(&mut self);
     fn exit_scope(&mut self) -> CompilerResult<()>;
     fn get_var(&self, name: &str) -> CompilerResult<Variable>;
+    fn get_builtin(&self, name: &str) -> Option<&Variable>;
     fn track_reference(&mut self, val: Value);
     fn set_var(&mut self, name: &str, val: Variable);
     fn build_function(
@@ -281,6 +284,10 @@ impl LLVMCompiler for Compiler {
 
     fn enter_scope(&mut self) {
         self.scopes.push(Scope::new());
+    }
+
+    fn get_builtin(&self, name: &str) -> Option<&Variable> {
+        self.builtins.get(name)
     }
 
     fn get_var(&self, name: &str) -> CompilerResult<Variable> {

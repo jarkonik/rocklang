@@ -37,7 +37,16 @@ fn compile_func_call<T: LLVMCompiler>(
         _ => Err(CompilerError::TypeError),
     }?;
 
-    let var = compiler.get_var(&name)?;
+    let builtin = compiler.get_builtin(&name);
+
+    let mut is_builtin = false;
+    let var = match builtin {
+        Some(b) => {
+            is_builtin = true;
+            *b
+        }
+        None => compiler.get_var(&name)?,
+    };
 
     let args = compile_args(compiler, &expr.args)?;
 
@@ -47,6 +56,11 @@ fn compile_func_call<T: LLVMCompiler>(
         return_type, val, ..
     } = var
     {
+        let val = match is_builtin {
+            true => val,
+            false => llvm::Function(builder.build_load(&llvm::Value(val.0), "").0),
+        };
+
         let llvm_value = builder.build_call(&val, &args, "");
 
         let val = match return_type {
