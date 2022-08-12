@@ -56,7 +56,7 @@ impl Value {
             Value::String(_) => context.void_type().pointer_type(0),
             Value::Vec(_) => context.void_type().pointer_type(0),
             Value::Function { typ, .. } => typ.pointer_type(0),
-            Value::Break => unreachable!(),
+            Value::Break => unimplemented!(),
         }
     }
 }

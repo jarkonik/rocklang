@@ -13,3 +13,29 @@ pub enum Variable {
     Vec(llvm::Value),
     Ptr(llvm::Value),
 }
+
+impl From<Variable> for llvm::Value {
+    fn from(v: Variable) -> Self {
+        match v {
+            Variable::String(lv) => lv,
+            Variable::Numeric(lv) => lv,
+            Variable::Bool(lv) => lv,
+            Variable::Function { val, .. } => llvm::Value(val.0),
+            Variable::Vec(lv) => lv,
+            Variable::Ptr(lv) => lv,
+        }
+    }
+}
+
+impl From<&Variable> for llvm::Value {
+    fn from(v: &Variable) -> Self {
+        match *v {
+            Variable::String(lv) => lv,
+            Variable::Numeric(lv) => lv,
+            Variable::Bool(lv) => lv,
+            Variable::Function { val, .. } => llvm::Value(val.0),
+            Variable::Vec(lv) => lv,
+            Variable::Ptr(lv) => lv,
+        }
+    }
+}

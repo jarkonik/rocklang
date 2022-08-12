@@ -39,12 +39,12 @@ impl Scope {
                     let release = module.get_function("release_vec_reference").unwrap();
                     builder.build_call(&release, &[*val], "");
                 }
-                Value::Numeric(_) => unreachable!(),
-                Value::Bool(_) => unreachable!(),
-                Value::Function { .. } => unreachable!(),
-                Value::Void => unreachable!(),
-                Value::Break => unreachable!(),
-                Value::Ptr(_) => unreachable!(),
+                Value::Numeric(_) => unimplemented!(),
+                Value::Bool(_) => unimplemented!(),
+                Value::Function { .. } => unimplemented!(),
+                Value::Void => unimplemented!(),
+                Value::Break => unimplemented!(),
+                Value::Ptr(_) => unimplemented!(),
             }
         }
         Ok(())

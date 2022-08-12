@@ -6,14 +6,7 @@ impl IdentifierVisitor<CompilerResult<Value>> for Compiler {
     fn visit_identifier(&mut self, expr: &str) -> CompilerResult<Value> {
         let var = self.get_var(expr)?;
 
-        let ptr = match var {
-            Variable::String(n) => n,
-            Variable::Numeric(n) => n,
-            Variable::Bool(n) => n,
-            Variable::Function { val, .. } => llvm::Value(val.0),
-            Variable::Vec(n) => n,
-            Variable::Ptr(n) => n,
-        };
+        let ptr: llvm::Value = var.into();
 
         let val = self.builder.build_load(&ptr, "");
 
