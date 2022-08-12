@@ -1,5 +1,5 @@
 use crate::{
-    expression::{self, Expression},
+    expression::{self, Node},
     llvm, parser,
     visitor::FuncCallVisitor,
 };
@@ -8,19 +8,27 @@ use super::{variable::Variable, Compiler, CompilerError, CompilerResult, LLVMCom
 
 fn compile_args<T: LLVMCompiler>(
     compiler: &mut T,
-    args: &[Expression],
+    args: &[Node],
 ) -> CompilerResult<Vec<llvm::Value>> {
     args.iter()
         .map(|arg| {
             let val = match compiler.walk(arg)? {
-                Value::Void => Err(CompilerError::TypeError)?,
+                Value::Void => Err(CompilerError::TypeError {
+                    expected: todo!(),
+                    actual: todo!(),
+                    span: todo!(),
+                })?,
                 Value::String(n) => n,
                 Value::Numeric(n) => n,
                 Value::Bool(n) => n,
                 Value::Vec(n) => n,
                 Value::Ptr(n) => n,
                 Value::Function { val, .. } => llvm::Value(val.0),
-                Value::Break => Err(CompilerError::TypeError)?,
+                Value::Break => Err(CompilerError::TypeError {
+                    expected: todo!(),
+                    actual: todo!(),
+                    span: todo!(),
+                })?,
             };
 
             Ok(val)
@@ -32,9 +40,13 @@ fn compile_func_call<T: LLVMCompiler>(
     compiler: &mut T,
     expr: &expression::FuncCall,
 ) -> CompilerResult<Value> {
-    let name = match &*expr.calee {
+    let name = match expr.calee.expression {
         expression::Expression::Identifier(ref name) => Ok(name.clone()),
-        _ => Err(CompilerError::TypeError),
+        _ => Err(CompilerError::TypeError {
+            expected: todo!(),
+            actual: todo!(),
+            span: todo!(),
+        }),
     }?;
 
     let builtin = compiler.get_builtin(&name);
@@ -83,7 +95,11 @@ fn compile_func_call<T: LLVMCompiler>(
 
         Ok(val)
     } else {
-        Err(CompilerError::TypeError)
+        Err(CompilerError::TypeError {
+            expected: todo!(),
+            actual: todo!(),
+            span: todo!(),
+        })
     }
 }
 
@@ -97,7 +113,7 @@ impl FuncCallVisitor<CompilerResult<Value>> for Compiler {
 mod test {
     use super::*;
     use crate::compiler::{utils::get_llvm_type, MAIN_FUNCTION};
-    use crate::parser::Type;
+    use crate::parser::{Span, Type};
     use crate::visitor::*;
     use crate::{
         compiler::{CompilerError, CompilerResult, LLVMCompiler, Value, Variable},
@@ -148,15 +164,17 @@ mod test {
 
             let const_double = Value::Numeric(compiler.context().const_double(3.));
 
-            compiler.expect_walk().returning_st(move |x| match x {
-                Expression::Numeric(_) => Ok(const_double),
-                _ => todo!(),
-            });
+            compiler
+                .expect_walk()
+                .returning_st(move |x| match x.expression {
+                    Expression::Numeric(_) => Ok(const_double),
+                    _ => todo!(),
+                });
 
             let val: Value;
             in_main_function!(compiler.context(), compiler.module(), compiler.builder(), {
                 let func_call = FuncCall {
-                    calee: Box::new(Expression::Identifier("test_fun".to_string())),
+                    calee: boxed_node!(Expression::Identifier("test_fun".to_string())),
                     args: $args,
                 };
                 val = compile_func_call(&mut compiler, &func_call)?;
@@ -243,7 +261,7 @@ mod test {
         let (ir, return_value) = test_func_call!(
             Type::Void,
             vec![Type::Numeric],
-            vec![Expression::Numeric(3.0)]
+            vec![node!(Expression::Numeric(3.0))]
         );
         assert!(matches!(return_value, Value::Void));
         assert_eq_ir!(

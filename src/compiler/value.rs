@@ -59,4 +59,16 @@ impl Value {
             Value::Break => unimplemented!(),
         }
     }
+
+    pub fn get_type(&self) -> parser::Type {
+        match self {
+            Value::Void | Value::Break => parser::Type::Void,
+            Value::Numeric(_) => parser::Type::Numeric,
+            Value::Bool(_) => parser::Type::Bool,
+            Value::Ptr(_) => parser::Type::Ptr,
+            Value::String(_) => parser::Type::String,
+            Value::Vec(_) => parser::Type::Vector,
+            Value::Function { typ, .. } => parser::Type::Function,
+        }
+    }
 }

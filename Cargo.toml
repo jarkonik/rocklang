@@ -27,6 +27,7 @@ llvm-sys = "140"
 backtrace = "0.3"
 test_utils = { path = "./test_utils" }
 libc = "0.2"
+anyhow = "1.0"
 
 [dev-dependencies]
 assert_cmd = "0.10"

@@ -29,6 +29,7 @@ use crate::llvm::Module;
 use crate::llvm::Type;
 use crate::parser;
 use crate::parser::Program;
+use crate::parser::Span;
 use crate::visitor::*;
 use std::collections::HashMap;
 use std::error::Error;
@@ -41,7 +42,13 @@ use self::variable::Variable;
 
 #[derive(Clone, Debug)]
 pub enum CompilerError {
-    TypeError,
+    VoidAssignment,
+    NonIdentifierAssignment,
+    TypeError {
+        expected: parser::Type,
+        actual: parser::Type,
+        span: Span,
+    },
     EngineInitError,
     UndefinedIdentifier(String),
     LLVMError(String),
@@ -50,7 +57,27 @@ pub enum CompilerError {
 
 impl fmt::Display for CompilerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Input error")
+        let msg = match self {
+            CompilerError::TypeError {
+                expected,
+                actual,
+                span,
+            } => {
+                format!(
+                    "type error expected {}, but got {} at {}",
+                    expected, actual, span
+                )
+            }
+            CompilerError::EngineInitError => "engine init error".to_string(),
+            CompilerError::UndefinedIdentifier(x) => {
+                format!("undefined identifier {}", x)
+            }
+            CompilerError::LLVMError(err) => format!("llvm error: {}", err),
+            CompilerError::LoadLibaryError(lib) => format!("error loading {}", lib),
+            CompilerError::VoidAssignment => "void assignment".to_string(),
+            CompilerError::NonIdentifierAssignment => "non identifier assignment".to_string(),
+        };
+        write!(f, "{}", msg)
     }
 }
 
@@ -77,23 +104,23 @@ pub struct Compiler {
 }
 
 impl Visitor<CompilerResult<Value>> for Compiler {
-    fn walk(&mut self, expr: &crate::expression::Expression) -> CompilerResult<Value> {
-        match expr {
-            Expression::Binary(expr) => self.visit_binary(expr),
-            Expression::Unary(expr) => self.visit_unary(expr),
-            Expression::FuncCall(expr) => self.visit_func_call(expr),
-            Expression::Numeric(expr) => self.visit_numeric(expr),
-            Expression::Assignment(expr) => self.visit_assignment(expr),
-            Expression::Identifier(expr) => self.visit_identifier(expr),
-            Expression::Conditional(expr) => self.visit_conditional(expr),
-            Expression::String(expr) => self.visit_string(expr),
-            Expression::Bool(expr) => self.visit_bool(expr),
+    fn walk(&mut self, node: &crate::expression::Node) -> CompilerResult<Value> {
+        match &node.expression {
+            Expression::Binary(expr) => self.visit_binary(&expr, node.span.clone()),
+            Expression::Unary(expr) => self.visit_unary(&expr),
+            Expression::FuncCall(expr) => self.visit_func_call(&expr),
+            Expression::Numeric(expr) => self.visit_numeric(&expr),
+            Expression::Assignment(expr) => self.visit_assignment(&expr),
+            Expression::Identifier(expr) => self.visit_identifier(&expr),
+            Expression::Conditional(expr) => self.visit_conditional(&expr, node.span.clone()),
+            Expression::String(expr) => self.visit_string(&expr),
+            Expression::Bool(expr) => self.visit_bool(&expr),
             Expression::Break => self.visit_break(),
-            Expression::While(expr) => self.visit_while(expr),
-            Expression::FuncDecl(expr) => self.visit_func_decl(expr),
-            Expression::Load(expr) => self.visit_load(expr),
-            Expression::Extern(expr) => self.visit_extern(expr),
-            Expression::Grouping(expr) => self.visit_grouping(expr),
+            Expression::While(expr) => self.visit_while(&expr),
+            Expression::FuncDecl(expr) => self.visit_func_decl(&expr),
+            Expression::Load(expr) => self.visit_load(&expr),
+            Expression::Extern(expr) => self.visit_extern(&expr),
+            Expression::Grouping(expr) => self.visit_grouping(&expr),
         }
     }
 }
@@ -345,7 +372,7 @@ impl LLVMCompiler for Compiler {
                     }
                     parser::Type::Ptr => Variable::Ptr(fun.get_param(i.try_into().unwrap())),
                     parser::Type::String => Variable::String(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Void => Err(CompilerError::TypeError)?,
+                    parser::Type::Void => todo!(),
                     parser::Type::Function => todo!(),
                     parser::Type::Bool => todo!(),
                 },

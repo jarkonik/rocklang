@@ -1,6 +1,6 @@
-use crate::expression;
+use crate::expression::{self, Node};
 use crate::expression::{Expression, Operator};
-use crate::token::Token;
+use crate::token::{Token, TokenKind};
 use backtrace::Backtrace;
 use serde::Serialize;
 use std::error::Error;
@@ -17,7 +17,11 @@ impl Display for ParserError {
                 token,
                 backtrace: _,
             } => {
-                write!(f, "Syntax error: unexpected token {}", token)
+                write!(
+                    f,
+                    "Syntax error: unexpected token {} at {}",
+                    token.kind, token.span
+                )
             }
         }
     }
@@ -37,6 +41,21 @@ pub enum Type {
     String,
 }
 
+impl Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            Type::Numeric => "Numeric",
+            Type::Bool => "Bool",
+            Type::Vector => "Vector",
+            Type::Void => "Void",
+            Type::Function => "Function",
+            Type::Ptr => "Ptr",
+            Type::String => "String",
+        };
+        write!(f, "{}", name)
+    }
+}
+
 #[derive(Clone, Serialize, Debug)]
 pub struct Param {
     pub typ: Type,
@@ -45,7 +64,7 @@ pub struct Param {
 
 #[derive(Default, Serialize, Clone)]
 pub struct Program {
-    pub body: Vec<Expression>,
+    pub body: Vec<Node>,
 }
 
 pub trait Parse {
@@ -57,9 +76,21 @@ pub struct Parser {
     current: usize,
 }
 
+#[derive(Debug, Default, Serialize, Clone)]
+pub struct Span {
+    pub line: u32,
+    pub column: u32,
+}
+
+impl Display for Span {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.line, self.column)
+    }
+}
+
 impl Parse for Parser {
     fn parse(&mut self) -> Result<Program> {
-        let mut statements: Vec<Expression> = Vec::new();
+        let mut statements: Vec<Node> = Vec::new();
 
         while !self.at_end() {
             statements.push(self.expression()?);
@@ -77,18 +108,18 @@ impl Parser {
         }
     }
 
-    fn expression(&mut self) -> Result<Expression> {
+    fn expression(&mut self) -> Result<Node> {
         self.while_loop()
     }
 
-    fn while_loop(&mut self) -> Result<Expression> {
-        match self.peek() {
-            Token::While => {
+    fn while_loop(&mut self) -> Result<Node> {
+        match self.peek().kind {
+            TokenKind::While => {
                 self.advance();
                 let predicate = self.expression()?;
 
-                match self.advance() {
-                    Token::LCurly => (),
+                match self.advance().kind {
+                    TokenKind::LCurly => (),
                     _ => {
                         return Err(ParserError::SyntaxError {
                             token: self.previous().clone(),
@@ -97,11 +128,11 @@ impl Parser {
                     }
                 };
 
-                let mut body: Vec<Expression> = Vec::new();
+                let mut body: Vec<Node> = Vec::new();
 
                 loop {
-                    match self.peek() {
-                        Token::RCurly => {
+                    match self.peek().kind {
+                        TokenKind::RCurly => {
                             self.advance();
                             break;
                         }
@@ -111,23 +142,30 @@ impl Parser {
                     }
                 }
 
-                Ok(Expression::While(expression::While {
+                Ok(self.node(Expression::While(expression::While {
                     predicate: Box::new(predicate),
                     body,
-                }))
+                })))
             }
             _ => self.conditional(),
         }
     }
 
-    fn conditional(&mut self) -> Result<Expression> {
-        match self.peek() {
-            Token::If => {
+    fn node(&mut self, expression: Expression) -> Node {
+        Node {
+            expression,
+            span: self.previous().span.clone(),
+        }
+    }
+
+    fn conditional(&mut self) -> Result<Node> {
+        match self.peek().kind {
+            TokenKind::If => {
                 self.advance();
                 let predicate = self.expression()?;
 
-                match self.advance() {
-                    Token::LCurly => (),
+                match self.advance().kind {
+                    TokenKind::LCurly => (),
                     _ => {
                         return Err(ParserError::SyntaxError {
                             token: self.previous().clone(),
@@ -136,12 +174,12 @@ impl Parser {
                     }
                 };
 
-                let mut body: Vec<Expression> = Vec::new();
-                let mut else_body: Vec<Expression> = Vec::new();
+                let mut body: Vec<Node> = Vec::new();
+                let mut else_body: Vec<Node> = Vec::new();
 
                 loop {
-                    match self.peek() {
-                        Token::RCurly => {
+                    match self.peek().kind {
+                        TokenKind::RCurly => {
                             self.advance();
                             break;
                         }
@@ -151,11 +189,11 @@ impl Parser {
                     }
                 }
 
-                if let Token::Else = self.peek() {
+                if let TokenKind::Else = self.peek().kind {
                     self.advance();
 
-                    match self.advance() {
-                        Token::LCurly => (),
+                    match self.advance().kind {
+                        TokenKind::LCurly => (),
                         _ => {
                             return Err(ParserError::SyntaxError {
                                 token: self.previous().clone(),
@@ -165,8 +203,8 @@ impl Parser {
                     };
 
                     loop {
-                        match self.peek() {
-                            Token::RCurly => {
+                        match self.peek().kind {
+                            TokenKind::RCurly => {
                                 self.advance();
                                 break;
                             }
@@ -177,82 +215,89 @@ impl Parser {
                     }
                 }
 
-                Ok(Expression::Conditional(expression::Conditional {
+                Ok(self.node(Expression::Conditional(expression::Conditional {
                     predicate: Box::new(predicate),
                     body,
                     else_body,
-                }))
+                })))
             }
             _ => self.assignment(),
         }
     }
 
-    fn assignment(&mut self) -> Result<Expression> {
+    fn assignment(&mut self) -> Result<Node> {
         let mut expr = self.equality()?;
 
-        while let Token::Equal = self.peek() {
+        while let TokenKind::Equal = self.peek().kind {
             self.advance();
-            expr = Expression::Assignment(expression::Assignment {
+            let right = self.equality()?;
+            expr = self.node(Expression::Assignment(expression::Assignment {
                 left: Box::new(expr),
-                right: Box::new(self.equality()?),
-            });
+                right: Box::new(right),
+            }))
         }
 
         Ok(expr)
     }
 
-    fn equality(&mut self) -> Result<Expression> {
+    fn equality(&mut self) -> Result<Node> {
         let mut expr = self.addition_or_modulo()?;
 
         loop {
-            match self.peek() {
-                Token::DoubleEqual => {
+            match self.peek().kind {
+                TokenKind::DoubleEqual => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.addition_or_modulo()?;
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::Equal,
-                        right: Box::new(self.addition_or_modulo()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
-                Token::NotEqual => {
+                TokenKind::NotEqual => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.addition_or_modulo()?;
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::NotEqual,
-                        right: Box::new(self.addition_or_modulo()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
-                Token::LessOrEqual => {
+                TokenKind::LessOrEqual => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.addition_or_modulo()?;
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::LessOrEqual,
-                        right: Box::new(self.addition_or_modulo()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
-                Token::Less => {
+                TokenKind::Less => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.addition_or_modulo()?;
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::Less,
-                        right: Box::new(self.addition_or_modulo()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
-                Token::Greater => {
+                TokenKind::Greater => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.addition_or_modulo()?;
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::Greater,
-                        right: Box::new(self.addition_or_modulo()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
-                Token::GreaterOrEqual => {
+                TokenKind::GreaterOrEqual => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.addition_or_modulo()?;
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::GreaterOrEqual,
-                        right: Box::new(self.addition_or_modulo()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
                 _ => break,
             }
@@ -261,34 +306,38 @@ impl Parser {
         Ok(expr)
     }
 
-    fn addition_or_modulo(&mut self) -> Result<Expression> {
+    fn addition_or_modulo(&mut self) -> Result<Node> {
         let mut expr = self.factor()?;
 
         loop {
-            match self.peek() {
-                Token::Plus => {
+            match self.peek().kind {
+                TokenKind::Plus => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.factor()?;
+
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::Plus,
-                        right: Box::new(self.factor()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
-                Token::Minus => {
+                TokenKind::Minus => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.factor()?;
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::Minus,
-                        right: Box::new(self.factor()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
-                Token::Percent => {
+                TokenKind::Percent => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.factor()?;
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::Mod,
-                        right: Box::new(self.factor()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
                 _ => break,
             }
@@ -296,26 +345,28 @@ impl Parser {
         Ok(expr)
     }
 
-    fn factor(&mut self) -> Result<Expression> {
+    fn factor(&mut self) -> Result<Node> {
         let mut expr = self.unary()?;
 
         loop {
-            match self.peek() {
-                Token::Asterisk => {
+            match self.peek().kind {
+                TokenKind::Asterisk => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.unary()?;
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::Asterisk,
-                        right: Box::new(self.unary()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
-                Token::Slash => {
+                TokenKind::Slash => {
                     self.advance();
-                    expr = Expression::Binary(expression::Binary {
+                    let right = self.unary()?;
+                    expr = self.node(Expression::Binary(expression::Binary {
                         left: Box::new(expr),
                         operator: Operator::Slash,
-                        right: Box::new(self.unary()?),
-                    });
+                        right: Box::new(right),
+                    }));
                 }
                 _ => break,
             }
@@ -324,25 +375,26 @@ impl Parser {
         Ok(expr)
     }
 
-    fn unary(&mut self) -> Result<Expression> {
-        match self.peek() {
-            Token::Minus => {
+    fn unary(&mut self) -> Result<Node> {
+        match self.peek().kind {
+            TokenKind::Minus => {
                 self.advance();
-                Ok(Expression::Unary(expression::Unary {
+                let right = self.unary()?;
+                Ok(self.node(Expression::Unary(expression::Unary {
                     operator: Operator::Minus,
-                    right: Box::new(self.unary()?),
-                }))
+                    right: Box::new(right),
+                })))
             }
             _ => self.extern_stmt(),
         }
     }
 
-    fn extern_stmt(&mut self) -> Result<Expression> {
-        match self.peek() {
-            Token::Extern => {
+    fn extern_stmt(&mut self) -> Result<Node> {
+        match self.peek().kind {
+            TokenKind::Extern => {
                 self.advance();
 
-                if !matches!(self.advance(), Token::Less) {
+                if !matches!(self.advance().kind, TokenKind::Less) {
                     return Err(ParserError::SyntaxError {
                         token: self.previous().clone(),
                         backtrace: Backtrace::new(),
@@ -353,12 +405,12 @@ impl Parser {
 
                 loop {
                     let token = self.advance().clone();
-                    match token {
-                        Token::Identifier(ref s) => {
+                    match token.kind {
+                        TokenKind::Identifier(ref s) => {
                             types.push(self.type_from_literal(s)?);
                         }
-                        Token::Comma => (),
-                        Token::Greater => {
+                        TokenKind::Comma => (),
+                        TokenKind::Greater => {
                             break;
                         }
                         _ => {
@@ -370,14 +422,14 @@ impl Parser {
                     }
                 }
 
-                if !matches!(self.advance(), Token::LeftParen) {
+                if !matches!(self.advance().kind, TokenKind::LeftParen) {
                     return Err(ParserError::SyntaxError {
                         token: self.previous().clone(),
                         backtrace: Backtrace::new(),
                     });
                 };
 
-                let name = if let Token::String(s) = self.advance() {
+                let name = if let TokenKind::String(s) = &self.advance().kind {
                     s.to_string()
                 } else {
                     return Err(ParserError::SyntaxError {
@@ -386,7 +438,7 @@ impl Parser {
                     });
                 };
 
-                if !matches!(self.advance(), Token::RightParen) {
+                if !matches!(self.advance().kind, TokenKind::RightParen) {
                     return Err(ParserError::SyntaxError {
                         token: self.previous().clone(),
                         backtrace: Backtrace::new(),
@@ -403,19 +455,19 @@ impl Parser {
                     }
                 };
 
-                Ok(Expression::Extern(expression::Extern {
+                Ok(self.node(Expression::Extern(expression::Extern {
                     types: types[0..types.len() - 1].to_vec(),
                     return_type,
                     name,
-                }))
+                })))
             }
             _ => self.func_declr(),
         }
     }
 
-    fn func_declr(&mut self) -> Result<Expression> {
-        match self.peek() {
-            Token::LeftParen => {
+    fn func_declr(&mut self) -> Result<Node> {
+        match self.peek().kind {
+            TokenKind::LeftParen => {
                 let current = self.current;
 
                 self.advance();
@@ -423,12 +475,12 @@ impl Parser {
                 let mut params: Vec<Param> = Vec::new();
 
                 loop {
-                    match self.advance().clone() {
-                        Token::Identifier(name_literal) => match self.advance() {
-                            Token::Colon => {
+                    match self.advance().clone().kind {
+                        TokenKind::Identifier(name_literal) => match self.advance().kind {
+                            TokenKind::Colon => {
                                 let token = self.advance().clone();
-                                match token {
-                                    Token::Identifier(type_literal) => {
+                                match token.kind {
+                                    TokenKind::Identifier(type_literal) => {
                                         params.push(Param {
                                             name: name_literal.to_string(),
                                             typ: self.type_from_literal(&type_literal)?,
@@ -447,8 +499,8 @@ impl Parser {
                                 return self.func_call();
                             }
                         },
-                        Token::Comma => {}
-                        Token::RightParen => break,
+                        TokenKind::Comma => {}
+                        TokenKind::RightParen => break,
                         _ => {
                             self.current = current;
                             return self.func_call();
@@ -456,8 +508,8 @@ impl Parser {
                     }
                 }
 
-                match self.advance() {
-                    Token::Colon => (),
+                match self.advance().kind {
+                    TokenKind::Colon => (),
                     _ => {
                         return Err(ParserError::SyntaxError {
                             token: self.previous().clone(),
@@ -466,8 +518,8 @@ impl Parser {
                     }
                 }
 
-                let return_type = match self.advance() {
-                    Token::Identifier(type_literal) => match type_literal.as_str() {
+                let return_type = match &self.advance().kind {
+                    TokenKind::Identifier(type_literal) => match type_literal.as_str() {
                         "number" => Type::Numeric,
                         "vec" => Type::Vector,
                         "void" => Type::Void,
@@ -486,8 +538,8 @@ impl Parser {
                     }
                 };
 
-                match self.advance() {
-                    Token::Arrow => (),
+                match self.advance().kind {
+                    TokenKind::Arrow => (),
                     _ => {
                         return Err(ParserError::SyntaxError {
                             token: self.previous().clone(),
@@ -496,8 +548,8 @@ impl Parser {
                     }
                 }
 
-                match self.advance() {
-                    Token::LCurly => (),
+                match self.advance().kind {
+                    TokenKind::LCurly => (),
                     _ => {
                         return Err(ParserError::SyntaxError {
                             token: self.previous().clone(),
@@ -506,11 +558,11 @@ impl Parser {
                     }
                 }
 
-                let mut body: Vec<Expression> = Vec::new();
+                let mut body: Vec<Node> = Vec::new();
 
                 loop {
-                    match self.peek() {
-                        Token::RCurly => {
+                    match self.peek().kind {
+                        TokenKind::RCurly => {
                             self.advance();
                             break;
                         }
@@ -519,32 +571,32 @@ impl Parser {
                         }
                     }
                 }
-                Ok(Expression::FuncDecl(expression::FuncDecl {
+                Ok(self.node(Expression::FuncDecl(expression::FuncDecl {
                     body,
                     params,
 
                     return_type,
-                }))
+                })))
             }
             _ => self.func_call(),
         }
     }
 
-    fn func_call(&mut self) -> Result<Expression> {
+    fn func_call(&mut self) -> Result<Node> {
         let mut expr = self.load()?;
 
-        while let Token::LeftParen = self.peek() {
-            match expr {
+        while let TokenKind::LeftParen = self.peek().kind {
+            match expr.expression {
                 Expression::Identifier { .. } => {
                     self.advance();
-                    let mut args: Vec<Expression> = Vec::new();
+                    let mut args: Vec<Node> = Vec::new();
 
                     loop {
-                        match self.peek() {
-                            Token::Comma => {
+                        match self.peek().kind {
+                            TokenKind::Comma => {
                                 self.advance();
                             }
-                            Token::RightParen => {
+                            TokenKind::RightParen => {
                                 self.advance();
                                 break;
                             }
@@ -554,10 +606,10 @@ impl Parser {
                         }
                     }
 
-                    expr = Expression::FuncCall(expression::FuncCall {
+                    expr = self.node(Expression::FuncCall(expression::FuncCall {
                         calee: Box::new(expr),
                         args,
-                    });
+                    }));
                 }
                 _ => {
                     return Err(ParserError::SyntaxError {
@@ -570,19 +622,19 @@ impl Parser {
         Ok(expr)
     }
 
-    fn load(&mut self) -> Result<Expression> {
-        match self.peek() {
-            Token::Load => {
+    fn load(&mut self) -> Result<Node> {
+        match self.peek().kind {
+            TokenKind::Load => {
                 self.advance();
 
-                if !matches!(self.advance(), Token::LeftParen) {
+                if !matches!(self.advance().kind, TokenKind::LeftParen) {
                     return Err(ParserError::SyntaxError {
                         token: self.previous().clone(),
                         backtrace: Backtrace::new(),
                     });
                 };
 
-                let name = if let Token::String(s) = self.advance() {
+                let name = if let TokenKind::String(s) = &self.advance().kind {
                     s.to_string()
                 } else {
                     return Err(ParserError::SyntaxError {
@@ -591,28 +643,31 @@ impl Parser {
                     });
                 };
 
-                if !matches!(self.advance(), Token::RightParen) {
+                if !matches!(self.advance().kind, TokenKind::RightParen) {
                     return Err(ParserError::SyntaxError {
                         token: self.previous().clone(),
                         backtrace: Backtrace::new(),
                     });
                 };
 
-                Ok(Expression::Load(name))
+                Ok(self.node(Expression::Load(name)))
             }
             _ => self.primary(),
         }
     }
 
-    fn primary(&mut self) -> Result<Expression> {
-        match self.advance() {
-            Token::Numeric(val) => Ok(Expression::Numeric(*val)),
-            Token::LeftParen => {
-                let expr = Expression::Grouping(Box::new(self.expression()?));
+    fn primary(&mut self) -> Result<Node> {
+        let token = self.advance().clone();
+        match &token.kind {
+            TokenKind::Numeric(val) => Ok(self.node(Expression::Numeric(*val))),
+            TokenKind::LeftParen => {
+                let expr = Expression::Grouping(expression::Grouping(Box::new(self.expression()?)));
 
-                match self.advance() {
-                    Token::RightParen => (),
-                    token => {
+                let token = self.advance();
+
+                match token.kind {
+                    TokenKind::RightParen => (),
+                    _ => {
                         return Err(ParserError::SyntaxError {
                             token: token.clone(),
                             backtrace: Backtrace::new(),
@@ -620,14 +675,16 @@ impl Parser {
                     }
                 };
 
-                Ok(expr)
+                Ok(self.node(expr))
             }
-            Token::Identifier(literal) => Ok(Expression::Identifier(literal.to_string())),
-            Token::String(literal) => Ok(Expression::String(literal.to_string())),
-            Token::True => Ok(Expression::Bool(true)),
-            Token::False => Ok(Expression::Bool(false)),
-            Token::Break => Ok(Expression::Break),
-            token => Err(ParserError::SyntaxError {
+            TokenKind::Identifier(literal) => {
+                Ok(self.node(Expression::Identifier(literal.to_string())))
+            }
+            TokenKind::String(literal) => Ok(self.node(Expression::String(literal.to_string()))),
+            TokenKind::True => Ok(self.node(Expression::Bool(true))),
+            TokenKind::False => Ok(self.node(Expression::Bool(false))),
+            TokenKind::Break => Ok(self.node(Expression::Break)),
+            _ => Err(ParserError::SyntaxError {
                 token: token.clone(),
                 backtrace: Backtrace::new(),
             }),
@@ -665,6 +722,6 @@ impl Parser {
     }
 
     fn at_end(&mut self) -> bool {
-        matches!(self.peek(), Token::Eof)
+        matches!(self.peek().kind, TokenKind::Eof)
     }
 }

@@ -8,7 +8,11 @@ impl WhileVisitor<CompilerResult<Value>> for Compiler {
     fn visit_while(&mut self, expr: &crate::expression::While) -> CompilerResult<Value> {
         let predicate = match self.walk(&expr.predicate)? {
             Value::Bool(b) => b,
-            _ => Err(CompilerError::TypeError)?,
+            _ => Err(CompilerError::TypeError {
+                expected: todo!(),
+                actual: todo!(),
+                span: todo!(),
+            })?,
         };
 
         let fun = self.builder().get_insert_block().get_parent();

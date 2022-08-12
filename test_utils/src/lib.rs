@@ -27,6 +27,23 @@ macro_rules! assert_eq_ir {
 }
 
 #[macro_export]
+macro_rules! node {
+    ($expr: expr) => {
+        Node {
+            expression: $expr,
+            span: Span::default(),
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! boxed_node {
+    ($expr: expr) => {
+        Box::new(node!($expr))
+    };
+}
+
+#[macro_export]
 macro_rules! in_main_function {
     ($context:expr, $module:expr, $builder:expr, $expression:expr) => {
         let main_fun = $module.add_function(
@@ -60,7 +77,7 @@ macro_rules! mock_compiler {
             }
 
             impl BinaryVisitor<CompilerResult<Value>> for Compiler {
-                fn visit_binary(&mut self, expr: &expression::Binary) -> CompilerResult<Value>;
+                fn visit_binary(&mut self, expr: &expression::Binary, span: Span) -> CompilerResult<Value>;
             }
 
             impl IdentifierVisitor<CompilerResult<Value>> for Compiler {
@@ -88,7 +105,7 @@ macro_rules! mock_compiler {
             }
 
             impl ConditionalVisitor<CompilerResult<Value>> for Compiler {
-                fn visit_conditional(&mut self, expr: &expression::Conditional) -> CompilerResult<Value>;
+                fn visit_conditional(&mut self, expr: &expression::Conditional, span: Span) -> CompilerResult<Value>;
             }
 
             impl UnaryVisitor<CompilerResult<Value>> for Compiler {
@@ -96,7 +113,7 @@ macro_rules! mock_compiler {
             }
 
             impl GroupingVisitor<CompilerResult<Value>> for Compiler {
-                fn visit_grouping(&mut self, expr: &expression::Expression) -> CompilerResult<Value>;
+                fn visit_grouping(&mut self, expr: &expression::Grouping) -> CompilerResult<Value>;
             }
 
             impl WhileVisitor<CompilerResult<Value>> for Compiler {
@@ -120,7 +137,7 @@ macro_rules! mock_compiler {
             }
 
             impl Visitor<CompilerResult<Value>> for Compiler {
-                fn walk(&mut self, expr: &expression::Expression) -> CompilerResult<Value>;
+                fn walk(&mut self, expr: &expression::Node) -> CompilerResult<Value>;
             }
 
             impl LLVMCompiler for Compiler {

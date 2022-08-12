@@ -30,17 +30,17 @@ fn compile_assignment<T: LLVMCompiler>(
         },
         Value::Vec(_) => Variable::Vec(ptr),
         Value::Ptr(_) => Variable::Ptr(ptr),
-        Value::Void | Value::Break => Err(CompilerError::TypeError)?,
+        Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
     };
 
-    if let Expression::Identifier(name) = &*expr.left {
-        compiler.set_var(name, var);
+    if let Expression::Identifier(name) = &expr.left.expression {
+        compiler.set_var(&name, var);
     } else {
-        Err(CompilerError::TypeError)?
+        Err(CompilerError::NonIdentifierAssignment)?
     }
 
-    if let expression::Expression::FuncDecl(e) = &*expr.right {
-        compiler.build_function(right, &*e)?
+    if let expression::Expression::FuncDecl(e) = &expr.right.expression {
+        compiler.build_function(right, &e)?
     }
 
     Ok(Value::Void)
@@ -63,10 +63,11 @@ mod test {
     use pretty_assertions::assert_eq;
 
     use super::*;
-    use crate::compiler::Variable;
     use crate::compiler::MAIN_FUNCTION;
     use crate::llvm::{Builder, Context, Module};
     use crate::parser;
+    use crate::parser::Span;
+    use crate::{compiler::Variable, expression::Node};
     use crate::{expression, visitor::*};
 
     mock_compiler!();
@@ -95,8 +96,14 @@ mod test {
             val = compile_assignment(
                 &mut compiler,
                 &expression::Assignment {
-                    left: Box::new(expression::Expression::Identifier("test".to_string())),
-                    right: Box::new(expression::Expression::Numeric(2.0)),
+                    left: Box::new(Node {
+                        expression: expression::Expression::Identifier("test".to_string()),
+                        span: Default::default(),
+                    }),
+                    right: Box::new(Node {
+                        expression: expression::Expression::Numeric(2.0),
+                        span: Default::default(),
+                    }),
                 },
             )?;
 

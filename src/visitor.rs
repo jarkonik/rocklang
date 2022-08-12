@@ -1,8 +1,8 @@
-use crate::expression::{self, Expression};
-use crate::parser::Program;
+use crate::expression::{self, Node};
+use crate::parser::{Program, Span};
 
 pub trait BinaryVisitor<T> {
-    fn visit_binary(&mut self, expr: &expression::Binary) -> T;
+    fn visit_binary(&mut self, expr: &expression::Binary, span: Span) -> T;
 }
 
 pub trait FuncCallVisitor<T> {
@@ -26,7 +26,7 @@ pub trait AssignmentVisitor<T> {
 }
 
 pub trait ConditionalVisitor<T> {
-    fn visit_conditional(&mut self, expr: &expression::Conditional) -> T;
+    fn visit_conditional(&mut self, expr: &expression::Conditional, span: Span) -> T;
 }
 
 pub trait UnaryVisitor<T> {
@@ -34,7 +34,7 @@ pub trait UnaryVisitor<T> {
 }
 
 pub trait GroupingVisitor<T> {
-    fn visit_grouping(&mut self, expr: &expression::Expression) -> T;
+    fn visit_grouping(&mut self, expr: &expression::Grouping) -> T;
 }
 
 pub trait WhileVisitor<T> {
@@ -83,5 +83,5 @@ pub trait Visitor<T>:
     + LoadVisitor<T>
     + ExternVisitor<T>
 {
-    fn walk(&mut self, expr: &Expression) -> T;
+    fn walk(&mut self, node: &Node) -> T;
 }

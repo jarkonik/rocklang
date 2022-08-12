@@ -1,4 +1,4 @@
-use rocklang::token::Token;
+use rocklang::token::TokenKind;
 
 macro_rules! assert_format_string {
     ($token:ident, $results:expr) => {

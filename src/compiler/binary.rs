@@ -1,5 +1,6 @@
 use crate::{
     expression::{self},
+    parser::Span,
     visitor::BinaryVisitor,
 };
 
@@ -8,17 +9,24 @@ use super::{value::Value, Compiler, CompilerError, CompilerResult, LLVMCompiler}
 fn compile_binary<T: LLVMCompiler>(
     compiler: &mut T,
     expr: &expression::Binary,
+    span: Span,
 ) -> CompilerResult<Value> {
-    let lhs = if let Value::Numeric(n) = compiler.walk(&expr.left)? {
-        n
-    } else {
-        Err(CompilerError::TypeError)?
+    let lhs = match compiler.walk(&expr.left)? {
+        Value::Numeric(n) => n,
+        expr => Err(CompilerError::TypeError {
+            expected: crate::parser::Type::Numeric,
+            actual: expr.get_type(),
+            span: span.clone(),
+        })?,
     };
 
-    let rhs = if let Value::Numeric(n) = compiler.walk(&expr.right)? {
-        n
-    } else {
-        Err(CompilerError::TypeError)?
+    let rhs = match compiler.walk(&expr.right)? {
+        Value::Numeric(n) => n,
+        expr => Err(CompilerError::TypeError {
+            expected: crate::parser::Type::Numeric,
+            actual: expr.get_type(),
+            span: span.clone(),
+        })?,
     };
 
     match expr.operator {
@@ -77,8 +85,8 @@ fn compile_binary<T: LLVMCompiler>(
 }
 
 impl BinaryVisitor<CompilerResult<Value>> for Compiler {
-    fn visit_binary(&mut self, expr: &expression::Binary) -> CompilerResult<Value> {
-        compile_binary(self, expr)
+    fn visit_binary(&mut self, expr: &expression::Binary, span: Span) -> CompilerResult<Value> {
+        compile_binary(self, expr, span)
     }
 }
 
@@ -92,6 +100,7 @@ mod test {
     use super::*;
     use crate::compiler::Variable;
     use crate::compiler::MAIN_FUNCTION;
+    use crate::expression::Node;
     use crate::llvm::{Builder, Context, Module};
     use crate::parser;
     use crate::visitor::*;
@@ -116,10 +125,17 @@ mod test {
             val = compile_binary(
                 &mut compiler,
                 &expression::Binary {
-                    left: Box::new(expression::Expression::Numeric(6.0)),
+                    left: Box::new(Node {
+                        expression: expression::Expression::Numeric(6.0),
+                        span: Default::default(),
+                    }),
                     operator,
-                    right: Box::new(expression::Expression::Numeric(2.0)),
+                    right: Box::new(Node {
+                        expression: expression::Expression::Numeric(2.0),
+                        span: Default::default(),
+                    }),
                 },
+                Span::default(),
             )?;
 
             match val {

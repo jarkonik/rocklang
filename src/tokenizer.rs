@@ -1,4 +1,5 @@
-use crate::token::Token;
+use crate::parser::Span;
+use crate::token::{Token, TokenKind};
 use std::error::Error;
 use std::fmt;
 
@@ -9,7 +10,7 @@ pub trait Tokenize {
 pub struct Tokenizer {
     source: String,
     current: usize,
-    start: usize,
+    column: usize,
     tokens: Vec<Token>,
     line: usize,
 }
@@ -17,16 +18,15 @@ pub struct Tokenizer {
 impl Tokenize for Tokenizer {
     fn tokenize(&mut self) -> Result<&Vec<Token>> {
         self.current = 0;
-        self.start = 0;
         self.line = 1;
+        self.column = 1;
         self.tokens.clear();
 
         while !self.at_end() {
-            self.start = self.current;
             self.scan_token()?;
         }
 
-        self.tokens.push(Token::Eof);
+        self.add_token(TokenKind::Eof);
 
         Ok(&self.tokens)
     }
@@ -54,7 +54,7 @@ impl Tokenizer {
             source,
             current: 0,
             line: 0,
-            start: 0,
+            column: 0,
             tokens: Vec::new(),
         }
     }
@@ -63,66 +63,69 @@ impl Tokenizer {
         let chr = self.advance();
         match chr {
             ' ' | '\r' | '\t' => (),
-            '\n' => self.line += 1,
+            '\n' => {
+                self.line += 1;
+                self.column = 0;
+            }
             '<' => {
                 if '=' == self.peek() {
                     self.advance();
-                    self.add_token(Token::LessOrEqual)
+                    self.add_token(TokenKind::LessOrEqual)
                 } else {
-                    self.add_token(Token::Less)
+                    self.add_token(TokenKind::Less)
                 }
             }
             '>' => {
                 if '=' == self.peek() {
                     self.advance();
-                    self.add_token(Token::GreaterOrEqual)
+                    self.add_token(TokenKind::GreaterOrEqual)
                 } else {
-                    self.add_token(Token::Greater)
+                    self.add_token(TokenKind::Greater)
                 }
             }
-            '(' => self.add_token(Token::LeftParen),
-            ')' => self.add_token(Token::RightParen),
-            '+' => self.add_token(Token::Plus),
-            '-' => self.add_token(Token::Minus),
-            '*' => self.add_token(Token::Asterisk),
-            '%' => self.add_token(Token::Percent),
+            '(' => self.add_token(TokenKind::LeftParen),
+            ')' => self.add_token(TokenKind::RightParen),
+            '+' => self.add_token(TokenKind::Plus),
+            '-' => self.add_token(TokenKind::Minus),
+            '*' => self.add_token(TokenKind::Asterisk),
+            '%' => self.add_token(TokenKind::Percent),
             '"' => self.string(),
             '!' => {
                 if '=' == self.peek() {
                     self.advance();
-                    self.add_token(Token::NotEqual);
+                    self.add_token(TokenKind::NotEqual);
                 } else {
-                    self.add_token(Token::Exclamation);
+                    self.add_token(TokenKind::Exclamation);
                 }
             }
             '|' if self.advance() == '|' => {
-                self.add_token(Token::Or);
+                self.add_token(TokenKind::Or);
             }
             '&' if self.advance() == '&' => {
-                self.add_token(Token::And);
+                self.add_token(TokenKind::And);
             }
             '=' => match self.peek() {
                 '=' => {
-                    self.add_token(Token::DoubleEqual);
+                    self.add_token(TokenKind::DoubleEqual);
                     self.advance();
                 }
                 '>' => {
-                    self.add_token(Token::Arrow);
+                    self.add_token(TokenKind::Arrow);
                     self.advance();
                 }
-                _ => self.add_token(Token::Equal),
+                _ => self.add_token(TokenKind::Equal),
             },
-            '{' => self.add_token(Token::LCurly),
-            '}' => self.add_token(Token::RCurly),
-            ',' => self.add_token(Token::Comma),
-            ':' => self.add_token(Token::Colon),
+            '{' => self.add_token(TokenKind::LCurly),
+            '}' => self.add_token(TokenKind::RCurly),
+            ',' => self.add_token(TokenKind::Comma),
+            ':' => self.add_token(TokenKind::Colon),
             '/' => {
                 if '/' == self.peek() {
                     while self.peek() != '\n' && !self.at_end() {
                         self.advance();
                     }
                 } else {
-                    self.add_token(Token::Slash);
+                    self.add_token(TokenKind::Slash);
                 }
             }
             c if c.is_alphabetic() => self.identifier(),
@@ -145,7 +148,7 @@ impl Tokenizer {
             literal.push(chr);
         }
         self.advance();
-        self.add_token(Token::String(literal));
+        self.add_token(TokenKind::String(literal));
     }
 
     fn numeric(&mut self) {
@@ -163,7 +166,7 @@ impl Tokenizer {
             }
         }
 
-        self.add_token(Token::Numeric(
+        self.add_token(TokenKind::Numeric(
             literal.parse().expect("Error parsing number"),
         ));
     }
@@ -184,24 +187,31 @@ impl Tokenizer {
         }
 
         match literal.as_str() {
-            "if" => self.add_token(Token::If),
-            "while" => self.add_token(Token::While),
-            "true" => self.add_token(Token::True),
-            "false" => self.add_token(Token::False),
-            "break" => self.add_token(Token::Break),
-            "else" => self.add_token(Token::Else),
-            "load" => self.add_token(Token::Load),
-            "extern" => self.add_token(Token::Extern),
-            _ => self.add_token(Token::Identifier(literal)),
+            "if" => self.add_token(TokenKind::If),
+            "while" => self.add_token(TokenKind::While),
+            "true" => self.add_token(TokenKind::True),
+            "false" => self.add_token(TokenKind::False),
+            "break" => self.add_token(TokenKind::Break),
+            "else" => self.add_token(TokenKind::Else),
+            "load" => self.add_token(TokenKind::Load),
+            "extern" => self.add_token(TokenKind::Extern),
+            _ => self.add_token(TokenKind::Identifier(literal)),
         };
     }
 
-    fn add_token(&mut self, token: Token) {
-        self.tokens.push(token);
+    fn add_token(&mut self, kind: TokenKind) {
+        self.tokens.push(Token {
+            kind,
+            span: Span {
+                line: self.line as u32,
+                column: self.column as u32,
+            },
+        });
     }
 
     fn advance(&mut self) -> char {
         let chr = self.peek();
+        self.column += 1;
         self.current += 1;
         chr
     }

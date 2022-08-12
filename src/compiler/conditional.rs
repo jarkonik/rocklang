@@ -1,14 +1,23 @@
-use crate::{expression, visitor::ConditionalVisitor};
+use crate::{
+    expression,
+    parser::{self, Span},
+    visitor::ConditionalVisitor,
+};
 
 use super::{Compiler, CompilerError, CompilerResult, LLVMCompiler, Value};
 
 fn compile_conditional<T: LLVMCompiler>(
     compiler: &mut T,
     expr: &expression::Conditional,
+    span: Span,
 ) -> CompilerResult<Value> {
     let predicate = match compiler.walk(&expr.predicate)? {
         Value::Bool(b) => b,
-        _ => Err(CompilerError::TypeError)?,
+        expr => Err(CompilerError::TypeError {
+            expected: parser::Type::Bool,
+            actual: expr.get_type(),
+            span,
+        })?,
     };
 
     let fun = compiler.builder().get_insert_block().get_parent();
@@ -45,7 +54,8 @@ impl ConditionalVisitor<CompilerResult<Value>> for Compiler {
     fn visit_conditional(
         &mut self,
         expr: &crate::expression::Conditional,
+        span: Span,
     ) -> CompilerResult<Value> {
-        compile_conditional(self, expr)
+        compile_conditional(self, expr, span)
     }
 }

@@ -11,12 +11,20 @@ impl UnaryVisitor<CompilerResult<Value>> for Compiler {
             expression::Operator::Minus => {
                 let r = match self.walk(&expr.right)? {
                     Value::Numeric(p) => p,
-                    _ => Err(CompilerError::TypeError)?,
+                    _ => Err(CompilerError::TypeError {
+                        expected: todo!(),
+                        actual: todo!(),
+                        span: todo!(),
+                    })?,
                 };
 
                 Ok(Value::Numeric(self.builder.build_fneg(r, "")))
             }
-            _ => Err(CompilerError::TypeError)?,
+            _ => Err(CompilerError::TypeError {
+                expected: todo!(),
+                actual: todo!(),
+                span: todo!(),
+            })?,
         }
     }
 }

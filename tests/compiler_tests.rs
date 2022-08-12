@@ -3,20 +3,22 @@ extern crate test_utils;
 
 use std::error::Error;
 
+use libc::group;
 use rocklang::compiler::{Compile, Compiler};
 
 use rocklang::expression::{
-    self, Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Operator, Unary, While,
+    self, Assignment, Binary, Conditional, Expression, FuncCall, FuncDecl, Node, Operator, Unary,
+    While,
 };
-use rocklang::parser::{Param, Program, Type};
+use rocklang::parser::{Param, Program, Span, Type};
 
 #[test]
 fn it_compiles_numeric_asignment() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::Assignment(Assignment {
-            left: Box::new(Expression::Identifier("x".to_string())),
-            right: Box::new(Expression::Numeric(5.0)),
-        })],
+        body: vec![node!(Expression::Assignment(Assignment {
+            left: boxed_node!(Expression::Identifier("x".to_string())),
+            right: boxed_node!(Expression::Numeric(5.0)),
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -44,14 +46,14 @@ fn it_compiles_numeric_asignment() -> Result<(), Box<dyn Error>> {
 fn it_compiles_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
-            Expression::Assignment(Assignment {
-                left: Box::new(Expression::Identifier("x".to_string())),
-                right: Box::new(Expression::Numeric(5.0)),
-            }),
-            Expression::Assignment(Assignment {
-                left: Box::new(Expression::Identifier("y".to_string())),
-                right: Box::new(Expression::Identifier("x".to_string())),
-            }),
+            node!(Expression::Assignment(Assignment {
+                left: boxed_node!(Expression::Identifier("x".to_string())),
+                right: boxed_node!(Expression::Numeric(5.0)),
+            })),
+            node!(Expression::Assignment(Assignment {
+                left: boxed_node!(Expression::Identifier("y".to_string())),
+                right: boxed_node!(Expression::Identifier("x".to_string())),
+            })),
         ],
     };
 
@@ -83,10 +85,10 @@ fn it_compiles_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panic_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::Assignment(Assignment {
-            left: Box::new(Expression::String("x".to_string())),
-            right: Box::new(Expression::Numeric(5.0)),
-        })],
+        body: vec![node!(Expression::Assignment(Assignment {
+            left: boxed_node!(Expression::String("x".to_string())),
+            right: boxed_node!(Expression::Numeric(5.0)),
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -99,9 +101,9 @@ fn it_panic_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
 fn it_compiles_new_vec_being_passed_as_fun_arg() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
-            Expression::Assignment(Assignment {
-                left: Box::new(Expression::Identifier("f".to_string())),
-                right: Box::new(Expression::FuncDecl(FuncDecl {
+            node!(Expression::Assignment(Assignment {
+                left: boxed_node!(Expression::Identifier("f".to_string())),
+                right: boxed_node!(Expression::FuncDecl(FuncDecl {
                     body: vec![],
                     return_type: Type::Void,
                     params: vec![Param {
@@ -109,14 +111,14 @@ fn it_compiles_new_vec_being_passed_as_fun_arg() -> Result<(), Box<dyn Error>> {
                         typ: Type::Vector,
                     }],
                 })),
-            }),
-            Expression::FuncCall(FuncCall {
-                calee: Box::new(Expression::Identifier("f".to_string())),
-                args: vec![Expression::FuncCall(FuncCall {
-                    calee: Box::new(Expression::Identifier("vec_new".to_string())),
+            })),
+            node!(Expression::FuncCall(FuncCall {
+                calee: boxed_node!(Expression::Identifier("f".to_string())),
+                args: vec![node!(Expression::FuncCall(FuncCall {
+                    calee: boxed_node!(Expression::Identifier("vec_new".to_string())),
                     args: vec![],
-                })],
-            }),
+                }))],
+            })),
         ],
     };
 
@@ -128,10 +130,10 @@ fn it_compiles_new_vec_being_passed_as_fun_arg() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_compiles_print_function_with_global_string() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::FuncCall(FuncCall {
-            calee: Box::new(Expression::Identifier("print".to_string())),
-            args: vec![Expression::String("name".to_string())],
-        })],
+        body: vec![node!(Expression::FuncCall(FuncCall {
+            calee: boxed_node!(Expression::Identifier("print".to_string())),
+            args: vec![node!(Expression::String("name".to_string()))],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -142,13 +144,13 @@ fn it_compiles_print_function_with_global_string() -> Result<(), Box<dyn Error>>
 #[test]
 fn it_compiles_print_function_with_string() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::FuncCall(FuncCall {
-            calee: Box::new(Expression::Identifier("print".to_string())),
-            args: vec![Expression::FuncCall(FuncCall {
-                calee: Box::new(Expression::Identifier("string".to_string())),
-                args: vec![Expression::Numeric(10.0)],
-            })],
-        })],
+        body: vec![node!(Expression::FuncCall(FuncCall {
+            calee: boxed_node!(Expression::Identifier("print".to_string())),
+            args: vec![node!(Expression::FuncCall(FuncCall {
+                calee: boxed_node!(Expression::Identifier("string".to_string())),
+                args: vec![node!(Expression::Numeric(10.0))],
+            }))],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -159,13 +161,13 @@ fn it_compiles_print_function_with_string() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_compiles_len_function_when_pass_new_vec() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::FuncCall(FuncCall {
-            calee: Box::new(Expression::Identifier("len".to_string())),
-            args: vec![Expression::FuncCall(FuncCall {
-                calee: Box::new(Expression::Identifier("vec_new".to_string())),
+        body: vec![node!(Expression::FuncCall(FuncCall {
+            calee: boxed_node!(Expression::Identifier("len".to_string())),
+            args: vec![node!(Expression::FuncCall(FuncCall {
+                calee: boxed_node!(Expression::Identifier("vec_new".to_string())),
                 args: vec![],
-            })],
-        })],
+            }))],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -177,20 +179,20 @@ fn it_compiles_len_function_when_pass_new_vec() -> Result<(), Box<dyn Error>> {
 fn it_compiles_vec_get_function() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
-            Expression::Assignment(Assignment {
-                left: Box::new(Expression::Identifier("z".to_string())),
-                right: Box::new(Expression::FuncCall(FuncCall {
-                    calee: Box::new(Expression::Identifier("vec_new".to_string())),
+            node!(Expression::Assignment(Assignment {
+                left: boxed_node!(Expression::Identifier("z".to_string())),
+                right: boxed_node!(Expression::FuncCall(FuncCall {
+                    calee: boxed_node!(Expression::Identifier("vec_new".to_string())),
                     args: vec![],
                 })),
-            }),
-            Expression::FuncCall(FuncCall {
-                calee: Box::new(Expression::Identifier("vec_get".to_string())),
+            })),
+            node!(Expression::FuncCall(FuncCall {
+                calee: boxed_node!(Expression::Identifier("vec_get".to_string())),
                 args: vec![
-                    Expression::Identifier("z".to_string()),
-                    Expression::Numeric(0.0),
+                    node!(Expression::Identifier("z".to_string())),
+                    node!(Expression::Numeric(0.0)),
                 ],
-            }),
+            })),
         ],
     };
 
@@ -202,10 +204,10 @@ fn it_compiles_vec_get_function() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_compiles_sqrt_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::FuncCall(FuncCall {
-            calee: Box::new(Expression::Identifier("sqrt".to_string())),
-            args: vec![Expression::Numeric(4.0)],
-        })],
+        body: vec![node!(Expression::FuncCall(FuncCall {
+            calee: boxed_node!(Expression::Identifier("sqrt".to_string())),
+            args: vec![node!(Expression::Numeric(4.0))],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -216,13 +218,13 @@ fn it_compiles_sqrt_funcion() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panic_when_more_then_one_arg_pass_to_print_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::FuncCall(FuncCall {
-            calee: Box::new(Expression::Identifier("print".to_string())),
+        body: vec![node!(Expression::FuncCall(FuncCall {
+            calee: boxed_node!(Expression::Identifier("print".to_string())),
             args: vec![
-                Expression::String("name".to_string()),
-                Expression::String("foo".to_string()),
+                node!(Expression::String("name".to_string())),
+                node!(Expression::String("foo".to_string())),
             ],
-        })],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -233,10 +235,10 @@ fn it_panic_when_more_then_one_arg_pass_to_print_funcion() -> Result<(), Box<dyn
 #[test]
 fn it_panics_when_non_sring_type_pass_to_print_funcions() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::FuncCall(FuncCall {
-            calee: Box::new(Expression::Identifier("print".to_string())),
-            args: vec![Expression::Numeric(10.0)],
-        })],
+        body: vec![node!(Expression::FuncCall(FuncCall {
+            calee: boxed_node!(Expression::Identifier("print".to_string())),
+            args: vec![node!(Expression::Numeric(10.0))],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -247,10 +249,10 @@ fn it_panics_when_non_sring_type_pass_to_print_funcions() -> Result<(), Box<dyn 
 #[test]
 fn it_panic_when_zero_args_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::FuncCall(FuncCall {
-            calee: Box::new(Expression::Identifier("string".to_string())),
+        body: vec![node!(Expression::FuncCall(FuncCall {
+            calee: boxed_node!(Expression::Identifier("string".to_string())),
             args: vec![],
-        })],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -261,10 +263,10 @@ fn it_panic_when_zero_args_pass_to_string_funcion() -> Result<(), Box<dyn Error>
 #[test]
 fn it_panic_when_bool_arg_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::FuncCall(FuncCall {
-            calee: Box::new(Expression::Identifier("string".to_string())),
-            args: vec![Expression::Bool(true)],
-        })],
+        body: vec![node!(Expression::FuncCall(FuncCall {
+            calee: boxed_node!(Expression::Identifier("string".to_string())),
+            args: vec![node!(Expression::Bool(true))],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -276,9 +278,9 @@ fn it_panic_when_bool_arg_pass_to_string_funcion() -> Result<(), Box<dyn Error>>
 fn it_compiles_new_vec_being_passed_as_variable() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
-            Expression::Assignment(Assignment {
-                left: Box::new(Expression::Identifier("f".to_string())),
-                right: Box::new(Expression::FuncDecl(FuncDecl {
+            node!(Expression::Assignment(Assignment {
+                left: boxed_node!(Expression::Identifier("f".to_string())),
+                right: boxed_node!(Expression::FuncDecl(FuncDecl {
                     body: vec![],
                     return_type: Type::Void,
                     params: vec![Param {
@@ -286,18 +288,18 @@ fn it_compiles_new_vec_being_passed_as_variable() -> Result<(), Box<dyn Error>> 
                         typ: Type::Vector,
                     }],
                 })),
-            }),
-            Expression::Assignment(Assignment {
-                left: Box::new(Expression::Identifier("vecinvar".to_string())),
-                right: Box::new(Expression::FuncCall(FuncCall {
-                    calee: Box::new(Expression::Identifier("vec_new".to_string())),
+            })),
+            node!(Expression::Assignment(Assignment {
+                left: boxed_node!(Expression::Identifier("vecinvar".to_string())),
+                right: boxed_node!(Expression::FuncCall(FuncCall {
+                    calee: boxed_node!(Expression::Identifier("vec_new".to_string())),
                     args: vec![],
                 })),
-            }),
-            Expression::FuncCall(FuncCall {
-                calee: Box::new(Expression::Identifier("f".to_string())),
-                args: vec![Expression::Identifier("vecinvar".to_string())],
-            }),
+            })),
+            node!(Expression::FuncCall(FuncCall {
+                calee: boxed_node!(Expression::Identifier("f".to_string())),
+                args: vec![node!(Expression::Identifier("vecinvar".to_string()))],
+            })),
         ],
     };
 
@@ -309,17 +311,17 @@ fn it_compiles_new_vec_being_passed_as_variable() -> Result<(), Box<dyn Error>> 
 #[test]
 fn it_compiles_recursive_fun() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::Assignment(Assignment {
-            left: Box::new(Expression::Identifier("f".to_string())),
-            right: Box::new(Expression::FuncDecl(FuncDecl {
+        body: vec![node!(Expression::Assignment(Assignment {
+            left: boxed_node!(Expression::Identifier("f".to_string())),
+            right: boxed_node!(Expression::FuncDecl(FuncDecl {
                 return_type: Type::Void,
                 params: vec![],
-                body: vec![Expression::FuncCall(FuncCall {
-                    calee: Box::new(Expression::Identifier("f".to_string())),
+                body: vec![node!(Expression::FuncCall(FuncCall {
+                    calee: boxed_node!(Expression::Identifier("f".to_string())),
                     args: vec![],
-                })],
+                }))],
             })),
-        })],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -330,10 +332,10 @@ fn it_compiles_recursive_fun() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_compiles_while_statment() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::While(While {
-            predicate: Box::new(Expression::Bool(false)),
+        body: vec![node!(Expression::While(While {
+            predicate: boxed_node!(Expression::Bool(false)),
             body: vec![],
-        })],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -345,22 +347,22 @@ fn it_compiles_while_statment() -> Result<(), Box<dyn Error>> {
 fn it_test_visit_func_decl() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
-            Expression::FuncDecl(FuncDecl {
+            node!(Expression::FuncDecl(FuncDecl {
                 params: vec![Param {
                     typ: Type::Numeric,
                     name: "n".to_string(),
                 }],
-                body: vec![Expression::String("n".to_string())],
+                body: vec![node!(Expression::String("n".to_string()))],
                 return_type: Type::Numeric,
-            }),
-            Expression::FuncDecl(FuncDecl {
+            })),
+            node!(Expression::FuncDecl(FuncDecl {
                 params: vec![Param {
                     typ: Type::Vector,
                     name: "n".to_string(),
                 }],
-                body: vec![Expression::String("n".to_string())],
+                body: vec![node!(Expression::String("n".to_string()))],
                 return_type: Type::Vector,
-            }),
+            })),
         ],
     };
 
@@ -371,15 +373,17 @@ fn it_test_visit_func_decl() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn it_compiles_grouping_expressions() -> Result<(), Box<dyn Error>> {
+    let grouping = expression::Grouping(boxed_node!(Expression::Binary(Binary {
+        left: boxed_node!(Expression::Numeric(10.0)),
+        operator: Operator::NotEqual,
+        right: boxed_node!(Expression::Numeric(2.0)),
+    })));
+
     let program = Program {
-        body: vec![Expression::Assignment(Assignment {
-            left: Box::new(Expression::Identifier("x".to_string())),
-            right: Box::new(Expression::Grouping(Box::new(Expression::Binary(Binary {
-                left: Box::new(Expression::Numeric(10.0)),
-                operator: Operator::NotEqual,
-                right: Box::new(Expression::Numeric(2.0)),
-            })))),
-        })],
+        body: vec![node!(Expression::Assignment(Assignment {
+            left: boxed_node!(Expression::Identifier("x".to_string())),
+            right: boxed_node!(Expression::Grouping(grouping)),
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -390,15 +394,15 @@ fn it_compiles_grouping_expressions() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_compiles_coditional() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::Conditional(Conditional {
-            predicate: Box::new(Expression::Binary(Binary {
-                left: Box::new(Expression::Numeric(10.0)),
+        body: vec![node!(Expression::Conditional(Conditional {
+            predicate: boxed_node!(Expression::Binary(Binary {
+                left: boxed_node!(Expression::Numeric(10.0)),
                 operator: Operator::NotEqual,
-                right: Box::new(Expression::Numeric(2.0)),
+                right: boxed_node!(Expression::Numeric(2.0)),
             })),
-            body: vec![Expression::Numeric(10.0)],
-            else_body: vec![Expression::Numeric(20.0)],
-        })],
+            body: vec![node!(Expression::Numeric(10.0))],
+            else_body: vec![node!(Expression::Numeric(20.0))],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -409,14 +413,14 @@ fn it_compiles_coditional() -> Result<(), Box<dyn Error>> {
 macro_rules! compile_operator {
     ($left_operator:expr, $operator:expr, $rigth_operator:expr) => {
         let program = Program {
-            body: vec![Expression::Assignment(Assignment {
-                left: Box::new(Expression::Identifier("b".to_string())),
-                right: Box::new(Expression::Binary(Binary {
+            body: vec![node!(Expression::Assignment(Assignment {
+                left: boxed_node!(Expression::Identifier("b".to_string())),
+                right: boxed_node!(Expression::Binary(Binary {
                     left: $left_operator,
                     operator: $operator,
                     right: $rigth_operator,
                 })),
-            })],
+            }))],
         };
 
         let mut compiler = Compiler::new(program)?;
@@ -427,59 +431,59 @@ macro_rules! compile_operator {
 #[test]
 fn it_compiles_operators() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Plus,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Minus,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Asterisk,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::LessOrEqual,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Less,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Greater,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::GreaterOrEqual,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Equal,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Slash,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Minus,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::NotEqual,
-        Box::new(Expression::Numeric(2.0))
+        boxed_node!(Expression::Numeric(2.0))
     );
     Ok(())
 }
@@ -487,9 +491,9 @@ fn it_compiles_operators() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_adding_numeric_to_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Plus,
-        Box::new(Expression::String("test".to_string()))
+        boxed_node!(Expression::String("test".to_string()))
     );
     Ok(())
 }
@@ -497,9 +501,9 @@ fn it_panics_when_adding_numeric_to_string() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_plus_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::String("test".to_string())),
+        boxed_node!(Expression::String("test".to_string())),
         Operator::Plus,
-        Box::new(Expression::Numeric(10.0))
+        boxed_node!(Expression::Numeric(10.0))
     );
     Ok(())
 }
@@ -507,9 +511,9 @@ fn it_panics_when_plus_string_to_numeric() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_substract_string_from_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Minus,
-        Box::new(Expression::String("test".to_string()))
+        boxed_node!(Expression::String("test".to_string()))
     );
     Ok(())
 }
@@ -517,9 +521,9 @@ fn it_panics_when_substract_string_from_numeric() -> Result<(), Box<dyn Error>> 
 #[test]
 fn it_panics_when_substract_numeric_from_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::String("test".to_string())),
+        boxed_node!(Expression::String("test".to_string())),
         Operator::Minus,
-        Box::new(Expression::Numeric(10.0))
+        boxed_node!(Expression::Numeric(10.0))
     );
     Ok(())
 }
@@ -527,9 +531,9 @@ fn it_panics_when_substract_numeric_from_string() -> Result<(), Box<dyn Error>> 
 #[test]
 fn it_panics_when_multiple_numeric_by_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Asterisk,
-        Box::new(Expression::String("test".to_string()))
+        boxed_node!(Expression::String("test".to_string()))
     );
     Ok(())
 }
@@ -537,9 +541,9 @@ fn it_panics_when_multiple_numeric_by_string() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_multiple_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::String("test".to_string())),
+        boxed_node!(Expression::String("test".to_string())),
         Operator::Asterisk,
-        Box::new(Expression::Numeric(10.0))
+        boxed_node!(Expression::Numeric(10.0))
     );
     Ok(())
 }
@@ -547,9 +551,9 @@ fn it_panics_when_multiple_string_to_numeric() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_less_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::LessOrEqual,
-        Box::new(Expression::String("test".to_string()))
+        boxed_node!(Expression::String("test".to_string()))
     );
     Ok(())
 }
@@ -557,9 +561,9 @@ fn it_panics_when_less_or_equal_numeric_and_string() -> Result<(), Box<dyn Error
 #[test]
 fn it_panics_when_less_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::String("test".to_string())),
+        boxed_node!(Expression::String("test".to_string())),
         Operator::LessOrEqual,
-        Box::new(Expression::Numeric(10.0))
+        boxed_node!(Expression::Numeric(10.0))
     );
     Ok(())
 }
@@ -567,9 +571,9 @@ fn it_panics_when_less_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>
 #[test]
 fn it_panics_when_less_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Less,
-        Box::new(Expression::String("test".to_string()))
+        boxed_node!(Expression::String("test".to_string()))
     );
     Ok(())
 }
@@ -577,9 +581,9 @@ fn it_panics_when_less_numeric_and_string() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_less_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::String("test".to_string())),
+        boxed_node!(Expression::String("test".to_string())),
         Operator::Less,
-        Box::new(Expression::Numeric(10.0))
+        boxed_node!(Expression::Numeric(10.0))
     );
     Ok(())
 }
@@ -587,9 +591,9 @@ fn it_panics_when_less_string_to_numeric() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_greater_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Greater,
-        Box::new(Expression::String("test".to_string()))
+        boxed_node!(Expression::String("test".to_string()))
     );
     Ok(())
 }
@@ -597,9 +601,9 @@ fn it_panics_when_greater_numeric_and_string() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_greater_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::String("test".to_string())),
+        boxed_node!(Expression::String("test".to_string())),
         Operator::Greater,
-        Box::new(Expression::Numeric(10.0))
+        boxed_node!(Expression::Numeric(10.0))
     );
     Ok(())
 }
@@ -607,9 +611,9 @@ fn it_panics_when_greater_string_to_numeric() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_greater_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::GreaterOrEqual,
-        Box::new(Expression::String("test".to_string()))
+        boxed_node!(Expression::String("test".to_string()))
     );
     Ok(())
 }
@@ -617,9 +621,9 @@ fn it_panics_when_greater_or_equal_numeric_and_string() -> Result<(), Box<dyn Er
 #[test]
 fn it_panics_when_greater_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::String("test".to_string())),
+        boxed_node!(Expression::String("test".to_string())),
         Operator::GreaterOrEqual,
-        Box::new(Expression::Numeric(10.0))
+        boxed_node!(Expression::Numeric(10.0))
     );
     Ok(())
 }
@@ -627,9 +631,9 @@ fn it_panics_when_greater_or_equal_string_to_numeric() -> Result<(), Box<dyn Err
 #[test]
 fn it_panics_when_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Equal,
-        Box::new(Expression::String("test".to_string()))
+        boxed_node!(Expression::String("test".to_string()))
     );
     Ok(())
 }
@@ -637,9 +641,9 @@ fn it_panics_when_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::String("test".to_string())),
+        boxed_node!(Expression::String("test".to_string())),
         Operator::Equal,
-        Box::new(Expression::Numeric(10.0))
+        boxed_node!(Expression::Numeric(10.0))
     );
     Ok(())
 }
@@ -647,9 +651,9 @@ fn it_panics_when_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_slash_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::Slash,
-        Box::new(Expression::String("test".to_string()))
+        boxed_node!(Expression::String("test".to_string()))
     );
     Ok(())
 }
@@ -657,9 +661,9 @@ fn it_panics_when_slash_numeric_and_string() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_slash_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::String("test".to_string())),
+        boxed_node!(Expression::String("test".to_string())),
         Operator::Slash,
-        Box::new(Expression::Numeric(10.0))
+        boxed_node!(Expression::Numeric(10.0))
     );
     Ok(())
 }
@@ -667,9 +671,9 @@ fn it_panics_when_slash_string_to_numeric() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_not_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::Numeric(10.0)),
+        boxed_node!(Expression::Numeric(10.0)),
         Operator::NotEqual,
-        Box::new(Expression::String("test".to_string()))
+        boxed_node!(Expression::String("test".to_string()))
     );
     Ok(())
 }
@@ -677,9 +681,9 @@ fn it_panics_when_not_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_not_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        Box::new(Expression::String("test".to_string())),
+        boxed_node!(Expression::String("test".to_string())),
         Operator::NotEqual,
-        Box::new(Expression::Numeric(10.0))
+        boxed_node!(Expression::Numeric(10.0))
     );
     Ok(())
 }
@@ -687,10 +691,10 @@ fn it_panics_when_not_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_compiles_unary_operator() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::Unary(Unary {
+        body: vec![node!(Expression::Unary(Unary {
             operator: Operator::Minus,
-            right: Box::new(Expression::Numeric(2.0)),
-        })],
+            right: boxed_node!(Expression::Numeric(2.0)),
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -701,10 +705,10 @@ fn it_compiles_unary_operator() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_pass_string_to_unary() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::Unary(Unary {
+        body: vec![node!(Expression::Unary(Unary {
             operator: Operator::Minus,
-            right: Box::new(Expression::String("foo".to_string())),
-        })],
+            right: boxed_node!(Expression::String("foo".to_string())),
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -715,10 +719,10 @@ fn it_panics_when_pass_string_to_unary() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_panics_when_wrong_unary_operator() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::Unary(Unary {
+        body: vec![node!(Expression::Unary(Unary {
             operator: Operator::Plus,
-            right: Box::new(Expression::Numeric(2.0)),
-        })],
+            right: boxed_node!(Expression::Numeric(2.0)),
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -729,10 +733,10 @@ fn it_panics_when_wrong_unary_operator() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_compile_break_in_while() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::While(While {
-            predicate: Box::new(Expression::Bool(true)),
-            body: vec![Expression::Break],
-        })],
+        body: vec![node!(Expression::While(While {
+            predicate: boxed_node!(Expression::Bool(true)),
+            body: vec![node!(Expression::Break)],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
@@ -744,55 +748,59 @@ fn it_compile_break_in_while() -> Result<(), Box<dyn Error>> {
 fn it_compiles_ffi_calls() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![
-            Expression::Load(String::from("./tests/rockffitestlib.so")),
-            Expression::Assignment(expression::Assignment {
-                left: Box::new(Expression::Identifier(String::from("sum"))),
-                right: Box::new(Expression::Extern(expression::Extern {
+            node!(Expression::Load(String::from("./tests/rockffitestlib.so"))),
+            node!(Expression::Assignment(expression::Assignment {
+                left: boxed_node!(Expression::Identifier(String::from("sum"))),
+                right: boxed_node!(Expression::Extern(expression::Extern {
                     types: [Type::Numeric, Type::Numeric].to_vec(),
                     return_type: Type::Numeric,
                     name: String::from("rockffitest"),
                 })),
-            }),
-            Expression::Assignment(expression::Assignment {
-                left: Box::new(Expression::Identifier(String::from("getptr"))),
-                right: Box::new(Expression::Extern(expression::Extern {
+            })),
+            node!(Expression::Assignment(expression::Assignment {
+                left: boxed_node!(Expression::Identifier(String::from("getptr"))),
+                right: boxed_node!(Expression::Extern(expression::Extern {
                     types: [].to_vec(),
                     return_type: Type::Ptr,
                     name: String::from("getpr"),
                 })),
-            }),
-            Expression::Assignment(expression::Assignment {
-                left: Box::new(Expression::Identifier(String::from("passptr"))),
-                right: Box::new(Expression::Extern(expression::Extern {
+            })),
+            node!(Expression::Assignment(expression::Assignment {
+                left: boxed_node!(Expression::Identifier(String::from("passptr"))),
+                right: boxed_node!(Expression::Extern(expression::Extern {
                     types: [Type::Ptr].to_vec(),
                     return_type: Type::Void,
                     name: String::from("passptr"),
                 })),
-            }),
-            Expression::Assignment(expression::Assignment {
-                left: Box::new(Expression::Identifier(String::from("passstr"))),
-                right: Box::new(Expression::Extern(expression::Extern {
+            })),
+            node!(Expression::Assignment(expression::Assignment {
+                left: boxed_node!(Expression::Identifier(String::from("passstr"))),
+                right: boxed_node!(Expression::Extern(expression::Extern {
                     types: [Type::String].to_vec(),
                     return_type: Type::Void,
                     name: String::from("passstr"),
                 })),
-            }),
-            Expression::FuncCall(expression::FuncCall {
-                calee: Box::new(Expression::Identifier(String::from("passptr"))),
-                args: [Expression::FuncCall(expression::FuncCall {
-                    calee: Box::new(Expression::Identifier(String::from("getptr"))),
+            })),
+            node!(Expression::FuncCall(expression::FuncCall {
+                calee: boxed_node!(Expression::Identifier(String::from("passptr"))),
+                args: [node!(Expression::FuncCall(expression::FuncCall {
+                    calee: boxed_node!(Expression::Identifier(String::from("getptr"))),
                     args: [].to_vec(),
-                })]
+                }))]
                 .to_vec(),
-            }),
-            Expression::FuncCall(expression::FuncCall {
-                calee: Box::new(Expression::Identifier(String::from("sum"))),
-                args: [Expression::Numeric(2.0), Expression::Numeric(3.0)].to_vec(),
-            }),
-            Expression::FuncCall(expression::FuncCall {
-                calee: Box::new(Expression::Identifier(String::from("passstr"))),
-                args: [Expression::String(String::from("test"))].to_vec(),
-            }),
+            })),
+            node!(Expression::FuncCall(expression::FuncCall {
+                calee: boxed_node!(Expression::Identifier(String::from("sum"))),
+                args: [
+                    node!(Expression::Numeric(2.0)),
+                    node!(Expression::Numeric(3.0))
+                ]
+                .to_vec(),
+            })),
+            node!(Expression::FuncCall(expression::FuncCall {
+                calee: boxed_node!(Expression::Identifier(String::from("passstr"))),
+                args: [node!(Expression::String(String::from("test")))].to_vec(),
+            })),
         ],
     };
 
@@ -832,14 +840,14 @@ declare void @passstr(i8*)
 #[test]
 fn it_compile_break_in_while_and_if() -> Result<(), Box<dyn Error>> {
     let program = Program {
-        body: vec![Expression::While(While {
-            predicate: Box::new(Expression::Bool(true)),
-            body: vec![Expression::Conditional(Conditional {
-                predicate: Box::new(Expression::Bool(true)),
-                body: vec![Expression::Break],
+        body: vec![node!(Expression::While(While {
+            predicate: boxed_node!(Expression::Bool(true)),
+            body: vec![node!(Expression::Conditional(Conditional {
+                predicate: boxed_node!(Expression::Bool(true)),
+                body: vec![node!(Expression::Break)],
                 else_body: vec![],
-            })],
-        })],
+            }))],
+        }))],
     };
 
     let mut compiler = Compiler::new(program)?;
