@@ -12,29 +12,96 @@ fn compile_assignment<T: LLVMCompiler>(
 ) -> CompilerResult<Value> {
     let right = compiler.walk(&expr.right)?;
 
-    let ptr = compiler
-        .builder()
-        .build_alloca(right.llvm_type(compiler.context()), "");
-    compiler.builder().create_store(right.into(), &ptr);
-
-    let var = match right {
-        Value::String(_) => Variable::String(ptr),
-        Value::Numeric(_) => Variable::Numeric(ptr),
-        Value::Bool(_) => Variable::Bool(ptr),
-        Value::Function {
-            return_type, typ, ..
-        } => Variable::Function {
-            val: llvm::Function(ptr.0),
-            typ,
-            return_type,
-        },
-        Value::Vec(_) => Variable::Vec(ptr),
-        Value::Ptr(_) => Variable::Ptr(ptr),
-        Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
+    let ptr = if let Expression::Identifier(name) = &expr.left.expression {
+        match compiler.get_var(name) {
+            Some(ptr) => ptr.into(),
+            None => compiler
+                .builder()
+                .build_alloca(right.llvm_type(compiler.context()), ""),
+        }
+    } else {
+        Err(CompilerError::NonIdentifierAssignment)?
     };
 
     if let Expression::Identifier(name) = &expr.left.expression {
-        compiler.set_var(&name, var);
+        match compiler.get_var(name) {
+            Some(mut var) => {
+                match var {
+                    Variable::String(val) => {
+                        let release = compiler
+                            .module()
+                            .get_function("release_string_reference")
+                            .unwrap();
+                        compiler.builder().build_call(
+                            &release,
+                            &[compiler.builder().build_load(&val, "")],
+                            "",
+                        );
+                    }
+                    Variable::Vec(val) => {
+                        let release = compiler
+                            .module()
+                            .get_function("release_vec_reference")
+                            .unwrap();
+
+                        compiler.builder().build_call(
+                            &release,
+                            &[compiler.builder().build_load(&val, "")],
+                            "",
+                        );
+                    }
+                    Variable::Numeric(_)
+                    | Variable::Bool(_)
+                    | Variable::Function { .. }
+                    | Variable::Ptr(_) => {}
+                }
+                compiler.builder().create_store(right.into(), &ptr);
+                var.set_value(ptr);
+            }
+            None => {
+                let var = match right {
+                    Value::String(_) => Variable::String(ptr),
+                    Value::Numeric(_) => Variable::Numeric(ptr),
+                    Value::Bool(_) => Variable::Bool(ptr),
+                    Value::Function {
+                        return_type,
+                        typ,
+                        val,
+                    } => Variable::Function {
+                        val,
+                        typ,
+                        return_type,
+                    },
+                    Value::Vec(_) => Variable::Vec(ptr),
+                    Value::Ptr(_) => Variable::Ptr(ptr),
+                    Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
+                };
+
+                compiler.builder().create_store(right.into(), &ptr);
+                compiler.set_var(name, var);
+            }
+        }
+
+        match right {
+            Value::String(val) => {
+                let release = compiler
+                    .module()
+                    .get_function("inc_string_reference")
+                    .unwrap();
+
+                compiler.builder().build_call(&release, &[val], "");
+            }
+            Value::Numeric(_) => {}
+            Value::Bool(_) => {}
+            Value::Function { .. } => {}
+            Value::Vec(val) => {
+                let release = compiler.module().get_function("inc_vec_reference").unwrap();
+
+                compiler.builder().build_call(&release, &[val], "");
+            }
+            Value::Ptr(_) => {}
+            Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
+        };
     } else {
         Err(CompilerError::NonIdentifierAssignment)?
     }

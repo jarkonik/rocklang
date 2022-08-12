@@ -33,6 +33,20 @@ pub unsafe extern "C" fn release_string_reference(ptr: *const RefCell<String>) {
     Rc::decrement_strong_count(ptr);
 }
 
+/// # Safety
+///
+/// loads raw ptr
+pub unsafe extern "C" fn inc_string_reference(ptr: *const RefCell<String>) {
+    Rc::increment_strong_count(ptr);
+}
+
+/// # Safety
+///
+/// loads raw ptr
+pub unsafe extern "C" fn inc_vec_reference(ptr: *const RefCell<Vec<f64>>) {
+    Rc::increment_strong_count(ptr);
+}
+
 pub extern "C" fn vec_new() -> *const RefCell<Vec<f64>> {
     let rc = Rc::new(RefCell::new(Vec::new()));
     Rc::into_raw(rc)
@@ -51,6 +65,22 @@ pub unsafe extern "C" fn vec_set(ptr: *const RefCell<Vec<f64>>, idx: f64, val: f
         vec[idx as usize] = val;
     }
     std::mem::forget(rc);
+}
+
+/// # Safety
+///
+/// loads raw ptr
+pub unsafe extern "C" fn vec_get(ptr: *const RefCell<Vec<f64>>, idx: f64) -> f64 {
+    let rc = Rc::from_raw(ptr);
+    let val = {
+        let mut vec = rc.try_borrow_mut().unwrap();
+        while vec.len() <= idx as usize {
+            vec.push(0.);
+        }
+        vec[idx as usize]
+    };
+    std::mem::forget(rc);
+    val
 }
 
 /// # Safety

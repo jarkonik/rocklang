@@ -148,7 +148,6 @@ macro_rules! mock_compiler {
                 fn exit_scope(&mut self) -> CompilerResult<()>;
                 fn get_var(&self, name: &str) -> CompilerResult<Variable>;
                 fn get_builtin(&self, name: &str) -> Option<Variable>;
-                fn track_reference(&mut self, val: Value);
                 fn set_var(&mut self, name: &str, val: Variable);
                 fn build_function(
                     &mut self,

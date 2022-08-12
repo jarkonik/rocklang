@@ -5,14 +5,14 @@ use super::{variable::Variable, CompilerResult, Value};
 
 pub struct Scope {
     env: HashMap<String, Variable>,
-    references: Vec<Value>,
+    params: HashMap<String, Value>,
 }
 
 impl Scope {
     pub fn new() -> Self {
         Scope {
+            params: HashMap::new(),
             env: HashMap::new(),
-            references: vec![],
         }
     }
 
@@ -21,16 +21,31 @@ impl Scope {
     }
 
     pub fn set(&mut self, literal: &str, val: Variable) {
+        if self.env.contains_key(literal) {
+            panic!()
+        }
         self.env.insert(literal.to_string(), val);
     }
 
-    pub fn track_reference(&mut self, value: Value) {
-        self.references.push(value);
-    }
-
     pub fn release_references(&self, module: &Module, builder: &Builder) -> CompilerResult<()> {
-        for reference in self.references.iter().rev() {
-            match reference {
+        for (_, var) in self.env.iter() {
+            match var {
+                Variable::String(val) => {
+                    let release = module.get_function("release_string_reference").unwrap();
+                    builder.build_call(&release, &[builder.build_load(val, "")], "");
+                }
+                Variable::Vec(val) => {
+                    let release = module.get_function("release_vec_reference").unwrap();
+                    builder.build_call(&release, &[builder.build_load(val, "")], "");
+                }
+                Variable::Numeric(_)
+                | Variable::Bool(_)
+                | Variable::Function { .. }
+                | Variable::Ptr(_) => {}
+            }
+        }
+        for (_, var) in self.params.iter() {
+            match var {
                 Value::String(val) => {
                     let release = module.get_function("release_string_reference").unwrap();
                     builder.build_call(&release, &[*val], "");
@@ -39,14 +54,22 @@ impl Scope {
                     let release = module.get_function("release_vec_reference").unwrap();
                     builder.build_call(&release, &[*val], "");
                 }
-                Value::Numeric(_) => unimplemented!(),
-                Value::Bool(_) => unimplemented!(),
-                Value::Function { .. } => unimplemented!(),
-                Value::Void => unimplemented!(),
-                Value::Break => unimplemented!(),
-                Value::Ptr(_) => unimplemented!(),
+                Value::Numeric(_) | Value::Bool(_) | Value::Function { .. } | Value::Ptr(_) => {}
+                Value::Void => unreachable!(),
+                Value::Break => unreachable!(),
             }
         }
         Ok(())
+    }
+
+    pub fn set_param(&mut self, name: &str, val: Value) {
+        if self.env.contains_key(name) {
+            panic!()
+        }
+        self.params.insert(name.to_string(), val);
+    }
+
+    pub fn get_param(&self, name: &str) -> Option<&Value> {
+        self.params.get(name)
     }
 }

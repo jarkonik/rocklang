@@ -20,6 +20,7 @@ impl ProgramVisitor<CompilerResult<Value>> for Compiler {
         self.builder.position_builder_at_end(&block);
 
         for stmt in program.body {
+            self.release_maybe_orphaned();
             self.walk(&stmt)?;
         }
         self.exit_scope()?;

@@ -51,13 +51,11 @@ fn compile_func_call<T: LLVMCompiler>(
 
     let builtin = compiler.get_builtin(&name);
 
-    let mut is_builtin = false;
     let var = match builtin {
-        Some(b) => {
-            is_builtin = true;
-            b
-        }
-        None => compiler.get_var(&name)?,
+        Some(b) => b,
+        None => compiler
+            .get_var(&name)
+            .ok_or(CompilerError::UndefinedIdentifier(name))?,
     };
 
     let args = compile_args(compiler, &expr.args)?;
@@ -68,18 +66,13 @@ fn compile_func_call<T: LLVMCompiler>(
         return_type, val, ..
     } = var
     {
-        let val = match is_builtin {
-            true => val,
-            false => llvm::Function(builder.build_load(&llvm::Value(val.0), "").0),
-        };
-
         let llvm_value = builder.build_call(&val, &args, "");
 
         let val = match return_type {
             parser::Type::Numeric => Value::Numeric(llvm_value),
             parser::Type::Vector => {
                 let value = Value::Vec(llvm_value);
-                compiler.track_reference(value);
+                compiler.track_maybe_orphaned(value);
                 value
             }
             parser::Type::Void => Value::Void,
@@ -88,7 +81,7 @@ fn compile_func_call<T: LLVMCompiler>(
             parser::Type::Bool => Value::Bool(llvm_value),
             parser::Type::String => {
                 let value = Value::String(llvm_value);
-                compiler.track_reference(value);
+                compiler.track_maybe_orphaned(value);
                 value
             }
         };

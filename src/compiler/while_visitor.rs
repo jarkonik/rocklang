@@ -1,3 +1,4 @@
+use crate::llvm;
 use crate::visitor::WhileVisitor;
 
 use super::{Compiler, CompilerError, CompilerResult, Value};
@@ -27,12 +28,14 @@ impl WhileVisitor<CompilerResult<Value>> for Compiler {
 
         self.enter_scope();
         for stmt in &expr.body {
+            self.release_maybe_orphaned();
             self.walk(stmt)?;
         }
         self.exit_scope().unwrap();
 
+        let pred: llvm::Value = self.walk(&expr.predicate)?.into();
         self.builder
-            .build_cond_br(&predicate, &loop_block, &after_loop_block);
+            .build_cond_br(&pred, &loop_block, &after_loop_block);
         self.builder.position_builder_at_end(&after_loop_block);
 
         Ok(Value::Void)

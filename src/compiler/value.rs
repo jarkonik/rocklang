@@ -21,7 +21,7 @@ pub enum Value {
 impl From<Value> for llvm::Value {
     fn from(v: Value) -> Self {
         match v {
-            Value::Void | Value::Break => unimplemented!(),
+            Value::Void | Value::Break => unreachable!(),
             Value::String(lv) => lv,
             Value::Numeric(lv) => lv,
             Value::Bool(lv) => lv,
@@ -35,7 +35,7 @@ impl From<Value> for llvm::Value {
 impl From<&Value> for llvm::Value {
     fn from(v: &Value) -> Self {
         match *v {
-            Value::Void | Value::Break => unimplemented!(),
+            Value::Void | Value::Break => unreachable!(),
             Value::String(lv) => lv,
             Value::Numeric(lv) => lv,
             Value::Bool(lv) => lv,
@@ -49,14 +49,13 @@ impl From<&Value> for llvm::Value {
 impl Value {
     pub fn llvm_type(&self, context: &Context) -> llvm::Type {
         match self {
-            Value::Void => context.void_type(),
             Value::Numeric(_) => context.double_type(),
             Value::Bool(_) => context.i1_type(),
             Value::Ptr(_) => context.void_type().pointer_type(0),
             Value::String(_) => context.void_type().pointer_type(0),
             Value::Vec(_) => context.void_type().pointer_type(0),
             Value::Function { typ, .. } => typ.pointer_type(0),
-            Value::Break => unimplemented!(),
+            Value::Void | Value::Break => unreachable!(),
         }
     }
 

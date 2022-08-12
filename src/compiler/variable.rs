@@ -39,3 +39,27 @@ impl From<&Variable> for llvm::Value {
         }
     }
 }
+impl Variable {
+    pub fn set_value(&mut self, ptr: llvm::Value) {
+        match self {
+            Variable::String(v) => {
+                v.0 = ptr.0;
+            }
+            Variable::Numeric(v) => {
+                v.0 = ptr.0;
+            }
+            Variable::Bool(v) => {
+                v.0 = ptr.0;
+            }
+            Variable::Function { val, .. } => {
+                val.0 = ptr.0;
+            }
+            Variable::Vec(v) => {
+                v.0 = ptr.0;
+            }
+            Variable::Ptr(v) => {
+                v.0 = ptr.0;
+            }
+        }
+    }
+}

@@ -12,7 +12,7 @@ impl StringVisitor<CompilerResult<Value>> for Compiler {
             .builder
             .build_global_string_ptr(with_newlines.as_str(), "");
         let string = Value::String(self.builder.build_call(&string_from_c_string, &[ptr], ""));
-        self.track_reference(string);
+        self.track_maybe_orphaned(string);
 
         Ok(string)
     }

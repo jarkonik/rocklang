@@ -28,6 +28,7 @@ use crate::llvm::Function;
 use crate::llvm::Module;
 use crate::llvm::Type;
 use crate::parser;
+use crate::parser::Parse;
 use crate::parser::Program;
 use crate::parser::Span;
 use crate::visitor::*;
@@ -92,6 +93,7 @@ pub trait Compile: ProgramVisitor<CompilerResult<Value>> {
 }
 
 pub struct Compiler {
+    maybe_orphaned: Vec<Value>,
     program: Program,
     engine: llvm::Engine,
     context: llvm::Context,
@@ -168,6 +170,7 @@ impl Compiler {
         let pass_manager = llvm::PassManager::new(&module);
 
         Ok(Compiler {
+            maybe_orphaned: Vec::new(),
             builtins: HashMap::new(),
             scopes: vec![],
             program,
@@ -230,6 +233,28 @@ impl Compiler {
         );
 
         self.init_builtin(
+            "inc_string_reference",
+            self.context.function_type(
+                self.context.void_type(),
+                &[self.context.void_type().pointer_type(0)],
+                false,
+            ),
+            stdlib::inc_string_reference as *mut c_void,
+            parser::Type::Void,
+        );
+
+        self.init_builtin(
+            "inc_vec_reference",
+            self.context.function_type(
+                self.context.void_type(),
+                &[self.context.void_type().pointer_type(0)],
+                false,
+            ),
+            stdlib::inc_vec_reference as *mut c_void,
+            parser::Type::Void,
+        );
+
+        self.init_builtin(
             "release_vec_reference",
             self.context.function_type(
                 self.context.void_type(),
@@ -276,6 +301,49 @@ impl Compiler {
             stdlib::vec_set as *mut c_void,
             parser::Type::Void,
         );
+
+        let vec_get_type = self.context.function_type(
+            self.context.double_type(),
+            &[
+                self.context.void_type().pointer_type(0),
+                self.context.double_type(),
+            ],
+            false,
+        );
+        self.init_builtin(
+            "vec_get",
+            vec_get_type,
+            stdlib::vec_get as *mut c_void,
+            parser::Type::Numeric,
+        );
+
+        let sqrt_type = self.context.function_type(
+            self.context.double_type(),
+            &[self.context.double_type()],
+            false,
+        );
+        let val = self.module.add_function("sqrt", sqrt_type);
+        self.builtins.insert(
+            "sqrt".to_string(),
+            Variable::Function {
+                val,
+                typ: sqrt_type,
+                return_type: parser::Type::Numeric,
+            },
+        );
+    }
+
+    fn set_param(&mut self, name: &str, val: Value) {
+        self.scopes.last_mut().unwrap().set_param(name, val);
+    }
+
+    fn get_param(&self, expr: &str) -> Option<Value> {
+        for scope in self.scopes.iter().rev() {
+            if let Some(val) = scope.get_param(expr) {
+                return Some(*val);
+            }
+        }
+        None
     }
 }
 
@@ -285,9 +353,10 @@ trait LLVMCompiler: Visitor<CompilerResult<Value>> {
     fn module(&self) -> &Module;
     fn enter_scope(&mut self);
     fn exit_scope(&mut self) -> CompilerResult<()>;
-    fn get_var(&self, name: &str) -> CompilerResult<Variable>;
+    fn get_var(&self, name: &str) -> Option<Variable>;
     fn get_builtin(&self, name: &str) -> Option<Variable>;
-    fn track_reference(&mut self, val: Value);
+    fn track_maybe_orphaned(&mut self, val: Value);
+    fn release_maybe_orphaned(&mut self);
     fn set_var(&mut self, name: &str, val: Variable);
     fn build_function(
         &mut self,
@@ -317,13 +386,17 @@ impl LLVMCompiler for Compiler {
         self.builtins.get(name).and_then(|x| Some(x.clone()))
     }
 
-    fn get_var(&self, name: &str) -> CompilerResult<Variable> {
+    fn track_maybe_orphaned(&mut self, val: Value) {
+        self.maybe_orphaned.push(val);
+    }
+
+    fn get_var(&self, name: &str) -> Option<Variable> {
         for scope in self.scopes.iter().rev() {
             if let Some(val) = scope.get(name) {
-                return Ok(*val);
+                return Some(*val);
             }
         }
-        Err(CompilerError::UndefinedIdentifier(name.to_string()))
+        None
     }
 
     fn set_var(&mut self, name: &str, val: Variable) {
@@ -332,11 +405,8 @@ impl LLVMCompiler for Compiler {
 
     fn exit_scope(&mut self) -> CompilerResult<()> {
         let scope = self.scopes.pop().unwrap();
+        self.release_maybe_orphaned();
         scope.release_references(self.module(), self.builder())
-    }
-
-    fn track_reference(&mut self, val: Value) {
-        self.scopes.last_mut().unwrap().track_reference(val);
     }
 
     fn build_function(
@@ -363,33 +433,51 @@ impl LLVMCompiler for Compiler {
         self.enter_scope();
 
         for (i, param) in expr.params.iter().enumerate() {
-            self.set_var(
-                param.name.as_str(),
-                match param.typ {
-                    parser::Type::Vector => Variable::Vec(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Numeric => {
-                        Variable::Numeric(fun.get_param(i.try_into().unwrap()))
-                    }
-                    parser::Type::Ptr => Variable::Ptr(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::String => Variable::String(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Void => todo!(),
-                    parser::Type::Function => todo!(),
-                    parser::Type::Bool => todo!(),
-                },
-            )
+            let val = fun.get_param(i.try_into().unwrap());
+
+            let val = match param.typ {
+                parser::Type::String => {
+                    let release = self.module.get_function("inc_vec_reference").unwrap();
+                    self.builder.build_call(&release, &[val], "");
+
+                    Value::String(val)
+                }
+                parser::Type::Numeric => Value::Numeric(val),
+                parser::Type::Bool => Value::Bool(val),
+                parser::Type::Vector => {
+                    let release = self.module.get_function("inc_vec_reference").unwrap();
+                    self.builder.build_call(&release, &[val], "");
+
+                    Value::Vec(val)
+                }
+                parser::Type::Void => todo!(),
+                parser::Type::Function => todo!(),
+                parser::Type::Ptr => todo!(),
+            };
+            self.set_param(param.name.as_str(), val);
         }
 
         let mut last_val = Value::Void;
 
         for stmt in expr.body.clone() {
+            self.release_maybe_orphaned();
             last_val = self.walk(&stmt)?;
         }
 
         let ret_val = match last_val {
             Value::Void => None,
             Value::Numeric(n) => Some(n),
-            Value::Vec(n) => Some(n),
-            Value::String(_) => todo!(),
+            Value::Vec(n) => {
+                let release = self.module.get_function("inc_vec_reference").unwrap();
+                self.builder.build_call(&release, &[n], "");
+                Some(n)
+            }
+            Value::String(n) => {
+                let release = self.module.get_function("inc_string_reference").unwrap();
+                self.builder.build_call(&release, &[n], "");
+
+                Some(n)
+            }
             Value::Bool(_) => todo!(),
             Value::Function { .. } => todo!(),
             Value::Break => todo!(),
@@ -412,5 +500,29 @@ impl LLVMCompiler for Compiler {
         }
 
         Ok(())
+    }
+
+    fn release_maybe_orphaned(&mut self) {
+        while let Some(val) = self.maybe_orphaned.pop() {
+            match val {
+                Value::Void => todo!(),
+                Value::String(v) => {
+                    let release = self
+                        .module
+                        .get_function("release_string_reference")
+                        .unwrap();
+                    self.builder.build_call(&release, &[v], "");
+                }
+                Value::Numeric(_) => todo!(),
+                Value::Bool(_) => todo!(),
+                Value::Function { .. } => todo!(),
+                Value::Vec(v) => {
+                    let release = self.module.get_function("release_vec_reference").unwrap();
+                    self.builder.build_call(&release, &[v], "");
+                }
+                Value::Break => todo!(),
+                Value::Ptr(_) => todo!(),
+            }
+        }
     }
 }

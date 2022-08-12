@@ -33,6 +33,7 @@ fn compile_conditional<T: LLVMCompiler>(
     compiler.builder().position_builder_at_end(&then_block);
     compiler.enter_scope();
     for stmt in &expr.body {
+        compiler.release_maybe_orphaned();
         compiler.walk(stmt)?;
     }
     compiler.exit_scope().unwrap();
@@ -41,6 +42,7 @@ fn compile_conditional<T: LLVMCompiler>(
     compiler.builder().position_builder_at_end(&else_block);
     compiler.enter_scope();
     for stmt in &expr.else_body {
+        compiler.release_maybe_orphaned();
         compiler.walk(stmt)?;
     }
     compiler.exit_scope().unwrap();
