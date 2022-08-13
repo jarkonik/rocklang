@@ -1708,7 +1708,13 @@ fn it_parses_load_expression() {
 
     assert_json_eq!(
         json!([{
-            "Load": "somelib.so"
+            "span": {
+                "column": 0,
+                "line": 0
+            },
+            "expression": {
+                "Load": "somelib.so"
+            }
         }]),
         json
     )
