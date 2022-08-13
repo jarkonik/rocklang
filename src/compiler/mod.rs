@@ -43,7 +43,9 @@ use self::variable::Variable;
 #[derive(Clone, Debug)]
 pub enum CompilerError {
     VoidAssignment,
-    NonIdentifierAssignment,
+    NonIdentifierAssignment {
+        span: Span,
+    },
     TypeError {
         expected: parser::Type,
         actual: parser::Type,
@@ -80,7 +82,9 @@ impl fmt::Display for CompilerError {
             CompilerError::LLVMError(err) => format!("llvm error: {}", err),
             CompilerError::LoadLibaryError(lib) => format!("error loading {}", lib),
             CompilerError::VoidAssignment => "void assignment".to_string(),
-            CompilerError::NonIdentifierAssignment => "non identifier assignment".to_string(),
+            CompilerError::NonIdentifierAssignment { span } => {
+                format!("non identifier assignment at {}", span)
+            }
             CompilerError::WrongOperator {
                 expected,
                 actual,
@@ -125,9 +129,9 @@ impl Visitor<CompilerResult<Value>> for Compiler {
             Expression::Unary(expr) => self.visit_unary(&expr, span),
             Expression::FuncCall(expr) => self.visit_func_call(&expr, span),
             Expression::Numeric(expr) => self.visit_numeric(&expr),
-            Expression::Assignment(expr) => self.visit_assignment(&expr),
+            Expression::Assignment(expr) => self.visit_assignment(&expr, span),
             Expression::Identifier(expr) => self.visit_identifier(&expr),
-            Expression::Conditional(expr) => self.visit_conditional(&expr, node.span.clone()),
+            Expression::Conditional(expr) => self.visit_conditional(&expr, span),
             Expression::String(expr) => self.visit_string(&expr),
             Expression::Bool(expr) => self.visit_bool(&expr),
             Expression::Break => self.visit_break(),

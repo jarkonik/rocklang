@@ -22,7 +22,7 @@ pub trait ProgramVisitor<T> {
 }
 
 pub trait AssignmentVisitor<T> {
-    fn visit_assignment(&mut self, expr: &expression::Assignment) -> T;
+    fn visit_assignment(&mut self, expr: &expression::Assignment, span: Span) -> T;
 }
 
 pub trait ConditionalVisitor<T> {

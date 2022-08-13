@@ -1,5 +1,6 @@
 use crate::{
     expression::{self, Expression},
+    parser::Span,
     visitor::AssignmentVisitor,
 };
 
@@ -8,6 +9,7 @@ use super::{variable::Variable, Compiler, CompilerError, CompilerResult, LLVMCom
 fn compile_assignment<T: LLVMCompiler>(
     compiler: &mut T,
     expr: &crate::expression::Assignment,
+    span: Span,
 ) -> CompilerResult<Value> {
     let right = compiler.walk(&expr.right)?;
 
@@ -19,7 +21,7 @@ fn compile_assignment<T: LLVMCompiler>(
                 .build_alloca(right.llvm_type(compiler.context()), ""),
         }
     } else {
-        Err(CompilerError::NonIdentifierAssignment)?
+        Err(CompilerError::NonIdentifierAssignment { span: span.clone() })?
     };
 
     if let Expression::Identifier(name) = &expr.left.expression {
@@ -102,7 +104,7 @@ fn compile_assignment<T: LLVMCompiler>(
             Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
         };
     } else {
-        Err(CompilerError::NonIdentifierAssignment)?
+        Err(CompilerError::NonIdentifierAssignment { span })?
     }
 
     if let expression::Expression::FuncDecl(e) = &expr.right.expression {
@@ -113,8 +115,12 @@ fn compile_assignment<T: LLVMCompiler>(
 }
 
 impl AssignmentVisitor<CompilerResult<Value>> for Compiler {
-    fn visit_assignment(&mut self, expr: &crate::expression::Assignment) -> CompilerResult<Value> {
-        compile_assignment(self, expr)
+    fn visit_assignment(
+        &mut self,
+        expr: &crate::expression::Assignment,
+        span: Span,
+    ) -> CompilerResult<Value> {
+        compile_assignment(self, expr, span)
     }
 }
 
