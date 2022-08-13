@@ -87,18 +87,42 @@ fn it_compiles_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
 
     assert_eq_ir!(
         &compiler.ir_string(),
-        "
-        ;ModuleID='main'source_filename=\"main\"targetdatalayout=\"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"
-        @x = global double 0.000000e+00
-        @y = global double 0.000000e+00
-        define void @__main__() {
-            entry:
-            store double 5.000000e+00, double*@x, align 8
-            %0= load double, double*@x, align 8
-            store double %0, double* @y, align 8
-            ret void
+        r#"
+        target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+
+        declare void* @string(double)
+
+        declare void @print(void*)
+
+        declare void @release_string_reference(void*)
+
+        declare void @inc_string_reference(void*)
+
+        declare void @inc_vec_reference(void*)
+
+        declare void @release_vec_reference(void*)
+
+        declare i8* @c_string_from_string(void*)
+
+        declare void* @string_from_c_string(i8*)
+
+        declare void* @vec_new()
+
+        declare void @vec_set(void*, double, double)
+
+        declare double @vec_get(void*, double)
+
+        declare double @sqrt(double)
+
+        define void @main() {
+          %1 = alloca double, align 8
+          store double 5.000000e+00, double* %1, align 8
+          %2 = load double, double* %1, align 8
+          %3 = alloca double, align 8
+          store double %2, double* %3, align 8
+          ret void
         }
-        "
+        "#
     );
 
     Ok(())
