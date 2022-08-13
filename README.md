@@ -45,7 +45,7 @@ mem_set = (vec: vec, val: number, n: number): vec => {
 }
 
 sieve = (n: number): void => {
-	v = vecnew()
+	v = vec_new()
 	prime = mem_set(v, 1, n + 1)
 
 	p = 2
