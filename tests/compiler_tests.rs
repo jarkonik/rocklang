@@ -457,7 +457,7 @@ fn it_compiles_coditional() -> Result<(), Box<dyn Error>> {
 }
 
 macro_rules! compile_operator {
-    ($left_operator:expr, $operator:expr, $rigth_operator:expr) => {
+    ($left_operator:expr, $operator:expr, $rigth_operator:expr) => {{
         let program = Program {
             body: vec![node!(Expression::Assignment(Assignment {
                 left: boxed_node!(Expression::Identifier("b".to_string())),
@@ -470,267 +470,371 @@ macro_rules! compile_operator {
         };
 
         let mut compiler = Compiler::new(program)?;
-        compiler.compile().unwrap();
-    };
+        compiler.compile()
+    }};
 }
 
 #[test]
 fn it_compiles_operators() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Plus,
-        boxed_node!(Expression::Numeric(2.0))
-    );
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Minus,
-        boxed_node!(Expression::Numeric(2.0))
-    );
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Asterisk,
-        boxed_node!(Expression::Numeric(2.0))
-    );
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::LessOrEqual,
-        boxed_node!(Expression::Numeric(2.0))
-    );
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Less,
-        boxed_node!(Expression::Numeric(2.0))
-    );
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Greater,
-        boxed_node!(Expression::Numeric(2.0))
-    );
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::GreaterOrEqual,
-        boxed_node!(Expression::Numeric(2.0))
-    );
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Equal,
-        boxed_node!(Expression::Numeric(2.0))
-    );
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Slash,
-        boxed_node!(Expression::Numeric(2.0))
-    );
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Minus,
-        boxed_node!(Expression::Numeric(2.0))
-    );
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::NotEqual,
-        boxed_node!(Expression::Numeric(2.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Plus,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Minus,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Asterisk,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::LessOrEqual,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Less,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Greater,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::GreaterOrEqual,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Equal,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Slash,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Minus,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::NotEqual,
+            boxed_node!(Expression::Numeric(2.0))
+        ),
+        Err(_)
+    ));
+
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_adding_numeric_to_string() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Plus,
-        boxed_node!(Expression::String("test".to_string()))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Plus,
+            boxed_node!(Expression::String("test".to_string()))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_plus_string_to_numeric() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::String("test".to_string())),
-        Operator::Plus,
-        boxed_node!(Expression::Numeric(10.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::String("test".to_string())),
+            Operator::Plus,
+            boxed_node!(Expression::Numeric(10.0))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_substract_string_from_numeric() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Minus,
-        boxed_node!(Expression::String("test".to_string()))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Minus,
+            boxed_node!(Expression::String("test".to_string()))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_substract_numeric_from_string() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::String("test".to_string())),
-        Operator::Minus,
-        boxed_node!(Expression::Numeric(10.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::String("test".to_string())),
+            Operator::Minus,
+            boxed_node!(Expression::Numeric(10.0))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_multiple_numeric_by_string() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Asterisk,
-        boxed_node!(Expression::String("test".to_string()))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Asterisk,
+            boxed_node!(Expression::String("test".to_string()))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_multiple_string_to_numeric() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::String("test".to_string())),
-        Operator::Asterisk,
-        boxed_node!(Expression::Numeric(10.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::String("test".to_string())),
+            Operator::Asterisk,
+            boxed_node!(Expression::Numeric(10.0))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_less_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::LessOrEqual,
-        boxed_node!(Expression::String("test".to_string()))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::LessOrEqual,
+            boxed_node!(Expression::String("test".to_string()))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_less_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::String("test".to_string())),
-        Operator::LessOrEqual,
-        boxed_node!(Expression::Numeric(10.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::String("test".to_string())),
+            Operator::LessOrEqual,
+            boxed_node!(Expression::Numeric(10.0))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_less_numeric_and_string() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Less,
-        boxed_node!(Expression::String("test".to_string()))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Less,
+            boxed_node!(Expression::String("test".to_string()))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_less_string_to_numeric() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::String("test".to_string())),
-        Operator::Less,
-        boxed_node!(Expression::Numeric(10.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::String("test".to_string())),
+            Operator::Less,
+            boxed_node!(Expression::Numeric(10.0))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_greater_numeric_and_string() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Greater,
-        boxed_node!(Expression::String("test".to_string()))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Greater,
+            boxed_node!(Expression::String("test".to_string()))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_greater_string_to_numeric() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::String("test".to_string())),
-        Operator::Greater,
-        boxed_node!(Expression::Numeric(10.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::String("test".to_string())),
+            Operator::Greater,
+            boxed_node!(Expression::Numeric(10.0))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_greater_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::GreaterOrEqual,
-        boxed_node!(Expression::String("test".to_string()))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::GreaterOrEqual,
+            boxed_node!(Expression::String("test".to_string()))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_greater_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::String("test".to_string())),
-        Operator::GreaterOrEqual,
-        boxed_node!(Expression::Numeric(10.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::String("test".to_string())),
+            Operator::GreaterOrEqual,
+            boxed_node!(Expression::Numeric(10.0))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Equal,
-        boxed_node!(Expression::String("test".to_string()))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Equal,
+            boxed_node!(Expression::String("test".to_string()))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::String("test".to_string())),
-        Operator::Equal,
-        boxed_node!(Expression::Numeric(10.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::String("test".to_string())),
+            Operator::Equal,
+            boxed_node!(Expression::Numeric(10.0))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_slash_numeric_and_string() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::Slash,
-        boxed_node!(Expression::String("test".to_string()))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::Slash,
+            boxed_node!(Expression::String("test".to_string()))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_slash_string_to_numeric() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::String("test".to_string())),
-        Operator::Slash,
-        boxed_node!(Expression::Numeric(10.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::String("test".to_string())),
+            Operator::Slash,
+            boxed_node!(Expression::Numeric(10.0))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_not_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
-        Operator::NotEqual,
-        boxed_node!(Expression::String("test".to_string()))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::Numeric(10.0)),
+            Operator::NotEqual,
+            boxed_node!(Expression::String("test".to_string()))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
 #[test]
 fn it_returns_err_when_not_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
-    compile_operator!(
-        boxed_node!(Expression::String("test".to_string())),
-        Operator::NotEqual,
-        boxed_node!(Expression::Numeric(10.0))
-    );
+    assert!(matches!(
+        compile_operator!(
+            boxed_node!(Expression::String("test".to_string())),
+            Operator::NotEqual,
+            boxed_node!(Expression::Numeric(10.0))
+        ),
+        Err(_)
+    ));
     Ok(())
 }
 
@@ -758,7 +862,9 @@ fn it_returns_err_when_pass_string_to_unary() -> Result<(), Box<dyn Error>> {
     };
 
     let mut compiler = Compiler::new(program)?;
-    compiler.compile().unwrap();
+
+    assert!(matches!(compiler.compile(), Err(_)));
+
     Ok(())
 }
 
@@ -772,12 +878,12 @@ fn it_returns_err_when_wrong_unary_operator() -> Result<(), Box<dyn Error>> {
     };
 
     let mut compiler = Compiler::new(program)?;
-    compiler.compile().unwrap();
+    assert!(matches!(compiler.compile(), Err(_)));
     Ok(())
 }
 
 #[test]
-fn it_compile_break_in_while() -> Result<(), Box<dyn Error>> {
+fn it_compiles_break_in_while() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::While(While {
             predicate: boxed_node!(Expression::Bool(true)),
