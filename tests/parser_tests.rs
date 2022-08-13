@@ -545,13 +545,31 @@ fn it_parses_binary_not_equal() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Identifier": "x"
-                        },
-                        "operator": "NotEqual",
-                        "right": {
-                            "Numeric": 10.0
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            },
+                            "operator": "NotEqual",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            }
                         }
                     }
                 }
