@@ -380,10 +380,7 @@ fn it_displays_correct_syntax_error() {
         backtrace: Backtrace::new(),
     };
     assert_eq!(
-        format!(
-            "Syntax error: unexpected token {}",
-            token!(TokenKind::DoubleEqual)
-        ),
+        format!("Syntax error: unexpected token {}", TokenKind::DoubleEqual),
         format!("{}", error)
     );
 }
@@ -742,8 +739,9 @@ fn it_parses_division() {
 #[test]
 fn it_parses_unary_minus() {
     let mut parser = Parser::new(&[
-        token!(TokenKind::Minus, TokenKind::Numeric(10.0)),
-        TokenKind::Eof,
+        token!(TokenKind::Minus),
+        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::Eof),
     ]);
 
     let ast = parser.parse().unwrap().body;
@@ -1166,7 +1164,10 @@ fn it_returns_an_error_when_func_has_no_arg_type_after_arg_name() {
             assert!(matches!(
                 e,
                 ParserError::SyntaxError {
-                    token: { kind: TokenKind::Colon, .. },
+                    token: Token {
+                        kind: TokenKind::Colon,
+                        ..
+                    },
                     ..
                 },
             ));
@@ -1538,7 +1539,7 @@ fn it_returns_error_for_unterminated_grouping_expresions() {
 
 #[test]
 fn it_parses_true_bool_literal() {
-    let mut parser = Parser::new(&[token!(TokenKind::True), TokenKind::Eof]);
+    let mut parser = Parser::new(&[token!(TokenKind::True), token!(TokenKind::Eof)]);
 
     let ast = parser.parse().unwrap().body;
     let json = serde_json::to_value(&ast).unwrap();
@@ -1557,7 +1558,7 @@ fn it_parses_true_bool_literal() {
 
 #[test]
 fn it_parses_false_bool_literal() {
-    let mut parser = Parser::new(&[token!(TokenKind::False), TokenKind::Eof]);
+    let mut parser = Parser::new(&[token!(TokenKind::False), token!(TokenKind::Eof)]);
 
     let ast = parser.parse().unwrap().body;
     let json = serde_json::to_value(&ast).unwrap();
@@ -1576,7 +1577,7 @@ fn it_parses_false_bool_literal() {
 
 #[test]
 fn it_parses_break_expression() {
-    let mut parser = Parser::new(&[token!(TokenKind::Break), TokenKind::Eof]);
+    let mut parser = Parser::new(&[token!(TokenKind::Break), token!(TokenKind::Eof)]);
 
     let ast = parser.parse().unwrap().body;
     let json = serde_json::to_value(&ast).unwrap();
