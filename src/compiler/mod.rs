@@ -283,6 +283,17 @@ impl Compiler {
         );
 
         self.init_builtin(
+            "c_string_from_string",
+            self.context.function_type(
+                self.context.i8_type().pointer_type(0),
+                &[self.context.void_type().pointer_type(0)],
+                false,
+            ),
+            stdlib::c_string_from_string as *mut c_void,
+            parser::Type::CString,
+        );
+
+        self.init_builtin(
             "string_from_c_string",
             self.context.function_type(
                 self.context.void_type().pointer_type(0),
@@ -440,6 +451,7 @@ impl LLVMCompiler for Compiler {
             Value::Vec(_) => todo!(),
             Value::Break => todo!(),
             Value::Ptr(_) => todo!(),
+            Value::CString(_) => todo!(),
         };
 
         let curr = self.builder.get_insert_block();
@@ -470,6 +482,7 @@ impl LLVMCompiler for Compiler {
                 parser::Type::Void => todo!(),
                 parser::Type::Function => todo!(),
                 parser::Type::Ptr => todo!(),
+                parser::Type::CString => todo!(),
             };
             self.set_param(param.name.as_str(), val);
         }
@@ -499,6 +512,7 @@ impl LLVMCompiler for Compiler {
             Value::Function { .. } => todo!(),
             Value::Break => todo!(),
             Value::Ptr(_) => todo!(),
+            Value::CString(_) => todo!(),
         };
 
         self.exit_scope()?;
@@ -539,6 +553,7 @@ impl LLVMCompiler for Compiler {
                 }
                 Value::Break => todo!(),
                 Value::Ptr(_) => todo!(),
+                Value::CString(_) => todo!(),
             }
         }
     }

@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate test_utils;
 
+use indoc::indoc;
+use pretty_assertions::assert_eq;
+
 use std::error::Error;
 
 use rocklang::compiler::{Compile, Compiler};
@@ -745,6 +748,11 @@ fn it_compile_break_in_while() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn it_compiles_ffi_calls() -> Result<(), Box<dyn Error>> {
+    let c_string = node!(Expression::FuncCall(FuncCall {
+        calee: boxed_node!(Expression::Identifier("c_string_from_string".to_string())),
+        args: vec![node!(Expression::String("foo".to_string()))],
+    }));
+
     let program = Program {
         body: vec![
             node!(Expression::Load(String::from("./tests/rockffitestlib.so"))),
@@ -775,7 +783,7 @@ fn it_compiles_ffi_calls() -> Result<(), Box<dyn Error>> {
             node!(Expression::Assignment(expression::Assignment {
                 left: boxed_node!(Expression::Identifier(String::from("passstr"))),
                 right: boxed_node!(Expression::Extern(expression::Extern {
-                    types: [Type::String].to_vec(),
+                    types: [Type::CString].to_vec(),
                     return_type: Type::Void,
                     name: String::from("passstr"),
                 })),
@@ -798,7 +806,7 @@ fn it_compiles_ffi_calls() -> Result<(), Box<dyn Error>> {
             })),
             node!(Expression::FuncCall(expression::FuncCall {
                 calee: boxed_node!(Expression::Identifier(String::from("passstr"))),
-                args: [node!(Expression::String(String::from("test")))].to_vec(),
+                args: [c_string].to_vec(),
             })),
         ],
     };
@@ -806,32 +814,55 @@ fn it_compiles_ffi_calls() -> Result<(), Box<dyn Error>> {
     let mut compiler = Compiler::new(program)?;
     compiler.compile().unwrap();
 
-    assert_eq!(
+    assert_eq_ir!(
         &compiler.ir_string(),
-        "
-            ; ModuleID = 'main'
-source_filename = \"main\"
-target datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"
+        r#"target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 
-@0 = private unnamed_addr constant [5 x i8] c\"test\\00\", align 1
+        @0 = private unnamed_addr constant [4 x i8] c"foo\00", align 1
 
-define void @__main__() {
-entry:
-  %0 = call void* @getpr()
-  call void @passptr(void* %0)
-  %1 = call double @rockffitest(double 2.000000e+00, double 3.000000e+00)
-  call void @passstr(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @0, i64 0, i64 0))
-  ret void
-}
+        declare void* @string(double)
 
-declare double @rockffitest(double, double)
+        declare void @print(void*)
 
-declare void* @getpr()
+        declare void @release_string_reference(void*)
 
-declare void @passptr(void*)
+        declare void @inc_string_reference(void*)
 
-declare void @passstr(i8*)
-        "
+        declare void @inc_vec_reference(void*)
+
+        declare void @release_vec_reference(void*)
+
+        declare i8* @c_string_from_string(void*)
+
+        declare void* @string_from_c_string(i8*)
+
+        declare void* @vec_new()
+
+        declare void @vec_set(void*, double, double)
+
+        declare double @vec_get(void*, double)
+
+        declare double @sqrt(double)
+
+        define void @main() {
+          %1 = call void* @getpr()
+          call void @passptr(void* %1)
+          %2 = call double @rockffitest(double 2.000000e+00, double 3.000000e+00)
+          %3 = call void* @string_from_c_string(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i64 0, i64 0))
+          %4 = call i8* @c_string_from_string(void* %3)
+          call void @passstr(i8* %4)
+          call void @release_string_reference(void* %3)
+          ret void
+        }
+
+        declare double @rockffitest(double, double)
+
+        declare void* @getpr()
+
+        declare void @passptr(void*)
+
+        declare void @passstr(i8*)
+        "#
     );
     Ok(())
 }

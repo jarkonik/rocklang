@@ -6,6 +6,7 @@ use crate::parser;
 pub enum Value {
     Void,
     String(llvm::Value),
+    CString(llvm::Value),
     Numeric(llvm::Value),
     Bool(llvm::Value),
     Function {
@@ -28,6 +29,7 @@ impl From<Value> for llvm::Value {
             Value::Function { val, .. } => llvm::Value(val.0),
             Value::Vec(lv) => lv,
             Value::Ptr(lv) => lv,
+            Value::CString(_) => todo!(),
         }
     }
 }
@@ -42,6 +44,7 @@ impl From<&Value> for llvm::Value {
             Value::Function { val, .. } => llvm::Value(val.0),
             Value::Vec(lv) => lv,
             Value::Ptr(lv) => lv,
+            Value::CString(_) => todo!(),
         }
     }
 }
@@ -56,6 +59,7 @@ impl Value {
             Value::Vec(_) => context.void_type().pointer_type(0),
             Value::Function { typ, .. } => typ.pointer_type(0),
             Value::Void | Value::Break => unreachable!(),
+            Value::CString(_) => todo!(),
         }
     }
 
@@ -68,6 +72,7 @@ impl Value {
             Value::String(_) => parser::Type::String,
             Value::Vec(_) => parser::Type::Vector,
             Value::Function { .. } => parser::Type::Function,
+            Value::CString(_) => parser::Type::CString,
         }
     }
 }

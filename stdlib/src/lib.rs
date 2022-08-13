@@ -1,4 +1,8 @@
-use std::{cell::RefCell, ffi::CStr, rc::Rc};
+use std::{
+    cell::RefCell,
+    ffi::{CStr, CString},
+    rc::Rc,
+};
 
 /// # Safety
 ///
@@ -7,6 +11,22 @@ pub unsafe extern "C" fn string_from_c_string(ptr: *const i8) -> *const RefCell<
     let c_str = CStr::from_ptr(ptr);
     let rc = Rc::new(RefCell::new(c_str.to_str().unwrap().to_string()));
     Rc::into_raw(rc)
+}
+
+/// # Safety
+///
+/// loads raw ptr
+pub unsafe extern "C" fn c_string_from_string(ptr: *const RefCell<String>) -> *const i8 {
+    let rc = Rc::from_raw(ptr);
+    let ptr = {
+        let string = rc.try_borrow().unwrap();
+        let c_string = CString::new(string.to_owned()).unwrap();
+        let ptr = c_string.as_ptr();
+        std::mem::forget(c_string);
+        ptr
+    };
+    std::mem::forget(rc);
+    ptr
 }
 
 pub extern "C" fn string(num: f64) -> *const RefCell<String> {

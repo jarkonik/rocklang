@@ -84,6 +84,7 @@ fn compile_assignment<T: LLVMCompiler>(
                     Value::Vec(_) => Variable::Vec(ptr),
                     Value::Ptr(_) => Variable::Ptr(ptr),
                     Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
+                    Value::CString(_) => todo!(),
                 };
 
                 compiler.builder().create_store(right.into(), &ptr);
@@ -110,6 +111,7 @@ fn compile_assignment<T: LLVMCompiler>(
             }
             Value::Ptr(_) => {}
             Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
+            Value::CString(_) => todo!(),
         };
     } else {
         Err(CompilerError::NonIdentifierAssignment { span })?

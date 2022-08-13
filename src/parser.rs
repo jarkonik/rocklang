@@ -39,6 +39,7 @@ pub enum Type {
     Function,
     Ptr,
     String,
+    CString,
 }
 
 impl Display for Type {
@@ -51,6 +52,7 @@ impl Display for Type {
             Type::Function => "Function",
             Type::Ptr => "Ptr",
             Type::String => "String",
+            Type::CString => "CString",
         };
         write!(f, "{}", name)
     }

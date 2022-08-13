@@ -16,8 +16,7 @@ macro_rules! assert_eq_ir {
                 indoc!(
                     r#"
             ; ModuleID = 'main'
-            source_filename = "main"
-        "#,
+            source_filename = "main""#,
                 ),
                 "\n",
                 indoc!($valid)

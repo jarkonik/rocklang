@@ -70,6 +70,7 @@ impl Scope {
                 Value::Numeric(_) | Value::Bool(_) | Value::Function { .. } | Value::Ptr(_) => {}
                 Value::Void => unreachable!(),
                 Value::Break => unreachable!(),
+                Value::CString(_) => todo!(),
             }
         }
         Ok(())

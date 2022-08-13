@@ -21,6 +21,7 @@ fn compile_args<T: LLVMCompiler>(
                 Value::Vec(n) => n,
                 Value::Ptr(n) => n,
                 Value::Function { val, .. } => llvm::Value(val.0),
+                Value::CString(n) => n,
             };
 
             Ok(val)
@@ -71,6 +72,10 @@ fn compile_func_call<T: LLVMCompiler>(
                 parser::Type::String => {
                     let value = Value::String(llvm_value);
                     compiler.track_maybe_orphaned(value);
+                    value
+                }
+                parser::Type::CString => {
+                    let value = Value::CString(llvm_value);
                     value
                 }
             };
