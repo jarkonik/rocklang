@@ -208,7 +208,7 @@ fn it_compiles_print_function_with_string() -> Result<(), Box<dyn Error>> {
 fn it_compiles_len_function_when_pass_new_vec() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::FuncCall(FuncCall {
-            calee: boxed_node!(Expression::Identifier("len".to_string())),
+            calee: boxed_node!(Expression::Identifier("vec_len".to_string())),
             args: vec![node!(Expression::FuncCall(FuncCall {
                 calee: boxed_node!(Expression::Identifier("vec_new".to_string())),
                 args: vec![],

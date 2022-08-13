@@ -107,6 +107,19 @@ pub unsafe extern "C" fn vec_get(ptr: *const RefCell<Vec<f64>>, idx: f64) -> f64
 /// # Safety
 ///
 /// loads raw ptr
+pub unsafe extern "C" fn vec_len(ptr: *const RefCell<Vec<f64>>) -> f64 {
+    let rc = Rc::from_raw(ptr);
+    let val = {
+        let vec = rc.borrow();
+        vec.len()
+    };
+    std::mem::forget(rc);
+    val as f64
+}
+
+/// # Safety
+///
+/// loads raw ptr
 pub unsafe extern "C" fn release_vec_reference(ptr: *const RefCell<Vec<f64>>) {
     Rc::decrement_strong_count(ptr);
 }

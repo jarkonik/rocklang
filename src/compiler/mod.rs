@@ -347,6 +347,18 @@ impl Compiler {
             parser::Type::Numeric,
         );
 
+        let vec_len_type = self.context.function_type(
+            self.context.double_type(),
+            &[self.context.void_type().pointer_type(0)],
+            false,
+        );
+        self.init_builtin(
+            "vec_len",
+            vec_len_type,
+            stdlib::vec_len as *mut c_void,
+            parser::Type::Numeric,
+        );
+
         let sqrt_type = self.context.function_type(
             self.context.double_type(),
             &[self.context.double_type()],
