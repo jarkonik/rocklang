@@ -108,7 +108,7 @@ fn compile_assignment<T: LLVMCompiler>(
     }
 
     if let expression::Expression::FuncDecl(e) = &expr.right.expression {
-        compiler.build_function(right, &e)?
+        compiler.build_function(right, e)?
     }
 
     Ok(Value::Void)

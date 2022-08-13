@@ -25,7 +25,7 @@ fn compile_binary<T: LLVMCompiler>(
         expr => Err(CompilerError::TypeError {
             expected: crate::parser::Type::Numeric,
             actual: expr.get_type(),
-            span: span.clone(),
+            span,
         })?,
     };
 

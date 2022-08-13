@@ -17,7 +17,7 @@ impl WhileVisitor<CompilerResult<Value>> for Compiler {
             val => Err(CompilerError::TypeError {
                 expected: parser::Type::Bool,
                 actual: val.get_type(),
-                span: span,
+                span,
             })?,
         };
 

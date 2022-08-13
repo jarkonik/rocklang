@@ -125,21 +125,21 @@ impl Visitor<CompilerResult<Value>> for Compiler {
     fn walk(&mut self, node: &crate::expression::Node) -> CompilerResult<Value> {
         let span = node.span.clone();
         match &node.expression {
-            Expression::Binary(expr) => self.visit_binary(&expr, span),
-            Expression::Unary(expr) => self.visit_unary(&expr, span),
-            Expression::FuncCall(expr) => self.visit_func_call(&expr, span),
-            Expression::Numeric(expr) => self.visit_numeric(&expr),
-            Expression::Assignment(expr) => self.visit_assignment(&expr, span),
-            Expression::Identifier(expr) => self.visit_identifier(&expr),
-            Expression::Conditional(expr) => self.visit_conditional(&expr, span),
-            Expression::String(expr) => self.visit_string(&expr),
-            Expression::Bool(expr) => self.visit_bool(&expr),
+            Expression::Binary(expr) => self.visit_binary(expr, span),
+            Expression::Unary(expr) => self.visit_unary(expr, span),
+            Expression::FuncCall(expr) => self.visit_func_call(expr, span),
+            Expression::Numeric(expr) => self.visit_numeric(expr),
+            Expression::Assignment(expr) => self.visit_assignment(expr, span),
+            Expression::Identifier(expr) => self.visit_identifier(expr),
+            Expression::Conditional(expr) => self.visit_conditional(expr, span),
+            Expression::String(expr) => self.visit_string(expr),
+            Expression::Bool(expr) => self.visit_bool(expr),
             Expression::Break => self.visit_break(),
-            Expression::While(expr) => self.visit_while(&expr, span),
-            Expression::FuncDecl(expr) => self.visit_func_decl(&expr),
-            Expression::Load(expr) => self.visit_load(&expr),
-            Expression::Extern(expr) => self.visit_extern(&expr),
-            Expression::Grouping(expr) => self.visit_grouping(&expr),
+            Expression::While(expr) => self.visit_while(expr, span),
+            Expression::FuncDecl(expr) => self.visit_func_decl(expr),
+            Expression::Load(expr) => self.visit_load(expr),
+            Expression::Extern(expr) => self.visit_extern(expr),
+            Expression::Grouping(expr) => self.visit_grouping(expr),
         }
     }
 }
@@ -400,7 +400,7 @@ impl LLVMCompiler for Compiler {
     }
 
     fn get_builtin(&self, name: &str) -> Option<Variable> {
-        self.builtins.get(name).and_then(|x| Some(x.clone()))
+        self.builtins.get(name).copied()
     }
 
     fn track_maybe_orphaned(&mut self, val: Value) {

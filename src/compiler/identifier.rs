@@ -28,7 +28,7 @@ impl IdentifierVisitor<CompilerResult<Value>> for Compiler {
             }
             None => self.get_param(expr),
         }
-        .ok_or(CompilerError::UndefinedIdentifier(expr.to_string()))?;
+        .ok_or_else(|| CompilerError::UndefinedIdentifier(expr.to_string()))?;
 
         Ok(val)
     }

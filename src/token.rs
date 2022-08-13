@@ -90,12 +90,12 @@ impl Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
             TokenKind::Numeric(value) => {
-                write!(f, "<{}({})>", token_name(&self), value)
+                write!(f, "<{}({})>", token_name(self), value)
             }
             TokenKind::Identifier(literal) | TokenKind::String(literal) => {
-                write!(f, "<{}({})>", token_name(&self), literal)
+                write!(f, "<{}({})>", token_name(self), literal)
             }
-            _ => write!(f, "<{}>", token_name(&self)),
+            _ => write!(f, "<{}>", token_name(self)),
         }
     }
 }
