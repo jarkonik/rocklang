@@ -197,6 +197,7 @@ mod test {
         assert_eq_ir!(
             module.to_string(),
             r#"
+
             define void @main() {
               %1 = alloca double, align 8
               store double 3.000000e+00, double* %1, align 8

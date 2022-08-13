@@ -182,6 +182,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             declare void @0()
 
             define void @main() {
@@ -200,6 +201,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             declare double @0()
 
             define void @main() {
@@ -218,6 +220,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             declare i1 @0()
 
             define void @main() {
@@ -236,6 +239,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             declare void* @0()
 
             define void @main() {
@@ -258,6 +262,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             declare void @0(double)
 
             define void @main() {

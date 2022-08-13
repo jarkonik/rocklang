@@ -165,6 +165,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca double, align 8
               store double 6.000000e+00, double* %1, align 8
@@ -182,6 +183,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca double, align 8
               store double 0.000000e+00, double* %1, align 8
@@ -199,6 +201,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca double, align 8
               store double 9.000000e+00, double* %1, align 8
@@ -216,6 +219,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca double, align 8
               store double 1.000000e+00, double* %1, align 8
@@ -233,6 +237,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca double, align 8
               store double 0.000000e+00, double* %1, align 8
@@ -250,6 +255,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca i1, align 1
               store i1 true, i1* %1, align 1
@@ -267,6 +273,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca i1, align 1
               store i1 false, i1* %1, align 1
@@ -284,6 +291,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca i1, align 1
               store i1 false, i1* %1, align 1
@@ -301,6 +309,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca i1, align 1
               store i1 true, i1* %1, align 1
@@ -318,6 +327,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca i1, align 1
               store i1 false, i1* %1, align 1
@@ -335,6 +345,7 @@ mod test {
         assert_eq_ir!(
             ir,
             r#"
+
             define void @main() {
               %1 = alloca i1, align 1
               store i1 true, i1* %1, align 1
