@@ -54,6 +54,8 @@ fn it_compiles_numeric_asignment() -> Result<(), Box<dyn Error>> {
 
         declare double @vec_get(void*, double)
 
+        declare double @vec_len(void*)
+
         declare double @sqrt(double)
 
         define void @main() {
@@ -112,6 +114,8 @@ fn it_compiles_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
 
         declare double @vec_get(void*, double)
 
+        declare double @vec_len(void*)
+
         declare double @sqrt(double)
 
         define void @main() {
@@ -138,7 +142,7 @@ fn it_returns_err_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
     };
 
     let mut compiler = Compiler::new(program)?;
-    compiler.compile().unwrap();
+    assert!(matches!(compiler.compile(), Err(_)));
 
     Ok(())
 }
@@ -274,7 +278,7 @@ fn it_returns_err_when_more_then_one_arg_pass_to_print_funcion() -> Result<(), B
     };
 
     let mut compiler = Compiler::new(program)?;
-    compiler.compile().unwrap();
+    assert!(matches!(compiler.compile(), Err(_)));
     Ok(())
 }
 
@@ -288,7 +292,7 @@ fn it_returns_err_when_non_sring_type_pass_to_print_funcions() -> Result<(), Box
     };
 
     let mut compiler = Compiler::new(program)?;
-    compiler.compile().unwrap();
+    assert!(matches!(compiler.compile(), Err(_)));
     Ok(())
 }
 
@@ -302,7 +306,7 @@ fn it_returns_err_when_zero_args_pass_to_string_funcion() -> Result<(), Box<dyn 
     };
 
     let mut compiler = Compiler::new(program)?;
-    compiler.compile().unwrap();
+    assert!(matches!(compiler.compile(), Err(_)));
     Ok(())
 }
 
@@ -316,7 +320,7 @@ fn it_returns_err_when_bool_arg_pass_to_string_funcion() -> Result<(), Box<dyn E
     };
 
     let mut compiler = Compiler::new(program)?;
-    compiler.compile().unwrap();
+    assert!(matches!(compiler.compile(), Err(_)));
     Ok(())
 }
 
@@ -476,104 +480,82 @@ macro_rules! compile_operator {
 
 #[test]
 fn it_compiles_operators() -> Result<(), Box<dyn Error>> {
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::Plus,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::Plus,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::Minus,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::Minus,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::Asterisk,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::Asterisk,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::LessOrEqual,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::LessOrEqual,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::Less,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::Less,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::Greater,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::Greater,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::GreaterOrEqual,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::GreaterOrEqual,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::Equal,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::Equal,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::Slash,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::Slash,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::Minus,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::Minus,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
-    assert!(matches!(
-        compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
-            Operator::NotEqual,
-            boxed_node!(Expression::Numeric(2.0))
-        ),
-        Err(_)
-    ));
+    compile_operator!(
+        boxed_node!(Expression::Numeric(10.0)),
+        Operator::NotEqual,
+        boxed_node!(Expression::Numeric(2.0))
+    )
+    .unwrap();
 
     Ok(())
 }
@@ -991,6 +973,8 @@ fn it_compiles_ffi_calls() -> Result<(), Box<dyn Error>> {
         declare void @vec_set(void*, double, double)
 
         declare double @vec_get(void*, double)
+
+        declare double @vec_len(void*)
 
         declare double @sqrt(double)
 
