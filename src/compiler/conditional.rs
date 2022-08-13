@@ -32,21 +32,44 @@ fn compile_conditional<T: LLVMCompiler>(
 
     compiler.builder().position_builder_at_end(&then_block);
     compiler.enter_scope();
+
+    let mut is_break = false;
     for stmt in &expr.body {
         compiler.release_maybe_orphaned();
-        compiler.walk(stmt)?;
+        if let Value::Break = compiler.walk(stmt)? {
+            is_break = true;
+            break;
+        }
     }
     compiler.exit_scope().unwrap();
-    compiler.builder().create_br(&after_if_block);
+
+    if is_break {
+        compiler
+            .builder()
+            .create_br(compiler.after_loop_blocks().last().unwrap());
+    } else {
+        compiler.builder().create_br(&after_if_block);
+    }
 
     compiler.builder().position_builder_at_end(&else_block);
     compiler.enter_scope();
+
+    let mut is_break = false;
     for stmt in &expr.else_body {
         compiler.release_maybe_orphaned();
-        compiler.walk(stmt)?;
+        if let Value::Break = compiler.walk(stmt)? {
+            is_break = true;
+            break;
+        }
     }
     compiler.exit_scope().unwrap();
-    compiler.builder().create_br(&after_if_block);
+    if is_break {
+        compiler
+            .builder()
+            .create_br(compiler.after_loop_blocks().last().unwrap());
+    } else {
+        compiler.builder().create_br(&after_if_block);
+    }
     compiler.builder().position_builder_at_end(&after_if_block);
 
     Ok(Value::Void)

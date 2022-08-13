@@ -109,6 +109,7 @@ pub trait Compile: ProgramVisitor<CompilerResult<Value>> {
 }
 
 pub struct Compiler {
+    after_loop_blocks: Vec<llvm::BasicBlock>,
     maybe_orphaned: Vec<Value>,
     program: Program,
     engine: llvm::Engine,
@@ -187,6 +188,7 @@ impl Compiler {
         let pass_manager = llvm::PassManager::new(&module);
 
         Ok(Compiler {
+            after_loop_blocks: Vec::new(),
             maybe_orphaned: Vec::new(),
             builtins: HashMap::new(),
             scopes: vec![],
@@ -381,6 +383,7 @@ trait LLVMCompiler: Visitor<CompilerResult<Value>> {
     fn module(&self) -> &Module;
     fn enter_scope(&mut self);
     fn exit_scope(&mut self) -> CompilerResult<()>;
+    fn after_loop_blocks(&self) -> &Vec<llvm::BasicBlock>;
     fn get_var(&self, name: &str) -> Option<Variable>;
     fn get_builtin(&self, name: &str) -> Option<Variable>;
     fn track_maybe_orphaned(&mut self, val: Value);
@@ -410,12 +413,10 @@ impl LLVMCompiler for Compiler {
         self.scopes.push(Scope::new());
     }
 
-    fn get_builtin(&self, name: &str) -> Option<Variable> {
-        self.builtins.get(name).copied()
-    }
-
-    fn track_maybe_orphaned(&mut self, val: Value) {
-        self.maybe_orphaned.push(val);
+    fn exit_scope(&mut self) -> CompilerResult<()> {
+        let scope = self.scopes.pop().unwrap();
+        self.release_maybe_orphaned();
+        scope.release_references(self.context(), self.module(), self.builder())
     }
 
     fn get_var(&self, name: &str) -> Option<Variable> {
@@ -427,14 +428,41 @@ impl LLVMCompiler for Compiler {
         None
     }
 
-    fn set_var(&mut self, name: &str, val: Variable) {
-        self.scopes.last_mut().unwrap().set(name, val);
+    fn get_builtin(&self, name: &str) -> Option<Variable> {
+        self.builtins.get(name).copied()
     }
 
-    fn exit_scope(&mut self) -> CompilerResult<()> {
-        let scope = self.scopes.pop().unwrap();
-        self.release_maybe_orphaned();
-        scope.release_references(self.context(), self.module(), self.builder())
+    fn track_maybe_orphaned(&mut self, val: Value) {
+        self.maybe_orphaned.push(val);
+    }
+
+    fn release_maybe_orphaned(&mut self) {
+        while let Some(val) = self.maybe_orphaned.pop() {
+            match val {
+                Value::Void => todo!(),
+                Value::String(v) => {
+                    let release = self
+                        .module
+                        .get_function("release_string_reference")
+                        .unwrap();
+                    self.builder.build_call(&release, &[v], "");
+                }
+                Value::Numeric(_) => todo!(),
+                Value::Bool(_) => todo!(),
+                Value::Function { .. } => todo!(),
+                Value::Vec(v) => {
+                    let release = self.module.get_function("release_vec_reference").unwrap();
+                    self.builder.build_call(&release, &[v], "");
+                }
+                Value::Break => todo!(),
+                Value::Ptr(_) => todo!(),
+                Value::CString(_) => todo!(),
+            }
+        }
+    }
+
+    fn set_var(&mut self, name: &str, val: Variable) {
+        self.scopes.last_mut().unwrap().set(name, val);
     }
 
     fn build_function(
@@ -533,28 +561,7 @@ impl LLVMCompiler for Compiler {
         Ok(())
     }
 
-    fn release_maybe_orphaned(&mut self) {
-        while let Some(val) = self.maybe_orphaned.pop() {
-            match val {
-                Value::Void => todo!(),
-                Value::String(v) => {
-                    let release = self
-                        .module
-                        .get_function("release_string_reference")
-                        .unwrap();
-                    self.builder.build_call(&release, &[v], "");
-                }
-                Value::Numeric(_) => todo!(),
-                Value::Bool(_) => todo!(),
-                Value::Function { .. } => todo!(),
-                Value::Vec(v) => {
-                    let release = self.module.get_function("release_vec_reference").unwrap();
-                    self.builder.build_call(&release, &[v], "");
-                }
-                Value::Break => todo!(),
-                Value::Ptr(_) => todo!(),
-                Value::CString(_) => todo!(),
-            }
-        }
+    fn after_loop_blocks(&self) -> &Vec<llvm::BasicBlock> {
+        &self.after_loop_blocks
     }
 }

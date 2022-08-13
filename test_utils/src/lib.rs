@@ -137,6 +137,7 @@ macro_rules! mock_compiler {
                 fn enter_scope(&mut self);
                 fn exit_scope(&mut self) -> CompilerResult<()>;
                 fn get_var(&self, name: &str) -> Option<Variable>;
+                fn after_loop_blocks(&self) -> &Vec<llvm::BasicBlock>;
                 fn track_maybe_orphaned(&mut self, val: Value);
                 fn release_maybe_orphaned(&mut self);
                 fn get_builtin(&self, name: &str) -> Option<Variable>;

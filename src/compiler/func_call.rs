@@ -74,10 +74,7 @@ fn compile_func_call<T: LLVMCompiler>(
                     compiler.track_maybe_orphaned(value);
                     value
                 }
-                parser::Type::CString => {
-                    let value = Value::CString(llvm_value);
-                    value
-                }
+                parser::Type::CString => Value::CString(llvm_value),
             };
 
             Ok(val)

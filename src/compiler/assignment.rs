@@ -146,6 +146,7 @@ mod test {
 
     use super::*;
     use crate::compiler::MAIN_FUNCTION;
+    use crate::llvm;
     use crate::llvm::{Builder, Context, Module};
     use crate::parser;
     use crate::parser::Span;

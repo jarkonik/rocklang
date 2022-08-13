@@ -918,7 +918,7 @@ fn it_compile_break_in_while_and_if() -> Result<(), Box<dyn Error>> {
             predicate: boxed_node!(Expression::Bool(true)),
             body: vec![node!(Expression::Conditional(Conditional {
                 predicate: boxed_node!(Expression::Bool(true)),
-                body: vec![node!(Expression::Break)],
+                body: vec![node!(Expression::Break), node!(Expression::Numeric(1.0))],
                 else_body: vec![],
             }))],
         }))],
