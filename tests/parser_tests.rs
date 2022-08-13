@@ -66,23 +66,59 @@ fn it_parses_parentheses() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Grouping": {
-                                "Binary": {
-                                    "left":{
-                                        "Numeric": 10.0
-                                    },
-                                    "operator": "Plus",
-                                    "right":{
-                                        "Numeric": 2.0
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Grouping": {
+                                        "span": {
+                                            "column": 0,
+                                            "line": 0
+                                        },
+                                        "expression": {
+                                            "Binary": {
+                                                "left":{
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                    "expression": {
+                                                        "Numeric": 10.0
+                                                    }
+                                                },
+                                                "operator": "Plus",
+                                                "right":{
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                    "expression": {
+                                                        "Numeric": 2.0
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
+                            },
+                            "operator":"Slash",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 3.0
+                                }
                             }
-                        },
-                        "operator":"Slash",
-                        "right": {
-                            "Numeric": 3.0
                         }
                     }
                 }
