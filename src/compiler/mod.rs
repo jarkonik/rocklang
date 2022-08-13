@@ -58,9 +58,6 @@ pub enum CompilerError {
         actual: expression::Operator,
         span: Span,
     },
-    NonIdentifierCall {
-        span: Span,
-    },
 }
 
 impl fmt::Display for CompilerError {
@@ -92,9 +89,6 @@ impl fmt::Display for CompilerError {
                 "wrong operator, expected {:#?}, but got {:#?} at {}",
                 expected, actual, span
             ),
-            CompilerError::NonIdentifierCall { span } => {
-                format!("call on non-identifier at {}", span)
-            }
         };
         write!(f, "{}", msg)
     }

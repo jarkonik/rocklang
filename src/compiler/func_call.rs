@@ -35,7 +35,7 @@ fn compile_func_call<T: LLVMCompiler>(
 ) -> CompilerResult<Value> {
     let name = match expr.calee.expression {
         expression::Expression::Identifier(ref name) => Ok(name.clone()),
-        _ => Err(CompilerError::NonIdentifierCall { span: span.clone() }),
+        _ => unreachable!(),
     }?;
 
     let builtin = compiler.get_builtin(&name);
