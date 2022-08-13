@@ -1127,7 +1127,10 @@ fn it_returns_an_error_when_func_has_non_type_expression_as_arg_type() {
             assert!(matches!(
                 e,
                 ParserError::SyntaxError {
-                    token: token!(TokenKind::String(_)),
+                    token: Token {
+                        kind: TokenKind::String(_),
+                        ..
+                    },
                     ..
                 },
             ));
@@ -1163,7 +1166,7 @@ fn it_returns_an_error_when_func_has_no_arg_type_after_arg_name() {
             assert!(matches!(
                 e,
                 ParserError::SyntaxError {
-                    token: token!(TokenKind::Colon),
+                    token: { kind: TokenKind::Colon, .. },
                     ..
                 },
             ));
@@ -1195,7 +1198,10 @@ fn it_returns_an_error_when_func_has_no_return_type() {
             assert!(matches!(
                 e,
                 ParserError::SyntaxError {
-                    token: token!(TokenKind::Arrow),
+                    token: Token {
+                        kind: TokenKind::Arrow,
+                        ..
+                    },
                     ..
                 },
             ));
@@ -1229,7 +1235,10 @@ fn it_returns_an_error_when_func_has_unknown_return_type() {
             assert!(matches!(
                 e,
                 ParserError::SyntaxError {
-                    token: token!(TokenKind::Identifier(_)),
+                    token: Token {
+                        kind: TokenKind::Identifier(_),
+                        ..
+                    },
                     ..
                 },
             ));
@@ -1263,7 +1272,10 @@ fn it_returns_an_error_when_func_has_non_type_expression_as_return_type() {
             assert!(matches!(
                 e,
                 ParserError::SyntaxError {
-                    token: token!(TokenKind::String(_)),
+                    token: Token {
+                        kind: TokenKind::String(_),
+                        ..
+                    },
                     ..
                 },
             ));
@@ -1296,7 +1308,10 @@ fn it_returns_error_when_func_decl_has_no_arrow() {
             assert!(matches!(
                 e,
                 ParserError::SyntaxError {
-                    token: token!(TokenKind::LCurly),
+                    token: Token {
+                        kind: TokenKind::LCurly,
+                        ..
+                    },
                     ..
                 },
             ));
@@ -1325,7 +1340,10 @@ fn it_returns_error_when_func_decl_has_no_body() {
             assert!(matches!(
                 e,
                 ParserError::SyntaxError {
-                    token: token!(TokenKind::String(_)),
+                    token: Token {
+                        kind: TokenKind::String(_),
+                        ..
+                    },
                     ..
                 },
             ));
@@ -1456,7 +1474,10 @@ fn it_returns_error_for_call_syntax_on_non_identifiers() {
             assert!(matches!(
                 e,
                 ParserError::SyntaxError {
-                    token: token!(TokenKind::LeftParen),
+                    token: Token {
+                        kind: TokenKind::LeftParen,
+                        ..
+                    },
                     ..
                 },
             ));
@@ -1504,7 +1525,10 @@ fn it_returns_error_for_unterminated_grouping_expresions() {
             assert!(matches!(
                 e,
                 ParserError::SyntaxError {
-                    token: token!(TokenKind::String(_)),
+                    token: Token {
+                        kind: TokenKind::String(_),
+                        ..
+                    },
                     ..
                 },
             ));

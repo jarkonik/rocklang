@@ -146,7 +146,9 @@ macro_rules! mock_compiler {
                 fn module(&self) -> &Module;
                 fn enter_scope(&mut self);
                 fn exit_scope(&mut self) -> CompilerResult<()>;
-                fn get_var(&self, name: &str) -> CompilerResult<Variable>;
+                fn get_var(&self, name: &str) -> Option<Variable>;
+                fn track_maybe_orphaned(&mut self, val: Value);
+                fn release_maybe_orphaned(&mut self);
                 fn get_builtin(&self, name: &str) -> Option<Variable>;
                 fn set_var(&mut self, name: &str, val: Variable);
                 fn build_function(
