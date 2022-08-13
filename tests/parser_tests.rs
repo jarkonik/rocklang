@@ -380,7 +380,10 @@ fn it_displays_correct_syntax_error() {
         backtrace: Backtrace::new(),
     };
     assert_eq!(
-        format!("Syntax error: unexpected token {}", TokenKind::DoubleEqual),
+        format!(
+            "Syntax error: unexpected token {} at 0:0",
+            TokenKind::DoubleEqual
+        ),
         format!("{}", error)
     );
 }
