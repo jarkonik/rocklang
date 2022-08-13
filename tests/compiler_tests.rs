@@ -82,7 +82,7 @@ fn it_compiles_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::Assignment(Assignment {
             left: boxed_node!(Expression::String("x".to_string())),
@@ -215,7 +215,7 @@ fn it_compiles_sqrt_funcion() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_more_then_one_arg_pass_to_print_funcion() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_more_then_one_arg_pass_to_print_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::FuncCall(FuncCall {
             calee: boxed_node!(Expression::Identifier("print".to_string())),
@@ -232,7 +232,7 @@ fn it_panics_when_more_then_one_arg_pass_to_print_funcion() -> Result<(), Box<dy
 }
 
 #[test]
-fn it_panics_when_non_sring_type_pass_to_print_funcions() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_non_sring_type_pass_to_print_funcions() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::FuncCall(FuncCall {
             calee: boxed_node!(Expression::Identifier("print".to_string())),
@@ -246,7 +246,7 @@ fn it_panics_when_non_sring_type_pass_to_print_funcions() -> Result<(), Box<dyn 
 }
 
 #[test]
-fn it_panics_when_zero_args_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_zero_args_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::FuncCall(FuncCall {
             calee: boxed_node!(Expression::Identifier("string".to_string())),
@@ -260,7 +260,7 @@ fn it_panics_when_zero_args_pass_to_string_funcion() -> Result<(), Box<dyn Error
 }
 
 #[test]
-fn it_panics_when_bool_arg_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_bool_arg_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::FuncCall(FuncCall {
             calee: boxed_node!(Expression::Identifier("string".to_string())),
@@ -488,7 +488,7 @@ fn it_compiles_operators() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_adding_numeric_to_string() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_adding_numeric_to_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::Numeric(10.0)),
         Operator::Plus,
@@ -498,7 +498,7 @@ fn it_panics_when_adding_numeric_to_string() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_plus_string_to_numeric() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_plus_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::String("test".to_string())),
         Operator::Plus,
@@ -508,7 +508,7 @@ fn it_panics_when_plus_string_to_numeric() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_substract_string_from_numeric() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_substract_string_from_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::Numeric(10.0)),
         Operator::Minus,
@@ -518,7 +518,7 @@ fn it_panics_when_substract_string_from_numeric() -> Result<(), Box<dyn Error>> 
 }
 
 #[test]
-fn it_panics_when_substract_numeric_from_string() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_substract_numeric_from_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::String("test".to_string())),
         Operator::Minus,
@@ -528,7 +528,7 @@ fn it_panics_when_substract_numeric_from_string() -> Result<(), Box<dyn Error>> 
 }
 
 #[test]
-fn it_panics_when_multiple_numeric_by_string() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_multiple_numeric_by_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::Numeric(10.0)),
         Operator::Asterisk,
@@ -538,7 +538,7 @@ fn it_panics_when_multiple_numeric_by_string() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_multiple_string_to_numeric() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_multiple_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::String("test".to_string())),
         Operator::Asterisk,
@@ -548,7 +548,7 @@ fn it_panics_when_multiple_string_to_numeric() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_less_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_less_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::Numeric(10.0)),
         Operator::LessOrEqual,
@@ -558,7 +558,7 @@ fn it_panics_when_less_or_equal_numeric_and_string() -> Result<(), Box<dyn Error
 }
 
 #[test]
-fn it_panics_when_less_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_less_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::String("test".to_string())),
         Operator::LessOrEqual,
@@ -568,7 +568,7 @@ fn it_panics_when_less_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>
 }
 
 #[test]
-fn it_panics_when_less_numeric_and_string() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_less_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::Numeric(10.0)),
         Operator::Less,
@@ -578,7 +578,7 @@ fn it_panics_when_less_numeric_and_string() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_less_string_to_numeric() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_less_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::String("test".to_string())),
         Operator::Less,
@@ -588,7 +588,7 @@ fn it_panics_when_less_string_to_numeric() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_greater_numeric_and_string() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_greater_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::Numeric(10.0)),
         Operator::Greater,
@@ -598,7 +598,7 @@ fn it_panics_when_greater_numeric_and_string() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_greater_string_to_numeric() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_greater_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::String("test".to_string())),
         Operator::Greater,
@@ -608,7 +608,7 @@ fn it_panics_when_greater_string_to_numeric() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_greater_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_greater_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::Numeric(10.0)),
         Operator::GreaterOrEqual,
@@ -618,7 +618,7 @@ fn it_panics_when_greater_or_equal_numeric_and_string() -> Result<(), Box<dyn Er
 }
 
 #[test]
-fn it_panics_when_greater_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_greater_or_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::String("test".to_string())),
         Operator::GreaterOrEqual,
@@ -628,7 +628,7 @@ fn it_panics_when_greater_or_equal_string_to_numeric() -> Result<(), Box<dyn Err
 }
 
 #[test]
-fn it_panics_when_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::Numeric(10.0)),
         Operator::Equal,
@@ -638,7 +638,7 @@ fn it_panics_when_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::String("test".to_string())),
         Operator::Equal,
@@ -648,7 +648,7 @@ fn it_panics_when_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_slash_numeric_and_string() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_slash_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::Numeric(10.0)),
         Operator::Slash,
@@ -658,7 +658,7 @@ fn it_panics_when_slash_numeric_and_string() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_slash_string_to_numeric() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_slash_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::String("test".to_string())),
         Operator::Slash,
@@ -668,7 +668,7 @@ fn it_panics_when_slash_string_to_numeric() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_not_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_not_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::Numeric(10.0)),
         Operator::NotEqual,
@@ -678,7 +678,7 @@ fn it_panics_when_not_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_not_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_not_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
     compile_operator!(
         boxed_node!(Expression::String("test".to_string())),
         Operator::NotEqual,
@@ -702,7 +702,7 @@ fn it_compiles_unary_operator() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_pass_string_to_unary() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_pass_string_to_unary() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::Unary(Unary {
             operator: Operator::Minus,
@@ -716,7 +716,7 @@ fn it_panics_when_pass_string_to_unary() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panics_when_wrong_unary_operator() -> Result<(), Box<dyn Error>> {
+fn it_returns_err_when_wrong_unary_operator() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::Unary(Unary {
             operator: Operator::Plus,
