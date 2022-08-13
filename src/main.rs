@@ -1,6 +1,5 @@
 use anyhow::Result;
 use rocklang::compiler::{Compile, Compiler};
-use std::process::ExitCode;
 
 use rocklang::parser::{Parse, Parser};
 use rocklang::tokenizer::{Tokenize, Tokenizer};

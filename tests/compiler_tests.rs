@@ -3,7 +3,6 @@ extern crate test_utils;
 
 use std::error::Error;
 
-use libc::group;
 use rocklang::compiler::{Compile, Compiler};
 
 use rocklang::expression::{

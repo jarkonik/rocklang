@@ -1,6 +1,7 @@
 use crate::{
     expression::{self, Node},
-    llvm, parser,
+    llvm,
+    parser::{self, Span},
     visitor::FuncCallVisitor,
 };
 
@@ -13,22 +14,13 @@ fn compile_args<T: LLVMCompiler>(
     args.iter()
         .map(|arg| {
             let val = match compiler.walk(arg)? {
-                Value::Void => Err(CompilerError::TypeError {
-                    expected: todo!(),
-                    actual: todo!(),
-                    span: todo!(),
-                })?,
+                Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
                 Value::String(n) => n,
                 Value::Numeric(n) => n,
                 Value::Bool(n) => n,
                 Value::Vec(n) => n,
                 Value::Ptr(n) => n,
                 Value::Function { val, .. } => llvm::Value(val.0),
-                Value::Break => Err(CompilerError::TypeError {
-                    expected: todo!(),
-                    actual: todo!(),
-                    span: todo!(),
-                })?,
             };
 
             Ok(val)
@@ -39,14 +31,11 @@ fn compile_args<T: LLVMCompiler>(
 fn compile_func_call<T: LLVMCompiler>(
     compiler: &mut T,
     expr: &expression::FuncCall,
+    span: Span,
 ) -> CompilerResult<Value> {
     let name = match expr.calee.expression {
         expression::Expression::Identifier(ref name) => Ok(name.clone()),
-        _ => Err(CompilerError::TypeError {
-            expected: todo!(),
-            actual: todo!(),
-            span: todo!(),
-        }),
+        _ => Err(CompilerError::NonIdentifierCall { span: span.clone() }),
     }?;
 
     let builtin = compiler.get_builtin(&name);
@@ -62,43 +51,47 @@ fn compile_func_call<T: LLVMCompiler>(
 
     let builder = compiler.builder();
 
-    if let Variable::Function {
-        return_type, val, ..
-    } = var
-    {
-        let llvm_value = builder.build_call(&val, &args, "");
+    match var {
+        Variable::Function {
+            return_type, val, ..
+        } => {
+            let llvm_value = builder.build_call(&val, &args, "");
 
-        let val = match return_type {
-            parser::Type::Numeric => Value::Numeric(llvm_value),
-            parser::Type::Vector => {
-                let value = Value::Vec(llvm_value);
-                compiler.track_maybe_orphaned(value);
-                value
-            }
-            parser::Type::Void => Value::Void,
-            parser::Type::Function => todo!(),
-            parser::Type::Ptr => Value::Ptr(llvm_value),
-            parser::Type::Bool => Value::Bool(llvm_value),
-            parser::Type::String => {
-                let value = Value::String(llvm_value);
-                compiler.track_maybe_orphaned(value);
-                value
-            }
-        };
+            let val = match return_type {
+                parser::Type::Numeric => Value::Numeric(llvm_value),
+                parser::Type::Vector => {
+                    let value = Value::Vec(llvm_value);
+                    compiler.track_maybe_orphaned(value);
+                    value
+                }
+                parser::Type::Void => Value::Void,
+                parser::Type::Function => todo!(),
+                parser::Type::Ptr => Value::Ptr(llvm_value),
+                parser::Type::Bool => Value::Bool(llvm_value),
+                parser::Type::String => {
+                    let value = Value::String(llvm_value);
+                    compiler.track_maybe_orphaned(value);
+                    value
+                }
+            };
 
-        Ok(val)
-    } else {
-        Err(CompilerError::TypeError {
-            expected: todo!(),
-            actual: todo!(),
-            span: todo!(),
-        })
+            Ok(val)
+        }
+        val => Err(CompilerError::TypeError {
+            expected: parser::Type::Function,
+            actual: val.get_type(),
+            span,
+        }),
     }
 }
 
 impl FuncCallVisitor<CompilerResult<Value>> for Compiler {
-    fn visit_func_call(&mut self, expr: &expression::FuncCall) -> CompilerResult<Value> {
-        compile_func_call(self, expr)
+    fn visit_func_call(
+        &mut self,
+        expr: &expression::FuncCall,
+        span: Span,
+    ) -> CompilerResult<Value> {
+        compile_func_call(self, expr, span)
     }
 }
 
@@ -170,7 +163,7 @@ mod test {
                     calee: boxed_node!(Expression::Identifier("test_fun".to_string())),
                     args: $args,
                 };
-                val = compile_func_call(&mut compiler, &func_call)?;
+                val = compile_func_call(&mut compiler, &func_call, Span::default())?;
             });
 
             (compiler.module().to_string(), val)

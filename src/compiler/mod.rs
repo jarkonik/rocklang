@@ -28,7 +28,6 @@ use crate::llvm::Function;
 use crate::llvm::Module;
 use crate::llvm::Type;
 use crate::parser;
-use crate::parser::Parse;
 use crate::parser::Program;
 use crate::parser::Span;
 use crate::visitor::*;
@@ -54,6 +53,14 @@ pub enum CompilerError {
     UndefinedIdentifier(String),
     LLVMError(String),
     LoadLibaryError(String),
+    WrongOperator {
+        expected: expression::Operator,
+        actual: expression::Operator,
+        span: Span,
+    },
+    NonIdentifierCall {
+        span: Span,
+    },
 }
 
 impl fmt::Display for CompilerError {
@@ -77,6 +84,17 @@ impl fmt::Display for CompilerError {
             CompilerError::LoadLibaryError(lib) => format!("error loading {}", lib),
             CompilerError::VoidAssignment => "void assignment".to_string(),
             CompilerError::NonIdentifierAssignment => "non identifier assignment".to_string(),
+            CompilerError::WrongOperator {
+                expected,
+                actual,
+                span,
+            } => format!(
+                "wrong operator, expected {:#?}, but got {:#?} at {}",
+                expected, actual, span
+            ),
+            CompilerError::NonIdentifierCall { span } => {
+                format!("call on non-identifier at {}", span)
+            }
         };
         write!(f, "{}", msg)
     }
@@ -107,10 +125,11 @@ pub struct Compiler {
 
 impl Visitor<CompilerResult<Value>> for Compiler {
     fn walk(&mut self, node: &crate::expression::Node) -> CompilerResult<Value> {
+        let span = node.span.clone();
         match &node.expression {
-            Expression::Binary(expr) => self.visit_binary(&expr, node.span.clone()),
-            Expression::Unary(expr) => self.visit_unary(&expr),
-            Expression::FuncCall(expr) => self.visit_func_call(&expr),
+            Expression::Binary(expr) => self.visit_binary(&expr, span),
+            Expression::Unary(expr) => self.visit_unary(&expr, span),
+            Expression::FuncCall(expr) => self.visit_func_call(&expr, span),
             Expression::Numeric(expr) => self.visit_numeric(&expr),
             Expression::Assignment(expr) => self.visit_assignment(&expr),
             Expression::Identifier(expr) => self.visit_identifier(&expr),
@@ -118,7 +137,7 @@ impl Visitor<CompilerResult<Value>> for Compiler {
             Expression::String(expr) => self.visit_string(&expr),
             Expression::Bool(expr) => self.visit_bool(&expr),
             Expression::Break => self.visit_break(),
-            Expression::While(expr) => self.visit_while(&expr),
+            Expression::While(expr) => self.visit_while(&expr, span),
             Expression::FuncDecl(expr) => self.visit_func_decl(&expr),
             Expression::Load(expr) => self.visit_load(&expr),
             Expression::Extern(expr) => self.visit_extern(&expr),

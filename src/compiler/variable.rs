@@ -40,6 +40,17 @@ impl From<&Variable> for llvm::Value {
     }
 }
 impl Variable {
+    pub fn get_type(&self) -> parser::Type {
+        match self {
+            Variable::Numeric(_) => parser::Type::Numeric,
+            Variable::Bool(_) => parser::Type::Bool,
+            Variable::Ptr(_) => parser::Type::Ptr,
+            Variable::String(_) => parser::Type::String,
+            Variable::Vec(_) => parser::Type::Vector,
+            Variable::Function { .. } => parser::Type::Function,
+        }
+    }
+
     pub fn set_value(&mut self, ptr: llvm::Value) {
         match self {
             Variable::String(v) => {

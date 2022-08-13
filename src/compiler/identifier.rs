@@ -1,4 +1,4 @@
-use crate::{llvm, visitor::IdentifierVisitor};
+use crate::visitor::IdentifierVisitor;
 
 use super::{variable::Variable, Compiler, CompilerError, CompilerResult, LLVMCompiler, Value};
 

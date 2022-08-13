@@ -6,7 +6,7 @@ pub trait BinaryVisitor<T> {
 }
 
 pub trait FuncCallVisitor<T> {
-    fn visit_func_call(&mut self, expr: &expression::FuncCall) -> T;
+    fn visit_func_call(&mut self, expr: &expression::FuncCall, span: Span) -> T;
 }
 
 pub trait NumericVisitor<T> {
@@ -30,7 +30,7 @@ pub trait ConditionalVisitor<T> {
 }
 
 pub trait UnaryVisitor<T> {
-    fn visit_unary(&mut self, expr: &expression::Unary) -> T;
+    fn visit_unary(&mut self, expr: &expression::Unary, span: Span) -> T;
 }
 
 pub trait GroupingVisitor<T> {
@@ -38,7 +38,7 @@ pub trait GroupingVisitor<T> {
 }
 
 pub trait WhileVisitor<T> {
-    fn visit_while(&mut self, expr: &expression::While) -> T;
+    fn visit_while(&mut self, expr: &expression::While, span: Span) -> T;
 }
 
 pub trait IdentifierVisitor<T> {

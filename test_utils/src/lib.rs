@@ -85,7 +85,7 @@ macro_rules! mock_compiler {
             }
 
             impl FuncCallVisitor<CompilerResult<Value>> for Compiler {
-                fn visit_func_call(&mut self, expr: &expression::FuncCall) -> CompilerResult<Value>;
+                fn visit_func_call(&mut self, expr: &expression::FuncCall, span: Span) -> CompilerResult<Value>;
             }
 
             impl FuncDeclVisitor<CompilerResult<Value>> for Compiler {
@@ -109,7 +109,7 @@ macro_rules! mock_compiler {
             }
 
             impl UnaryVisitor<CompilerResult<Value>> for Compiler {
-                fn visit_unary(&mut self, expr: &expression::Unary) -> CompilerResult<Value>;
+                fn visit_unary(&mut self, expr: &expression::Unary, span: Span) -> CompilerResult<Value>;
             }
 
             impl GroupingVisitor<CompilerResult<Value>> for Compiler {
@@ -117,7 +117,7 @@ macro_rules! mock_compiler {
             }
 
             impl WhileVisitor<CompilerResult<Value>> for Compiler {
-                fn visit_while(&mut self, expr: &expression::While) -> CompilerResult<Value>;
+                fn visit_while(&mut self, expr: &expression::While, span: Span) -> CompilerResult<Value>;
             }
 
             impl BoolVisitor<CompilerResult<Value>> for Compiler {

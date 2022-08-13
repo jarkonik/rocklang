@@ -1,29 +1,34 @@
 use crate::{
     expression,
+    parser::{self, Span},
     visitor::{UnaryVisitor, Visitor},
 };
 
 use super::{Compiler, CompilerError, CompilerResult, Value};
 
 impl UnaryVisitor<CompilerResult<Value>> for Compiler {
-    fn visit_unary(&mut self, expr: &crate::expression::Unary) -> CompilerResult<Value> {
-        match expr.operator {
+    fn visit_unary(
+        &mut self,
+        expr: &crate::expression::Unary,
+        span: Span,
+    ) -> CompilerResult<Value> {
+        match &expr.operator {
             expression::Operator::Minus => {
                 let r = match self.walk(&expr.right)? {
                     Value::Numeric(p) => p,
-                    _ => Err(CompilerError::TypeError {
-                        expected: todo!(),
-                        actual: todo!(),
-                        span: todo!(),
+                    val => Err(CompilerError::TypeError {
+                        expected: parser::Type::Numeric,
+                        actual: val.get_type(),
+                        span,
                     })?,
                 };
 
                 Ok(Value::Numeric(self.builder.build_fneg(r, "")))
             }
-            _ => Err(CompilerError::TypeError {
-                expected: todo!(),
-                actual: todo!(),
-                span: todo!(),
+            operator => Err(CompilerError::WrongOperator {
+                expected: expression::Operator::Minus,
+                actual: operator.clone(),
+                span,
             })?,
         }
     }

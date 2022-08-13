@@ -67,7 +67,7 @@ impl Value {
             Value::Ptr(_) => parser::Type::Ptr,
             Value::String(_) => parser::Type::String,
             Value::Vec(_) => parser::Type::Vector,
-            Value::Function { typ, .. } => parser::Type::Function,
+            Value::Function { .. } => parser::Type::Function,
         }
     }
 }
