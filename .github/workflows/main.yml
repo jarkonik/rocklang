@@ -32,8 +32,14 @@ jobs:
         run: for file in examples/*; do cargo valgrind run $file || exit 1; done
 
   test:
+    strategy:
+      matrix:
+        config:
+          - os: ubuntu-latest
+          - os: macos-latest
+          - os: windows-latest
     name: Test Suite
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.config.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/install_llvm
