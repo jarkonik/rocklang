@@ -705,13 +705,31 @@ fn it_parses_subtraction() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Numeric": 10.0
-                        },
-                        "operator": "Minus",
-                        "right": {
-                            "Identifier": "x"
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            },
+                            "operator": "Minus",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            }
                         }
                     }
                 }
