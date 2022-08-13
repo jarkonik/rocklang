@@ -101,7 +101,7 @@ macro_rules! mock_compiler {
             }
 
             impl AssignmentVisitor<CompilerResult<Value>> for Compiler {
-                fn visit_assignment(&mut self, expr: &expression::Assignment) -> CompilerResult<Value>;
+                fn visit_assignment(&mut self, expr: &expression::Assignment, span: Span) -> CompilerResult<Value>;
             }
 
             impl ConditionalVisitor<CompilerResult<Value>> for Compiler {

@@ -152,6 +152,7 @@ mod test {
         let mut compiler = MockCompiler::new();
         compiler.expect_context().return_const(context);
         compiler.expect_builder().return_const(builder);
+        compiler.expect_get_var().return_const_st(None);
 
         let const_double = Value::Numeric(compiler.context().const_double(3.0));
         compiler.expect_walk().return_const_st(Ok(const_double));
@@ -177,6 +178,7 @@ mod test {
                         span: Default::default(),
                     }),
                 },
+                Span::default(),
             )?;
 
             assert!(matches!(val, Value::Void));
