@@ -37,23 +37,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Install llvm when platform != Windows
-        if: ${{ runner.os != 'Windows' }}
+      - name: Install llvm
         uses: ./.github/actions/install_llvm
 
-      - name: Download llvm when platform == Windows
-        if: ${{ runner.os == 'Windows' }}
-        run: Invoke-WebRequest -OutFile llvm.7z https://github.com/vovkos/llvm-package-windows/releases/download/llvm-master/llvm-13.0.0-windows-amd64-msvc15-libcmt.7z
-        shell: pwsh
-
-      - name: Extract llvm when platform == Windows
-        if: ${{ runner.os == 'Windows' }}
-        run: 7z.exe x .\llvm.7z -oC:\ -y
-        shell: pwsh
-
       - name: Build project when platform == Windows
-        env:
-          LLVM_SYS_130_PREFIX: 'C:\llvm-13.0.0-windows-amd64-msvc15-libcmt'
         if: ${{ runner.os == 'Windows' }}
         run: cargo build --release --locked
 
@@ -89,8 +76,6 @@ jobs:
 
       - name: Create wix installer when platform == Windows
         if: ${{ runner.os == 'Windows' }}
-        env:
-          LLVM_SYS_130_PREFIX: 'C:\llvm-13.0.0-windows-amd64-msvc15-libcmt'
         run: cargo wix -o target/wix/rocklang.msi -p rocklang
 
       - name: Upload installer when platform == Windows
