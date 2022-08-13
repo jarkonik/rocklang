@@ -115,32 +115,74 @@ fn it_parses_while_loop() {
         json!(
             [
                 {
-                    "While": {
-                        "predicate": {
-                            "Binary": {
-                                "left":{
-                                    "Identifier": "x"
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "While": {
+                            "predicate": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
                                 },
-                                "operator": "Less",
-                                "right":{
-                                    "Numeric": 10.0
-                                }
-                            }
-                        },
-                        "body": [
-                            {
-                                "FuncCall": {
-                                    "args": [
-                                        {
-                                        "String": "hello"
+                                "expression": {
+                                    "Binary": {
+                                        "left":{
+                                            "span": {
+                                                "column": 0,
+                                                "line": 0
+                                            },
+                                            "expression": {
+                                                "Identifier": "x"
+                                            }
+                                        },
+                                        "operator": "Less",
+                                        "right":{
+                                            "span": {
+                                                "column": 0,
+                                                "line": 0
+                                            },
+                                            "expression": {
+                                                "Numeric": 10.0
+                                            }
                                         }
-                                    ],
-                                    "calee": {
-                                        "Identifier": "print"
                                     }
                                 }
-                            }
-                        ]
+                            },
+                            "body": [
+                                {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "FuncCall": {
+                                            "args": [
+                                                {
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                    "expression": {
+                                                        "String": "hello"
+                                                    }
+                                                }
+                                            ],
+                                            "calee": {
+                                                "span": {
+                                                    "column": 0,
+                                                    "line": 0
+                                                },
+                                                "expression": {
+                                                    "Identifier": "print"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             ]
