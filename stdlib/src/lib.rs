@@ -59,8 +59,8 @@ pub unsafe extern "C" fn vec_set(ptr: *const RefCell<Vec<f64>>, idx: f64, val: f
     let rc = Rc::from_raw(ptr);
     {
         let mut vec = rc.try_borrow_mut().unwrap();
-        while vec.len() <= idx as usize {
-            vec.push(0.);
+        if (idx as usize) >= vec.len() {
+            vec.resize((idx as usize) + 1, 0.);
         }
         vec[idx as usize] = val;
     }
@@ -73,11 +73,12 @@ pub unsafe extern "C" fn vec_set(ptr: *const RefCell<Vec<f64>>, idx: f64, val: f
 pub unsafe extern "C" fn vec_get(ptr: *const RefCell<Vec<f64>>, idx: f64) -> f64 {
     let rc = Rc::from_raw(ptr);
     let val = {
-        let mut vec = rc.try_borrow_mut().unwrap();
-        while vec.len() <= idx as usize {
-            vec.push(0.);
+        let vec = rc.borrow();
+        if (idx as usize) < vec.len() {
+            vec[idx as usize]
+        } else {
+            0.
         }
-        vec[idx as usize]
     };
     std::mem::forget(rc);
     val
