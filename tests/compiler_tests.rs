@@ -82,7 +82,7 @@ fn it_compiles_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panic_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
+fn it_panics_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::Assignment(Assignment {
             left: boxed_node!(Expression::String("x".to_string())),
@@ -215,7 +215,7 @@ fn it_compiles_sqrt_funcion() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn it_panic_when_more_then_one_arg_pass_to_print_funcion() -> Result<(), Box<dyn Error>> {
+fn it_panics_when_more_then_one_arg_pass_to_print_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::FuncCall(FuncCall {
             calee: boxed_node!(Expression::Identifier("print".to_string())),
@@ -246,7 +246,7 @@ fn it_panics_when_non_sring_type_pass_to_print_funcions() -> Result<(), Box<dyn 
 }
 
 #[test]
-fn it_panic_when_zero_args_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
+fn it_panics_when_zero_args_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::FuncCall(FuncCall {
             calee: boxed_node!(Expression::Identifier("string".to_string())),
@@ -260,7 +260,7 @@ fn it_panic_when_zero_args_pass_to_string_funcion() -> Result<(), Box<dyn Error>
 }
 
 #[test]
-fn it_panic_when_bool_arg_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
+fn it_panics_when_bool_arg_pass_to_string_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::FuncCall(FuncCall {
             calee: boxed_node!(Expression::Identifier("string".to_string())),
