@@ -10,7 +10,7 @@ fn prime_sieve() -> Result<(), Box<dyn std::error::Error>> {
     cmd.arg("examples/sieve.rck");
     cmd.assert()
         .success()
-        .stdout(predicate::eq("2.000000\n3.000000\n5.000000\n7.000000\n").normalize());
+        .stdout(predicate::eq("2\n3\n5\n7\n").normalize());
 
     Ok(())
 }
@@ -69,7 +69,7 @@ fn ffi() -> Result<(), Box<dyn std::error::Error>> {
     cmd.arg("examples/ffi.rck");
     cmd.assert()
         .success()
-        .stdout(predicate::eq("2 + 3 is 5.000000\n").normalize());
+        .stdout(predicate::eq("2 + 3 is 5\n").normalize());
 
     Ok(())
 }
