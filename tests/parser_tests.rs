@@ -1056,29 +1056,53 @@ fn it_parses_func_declaration_with_one_fun_param() {
         json!(
             [
                 {
-                    "FuncDecl": {
-                        "return_type": "Null",
-                        "params": [
-                            {
-                                "typ": "Function",
-                                "name": "a"
-                            }
-                        ],
-                        "body": [
-                            {
-                                "FuncCall": {
-                                    "args": [
-                                        {
-                                            "String": "hello"
-                                        }
-                                    ],
-                                    "calee": {
-                                        "Identifier": "print"
-                                    }
-
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "FuncDecl": {
+                            "return_type": "Void",
+                            "params": [
+                                {
+                                    "typ": "Function",
+                                    "name": "a"
                                 }
-                            }
-                        ]
+                            ],
+                            "body": [
+                                {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "FuncCall": {
+                                            "args": [
+                                                {
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                    "expression": {
+
+                                                        "String": "hello"
+                                                    }
+                                                }
+                                            ],
+                                            "calee": {
+                                                "span": {
+                                                    "column": 0,
+                                                    "line": 0
+                                                },
+                                                "expression": {
+                                                    "Identifier": "print"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             ]
