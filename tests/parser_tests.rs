@@ -1585,7 +1585,13 @@ fn it_parses_break_expression() {
     let ast = parser.parse().unwrap().body;
     let json = serde_json::to_value(&ast).unwrap();
 
-    assert_json_eq!(json!(["Break"]), json)
+    assert_json_eq!(
+        json!([{ "expression": "Break", "span": {
+        "column": 0,
+        "line": 0
+    } }]),
+        json
+    )
 }
 
 #[test]
@@ -1608,31 +1614,79 @@ fn it_parses_grouping_expression_with_identifiers() {
 
     assert_json_eq!(
         json!([{
-            "Assignment": {
-                "left": {
-                    "Identifier": "b"
-                },
+            "span": {
+                "column": 0,
+                "line": 0
+            },
+            "expression": {
+                "Assignment": {
+                    "left": {
+                        "expression": {
+                            "Identifier": "b"
+                        },
+                        "span": {
+                            "column": 0,
+                            "line": 0
+                        },
+                    },
                 "right": {
-                    "Binary": {
-                        "left": {
-                            "Grouping": {
-                                "Binary": {
-                                    "left": {
-                                        "Identifier": "a"
-                                    },
-                                    "operator": "Plus",
-                                    "right": {
-                                        "Numeric": 1.0,
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Grouping": {
+                                        "span": {
+                                            "column": 0,
+                                            "line": 0
+                                        },
+                                        "expression": {
+                                            "Binary": {
+                                                "left": {
+                                                    "expression": {
+                                                        "Identifier": "a"
+                                                    },
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                },
+                                                "operator": "Plus",
+                                                "right": {
+                                                    "expression": {
+                                                        "Numeric": 1.0,
+                                                    },
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                }
+                                            }
+                                        }
                                     }
                                 }
+                            },
+                            "operator": "Asterisk",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 2.0
+                                }
                             }
-                        },
-                        "operator": "Asterisk",
-                        "right": {
-                            "Numeric": 2.0
                         }
                     }
                 }
+            }
             }
         }]),
         json
