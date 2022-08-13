@@ -85,22 +85,20 @@ fn it_compiles_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
     compiler.turn_off_optimization();
     compiler.compile().unwrap();
 
-    assert_eq!(
-        remove_whitespace!(&compiler.ir_string()),
-        remove_whitespace!(
-            "
-            ;ModuleID='main'source_filename=\"main\"targetdatalayout=\"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"
-            @x = global double 0.000000e+00
-            @y = global double 0.000000e+00
-            define void @__main__() {
-                entry:
-                store double 5.000000e+00, double*@x, align 8
-                %0= load double, double*@x, align 8
-                store double %0, double* @y, align 8
-                ret void
-            }
-	"
-        )
+    assert_eq_ir!(
+        &compiler.ir_string(),
+        "
+        ;ModuleID='main'source_filename=\"main\"targetdatalayout=\"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"
+        @x = global double 0.000000e+00
+        @y = global double 0.000000e+00
+        define void @__main__() {
+            entry:
+            store double 5.000000e+00, double*@x, align 8
+            %0= load double, double*@x, align 8
+            store double %0, double* @y, align 8
+            ret void
+        }
+        "
     );
 
     Ok(())

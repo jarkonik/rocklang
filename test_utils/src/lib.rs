@@ -1,13 +1,4 @@
 #[macro_export]
-macro_rules! remove_whitespace {
-    ($s:expr) => {
-        $s.chars()
-            .filter(|c| !c.is_whitespace())
-            .collect::<String>()
-    };
-}
-
-#[macro_export]
 macro_rules! assert_eq_ir {
     ($result:expr, $valid:expr) => {
         assert_eq!(
