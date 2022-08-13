@@ -135,6 +135,8 @@ impl Builder {
         let mut args: Vec<*mut llvm::LLVMValue> = args.iter().map(|t| t.0).collect();
 
         Value::from(unsafe {
+            // TODO: dont use deprecated api
+            #[allow(deprecated)]
             LLVMBuildCall(
                 self.0,
                 func.0,
