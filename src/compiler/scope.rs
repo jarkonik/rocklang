@@ -1,4 +1,4 @@
-use crate::llvm::{Builder, Module};
+use crate::llvm::{Builder, Context, Module};
 use std::collections::HashMap;
 
 use super::{variable::Variable, CompilerResult, Value};
@@ -27,16 +27,29 @@ impl Scope {
         self.env.insert(literal.to_string(), val);
     }
 
-    pub fn release_references(&self, module: &Module, builder: &Builder) -> CompilerResult<()> {
+    pub fn release_references(
+        &self,
+        context: &Context,
+        module: &Module,
+        builder: &Builder,
+    ) -> CompilerResult<()> {
         for (_, var) in self.env.iter() {
             match var {
                 Variable::String(val) => {
                     let release = module.get_function("release_string_reference").unwrap();
-                    builder.build_call(&release, &[builder.build_load(val, "")], "");
+                    builder.build_call(
+                        &release,
+                        &[builder.build_load(&var.llvm_type(context), val, "")],
+                        "",
+                    );
                 }
                 Variable::Vec(val) => {
                     let release = module.get_function("release_vec_reference").unwrap();
-                    builder.build_call(&release, &[builder.build_load(val, "")], "");
+                    builder.build_call(
+                        &release,
+                        &[builder.build_load(&var.llvm_type(context), val, "")],
+                        "",
+                    );
                 }
                 Variable::Numeric(_)
                 | Variable::Bool(_)

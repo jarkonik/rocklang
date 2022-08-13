@@ -1,4 +1,7 @@
-use crate::{llvm, parser};
+use crate::{
+    llvm::{self, Context},
+    parser,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Variable {
@@ -40,6 +43,17 @@ impl From<&Variable> for llvm::Value {
     }
 }
 impl Variable {
+    pub fn llvm_type(&self, context: &Context) -> llvm::Type {
+        match self {
+            Variable::Numeric(_) => context.double_type(),
+            Variable::Bool(_) => context.i1_type(),
+            Variable::Ptr(_) => context.void_type().pointer_type(0),
+            Variable::String(_) => context.void_type().pointer_type(0),
+            Variable::Vec(_) => context.void_type().pointer_type(0),
+            Variable::Function { typ, .. } => typ.pointer_type(0),
+        }
+    }
+
     pub fn get_type(&self) -> parser::Type {
         match self {
             Variable::Numeric(_) => parser::Type::Numeric,

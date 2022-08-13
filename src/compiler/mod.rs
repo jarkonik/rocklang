@@ -423,7 +423,7 @@ impl LLVMCompiler for Compiler {
     fn exit_scope(&mut self) -> CompilerResult<()> {
         let scope = self.scopes.pop().unwrap();
         self.release_maybe_orphaned();
-        scope.release_references(self.module(), self.builder())
+        scope.release_references(self.context(), self.module(), self.builder())
     }
 
     fn build_function(

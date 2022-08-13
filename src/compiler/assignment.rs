@@ -35,7 +35,11 @@ fn compile_assignment<T: LLVMCompiler>(
                             .unwrap();
                         compiler.builder().build_call(
                             &release,
-                            &[compiler.builder().build_load(&val, "")],
+                            &[compiler.builder().build_load(
+                                &var.llvm_type(compiler.context()),
+                                &val,
+                                "",
+                            )],
                             "",
                         );
                     }
@@ -47,7 +51,11 @@ fn compile_assignment<T: LLVMCompiler>(
 
                         compiler.builder().build_call(
                             &release,
-                            &[compiler.builder().build_load(&val, "")],
+                            &[compiler.builder().build_load(
+                                &var.llvm_type(compiler.context()),
+                                &val,
+                                "",
+                            )],
                             "",
                         );
                     }

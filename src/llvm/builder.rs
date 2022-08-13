@@ -52,8 +52,8 @@ impl Builder {
         Value::from(unsafe { LLVMBuildMalloc(self.0, el_type.0, c_str(name).as_ptr()) })
     }
 
-    pub fn build_load(&self, ptr: &Value, name: &str) -> Value {
-        Value::from(unsafe { LLVMBuildLoad(self.0, ptr.0, c_str(name).as_ptr()) })
+    pub fn build_load(&self, typ: &Type, ptr: &Value, name: &str) -> Value {
+        Value::from(unsafe { LLVMBuildLoad2(self.0, typ.0, ptr.0, c_str(name).as_ptr()) })
     }
 
     pub fn build_add(&self, lhs: Value, rhs: Value, name: &str) -> Value {

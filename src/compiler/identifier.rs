@@ -8,7 +8,9 @@ impl IdentifierVisitor<CompilerResult<Value>> for Compiler {
 
         let val = match var {
             Some(var) => {
-                let val = self.builder.build_load(&var.into(), "");
+                let val = self
+                    .builder
+                    .build_load(&var.llvm_type(&self.context), &var.into(), "");
                 Some(match var {
                     Variable::String(_) => Value::String(val),
                     Variable::Numeric(_) => Value::Numeric(val),
