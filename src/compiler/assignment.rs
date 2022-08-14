@@ -59,7 +59,8 @@ fn compile_assignment<T: LLVMCompiler>(
                             "",
                         );
                     }
-                    Variable::F64(_)
+                    Variable::I32(_)
+                    | Variable::F64(_)
                     | Variable::Bool(_)
                     | Variable::Function { .. }
                     | Variable::Ptr(_) => {}
@@ -85,6 +86,7 @@ fn compile_assignment<T: LLVMCompiler>(
                     Value::Ptr(_) => Variable::Ptr(ptr),
                     Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
                     Value::CString(_) => todo!(),
+                    Value::I32(_) => Variable::I32(ptr),
                 };
 
                 compiler.builder().create_store(right.into(), &ptr);
@@ -112,6 +114,7 @@ fn compile_assignment<T: LLVMCompiler>(
             Value::Ptr(_) => {}
             Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
             Value::CString(_) => todo!(),
+            Value::I32(_) => {}
         };
     } else {
         Err(CompilerError::NonIdentifierAssignment { span })?

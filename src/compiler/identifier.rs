@@ -26,6 +26,7 @@ impl IdentifierVisitor<CompilerResult<Value>> for Compiler {
                     },
                     Variable::Vec(_) => Value::Vec(val),
                     Variable::Ptr(_) => Value::Ptr(val),
+                    Variable::I32(_) => Value::I32(val),
                 })
             }
             None => self.get_param(expr),

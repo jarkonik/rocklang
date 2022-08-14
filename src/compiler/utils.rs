@@ -13,5 +13,6 @@ pub fn get_llvm_type(context: &Context, typ: &parser::Type) -> llvm::Type {
         parser::Type::String => context.void_type().pointer_type(0),
         parser::Type::Bool => context.i1_type(),
         parser::Type::CString => context.i8_type().pointer_type(0),
+        parser::Type::I32 => context.i32_type(),
     }
 }

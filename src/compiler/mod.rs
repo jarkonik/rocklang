@@ -469,6 +469,7 @@ impl LLVMCompiler for Compiler {
                 Value::Break => todo!(),
                 Value::Ptr(_) => todo!(),
                 Value::CString(_) => todo!(),
+                Value::I32(_) => todo!(),
             }
         }
     }
@@ -492,6 +493,7 @@ impl LLVMCompiler for Compiler {
             Value::Break => todo!(),
             Value::Ptr(_) => todo!(),
             Value::CString(_) => todo!(),
+            Value::I32(_) => todo!(),
         };
 
         let curr = self.builder.get_insert_block();
@@ -523,6 +525,7 @@ impl LLVMCompiler for Compiler {
                 parser::Type::Function => todo!(),
                 parser::Type::Ptr => todo!(),
                 parser::Type::CString => todo!(),
+                parser::Type::I32 => Value::I32(val),
             };
             self.set_param(param.name.as_str(), val);
         }
@@ -553,6 +556,7 @@ impl LLVMCompiler for Compiler {
             Value::Break => todo!(),
             Value::Ptr(_) => todo!(),
             Value::CString(_) => todo!(),
+            Value::I32(_) => todo!(),
         };
 
         self.exit_scope()?;

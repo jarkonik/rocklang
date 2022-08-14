@@ -54,12 +54,14 @@ pub enum Type {
     Ptr,
     String,
     CString,
+    I32,
 }
 
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = match self {
             Type::F64 => "F64",
+            Type::I32 => "I32",
             Type::Bool => "Bool",
             Type::Vector => "Vector",
             Type::Void => "Void",
@@ -536,6 +538,7 @@ impl Parser {
 
                 let return_type = match &self.advance().kind {
                     TokenKind::Identifier(type_literal) => match type_literal.as_str() {
+                        "i32" => Type::I32,
                         "f64" => Type::F64,
                         "vec" => Type::Vector,
                         "void" => Type::Void,
@@ -725,6 +728,7 @@ impl Parser {
             "void" => Ok(Type::Void),
             "string" => Ok(Type::String),
             "cstring" => Ok(Type::CString),
+            "i32" => Ok(Type::I32),
             "f64" => Ok(Type::F64),
             "vec" => Ok(Type::Vector),
             "fun" => Ok(Type::Function),

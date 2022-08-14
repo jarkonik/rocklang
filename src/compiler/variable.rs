@@ -15,6 +15,7 @@ pub enum Variable {
     },
     Vec(llvm::Value),
     Ptr(llvm::Value),
+    I32(crate::llvm::Value),
 }
 
 impl From<Variable> for llvm::Value {
@@ -26,6 +27,7 @@ impl From<Variable> for llvm::Value {
             Variable::Function { val, .. } => llvm::Value(val.0),
             Variable::Vec(lv) => lv,
             Variable::Ptr(lv) => lv,
+            Variable::I32(lv) => lv,
         }
     }
 }
@@ -39,6 +41,7 @@ impl From<&Variable> for llvm::Value {
             Variable::Function { val, .. } => llvm::Value(val.0),
             Variable::Vec(lv) => lv,
             Variable::Ptr(lv) => lv,
+            Variable::I32(lv) => lv,
         }
     }
 }
@@ -51,6 +54,7 @@ impl Variable {
             Variable::String(_) => context.void_type().pointer_type(0),
             Variable::Vec(_) => context.void_type().pointer_type(0),
             Variable::Function { typ, .. } => typ.pointer_type(0),
+            Variable::I32(_) => context.i32_type(),
         }
     }
 
@@ -62,6 +66,7 @@ impl Variable {
             Variable::String(_) => parser::Type::String,
             Variable::Vec(_) => parser::Type::Vector,
             Variable::Function { .. } => parser::Type::Function,
+            Variable::I32(_) => parser::Type::I32,
         }
     }
 
@@ -83,6 +88,9 @@ impl Variable {
                 v.0 = ptr.0;
             }
             Variable::Ptr(v) => {
+                v.0 = ptr.0;
+            }
+            Variable::I32(v) => {
                 v.0 = ptr.0;
             }
         }

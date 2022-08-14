@@ -17,6 +17,7 @@ pub enum Value {
     Vec(llvm::Value),
     Break,
     Ptr(llvm::Value),
+    I32(llvm::Value),
 }
 
 impl From<Value> for llvm::Value {
@@ -30,6 +31,7 @@ impl From<Value> for llvm::Value {
             Value::Vec(lv) => lv,
             Value::Ptr(lv) => lv,
             Value::CString(_) => todo!(),
+            Value::I32(lv) => lv,
         }
     }
 }
@@ -45,6 +47,7 @@ impl From<&Value> for llvm::Value {
             Value::Vec(lv) => lv,
             Value::Ptr(lv) => lv,
             Value::CString(_) => todo!(),
+            Value::I32(lv) => lv,
         }
     }
 }
@@ -60,6 +63,7 @@ impl Value {
             Value::Function { typ, .. } => typ.pointer_type(0),
             Value::Void | Value::Break => unreachable!(),
             Value::CString(_) => todo!(),
+            Value::I32(_) => context.i32_type(),
         }
     }
 
@@ -73,6 +77,7 @@ impl Value {
             Value::Vec(_) => parser::Type::Vector,
             Value::Function { .. } => parser::Type::Function,
             Value::CString(_) => parser::Type::CString,
+            Value::I32(_) => parser::Type::I32,
         }
     }
 }

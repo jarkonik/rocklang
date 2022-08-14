@@ -22,6 +22,7 @@ fn compile_args<T: LLVMCompiler>(
                 Value::Ptr(n) => n,
                 Value::Function { val, .. } => llvm::Value(val.0),
                 Value::CString(n) => n,
+                Value::I32(n) => n,
             };
 
             Ok(val)
@@ -75,6 +76,7 @@ fn compile_func_call<T: LLVMCompiler>(
                     value
                 }
                 parser::Type::CString => Value::CString(llvm_value),
+                parser::Type::I32 => Value::I32(llvm_value),
             };
 
             Ok(val)
