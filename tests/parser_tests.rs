@@ -837,13 +837,19 @@ fn it_parses_division() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Numeric": 10.0
-                        },
-                        "operator": "Slash",
-                        "right": {
-                            "Identifier": "x"
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            },
+                            "operator": "Slash",
+                            "right": {
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            }
                         }
                     }
                 }
@@ -868,10 +874,22 @@ fn it_parses_unary_minus() {
         json!(
             [
                 {
-                    "Unary": {
-                        "operator": "Minus",
-                        "right": {
-                            "Numeric": 10.0
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Unary": {
+                            "operator": "Minus",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            }
                         }
                     }
                 }
@@ -982,29 +1000,53 @@ fn it_parses_func_declaration_with_one_number_param() {
         json!(
             [
                 {
-                    "FuncDecl": {
-                        "return_type": "Null",
-                        "params": [
-                            {
-                                "typ": "Numeric",
-                                "name": "a"
-                            }
-                        ],
-                        "body": [
-                            {
-                                "FuncCall": {
-                                    "args": [
-                                        {
-                                            "String": "hello"
-                                        }
-                                    ],
-                                    "calee": {
-                                        "Identifier": "print"
-                                    }
-
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "FuncDecl": {
+                            "return_type": "Void",
+                            "params": [
+                                {
+                                    "typ": "Numeric",
+                                    "name": "a"
                                 }
-                            }
-                        ]
+                            ],
+                            "body": [
+                                {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "FuncCall": {
+                                            "args": [
+                                                {
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                    "expression": {
+                                                        "String": "hello"
+                                                    }
+                                                }
+                                            ],
+                                            "calee": {
+                                                "span": {
+                                                    "column": 0,
+                                                    "line": 0
+                                                },
+                                                "expression": {
+                                                    "Identifier": "print"
+                                                }
+                                            }
+
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             ]
@@ -1040,29 +1082,53 @@ fn it_parses_func_declaration_with_one_vec_param() {
         json!(
             [
                 {
-                    "FuncDecl": {
-                        "return_type": "Null",
-                        "params": [
-                            {
-                                "typ": "Vector",
-                                "name": "a"
-                            }
-                        ],
-                        "body": [
-                            {
-                                "FuncCall": {
-                                    "args": [
-                                        {
-                                            "String": "hello"
-                                        }
-                                    ],
-                                    "calee": {
-                                        "Identifier": "print"
-                                    }
-
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "FuncDecl": {
+                            "return_type": "Void",
+                            "params": [
+                                {
+                                    "typ": "Vector",
+                                    "name": "a"
                                 }
-                            }
-                        ]
+                            ],
+                            "body": [
+                                {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "FuncCall": {
+                                            "args": [
+                                                {
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                    "expression": {
+                                                        "String": "hello"
+                                                    }
+                                                }
+                                            ],
+                                            "calee": {
+                                                "span": {
+                                                    "column": 0,
+                                                    "line": 0
+                                                },
+                                                "expression": {
+                                                    "Identifier": "print"
+                                                }
+                                            }
+
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             ]
