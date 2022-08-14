@@ -712,6 +712,7 @@ impl Parser {
         match type_literal {
             "void" => Ok(Type::Void),
             "string" => Ok(Type::String),
+            "cstring" => Ok(Type::CString),
             "number" => Ok(Type::Numeric),
             "vec" => Ok(Type::Vector),
             "fun" => Ok(Type::Function),
