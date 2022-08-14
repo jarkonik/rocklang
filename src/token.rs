@@ -3,7 +3,7 @@ use std::fmt::Display;
 
 use crate::parser::Span;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum TokenKind {
     DoubleEqual,
     Else,

@@ -7,7 +7,7 @@ use std::error::Error;
 use std::fmt;
 use std::{env, fs};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct InputError {}
 
 impl fmt::Display for InputError {

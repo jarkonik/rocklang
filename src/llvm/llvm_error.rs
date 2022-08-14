@@ -1,7 +1,7 @@
 use core::fmt;
 use std::error::Error;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct LLVMError {}
 
 impl fmt::Display for LLVMError {

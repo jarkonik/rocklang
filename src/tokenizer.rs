@@ -32,7 +32,7 @@ impl Tokenize for Tokenizer {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct TokenizerError {
     pub chr: char,
     pub line: usize,
