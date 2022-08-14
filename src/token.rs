@@ -36,6 +36,7 @@ pub enum TokenKind {
     String(String),
     Identifier(String),
     F64(f64),
+    I32(i32),
     Load,
     Extern,
     Eof,
@@ -83,6 +84,7 @@ fn token_name(token: &TokenKind) -> &str {
         TokenKind::Colon => "Colon",
         TokenKind::Load => "Load",
         TokenKind::Extern => "Extern",
+        TokenKind::I32(_) => "I32",
     }
 }
 

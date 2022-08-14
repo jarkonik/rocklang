@@ -13,6 +13,10 @@ pub trait F64Visitor<T> {
     fn visit_f64(&mut self, expr: &f64) -> T;
 }
 
+pub trait I32Visitor<T> {
+    fn visit_i32(&mut self, expr: &i32) -> T;
+}
+
 pub trait StringVisitor<T> {
     fn visit_string(&mut self, expr: &str) -> T;
 }
@@ -69,6 +73,7 @@ pub trait Visitor<T>:
     BinaryVisitor<T>
     + FuncCallVisitor<T>
     + F64Visitor<T>
+    + I32Visitor<T>
     + StringVisitor<T>
     + ProgramVisitor<T>
     + AssignmentVisitor<T>

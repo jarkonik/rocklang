@@ -141,6 +141,7 @@ impl Visitor<CompilerResult<Value>> for Compiler {
             Expression::Load(expr) => self.visit_load(expr),
             Expression::Extern(expr) => self.visit_extern(expr),
             Expression::Grouping(expr) => self.visit_grouping(expr),
+            Expression::I32(expr) => self.visit_i32(expr),
         }
     }
 }
@@ -431,6 +432,10 @@ impl LLVMCompiler for Compiler {
         scope.release_references(self.context(), self.module(), self.builder())
     }
 
+    fn after_loop_blocks(&self) -> &Vec<llvm::BasicBlock> {
+        &self.after_loop_blocks
+    }
+
     fn get_var(&self, name: &str) -> Option<Variable> {
         for scope in self.scopes.iter().rev() {
             if let Some(val) = scope.get(name) {
@@ -575,9 +580,5 @@ impl LLVMCompiler for Compiler {
         }
 
         Ok(())
-    }
-
-    fn after_loop_blocks(&self) -> &Vec<llvm::BasicBlock> {
-        &self.after_loop_blocks
     }
 }

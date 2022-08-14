@@ -90,6 +90,7 @@ pub enum Expression {
     FuncDecl(FuncDecl),
     Load(String),
     Extern(Extern),
+    I32(i32),
 }
 
 #[derive(Debug, Serialize, Clone)]

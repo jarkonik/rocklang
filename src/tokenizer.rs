@@ -155,10 +155,18 @@ impl Tokenizer {
         let mut literal = String::new();
         literal.push(self.previous());
 
+        let mut is_floating_point = false;
+
         loop {
             let chr = self.peek();
 
-            if chr.is_numeric() || chr == '.' {
+            let is_chr_point = chr == '.';
+
+            if is_chr_point {
+                is_floating_point = true
+            }
+
+            if chr.is_numeric() || is_chr_point {
                 literal.push(chr);
                 self.advance();
             } else {
@@ -166,9 +174,15 @@ impl Tokenizer {
             }
         }
 
-        self.add_token(TokenKind::F64(
-            literal.parse().expect("Error parsing number"),
-        ));
+        let parsed = literal.parse().expect("Error parsing number");
+
+        let token = if is_floating_point {
+            TokenKind::F64(parsed)
+        } else {
+            TokenKind::I32(parsed as i32)
+        };
+
+        self.add_token(token);
     }
 
     fn identifier(&mut self) {

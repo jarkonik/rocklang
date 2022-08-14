@@ -677,6 +677,7 @@ impl Parser {
         let token = self.advance().clone();
         match &token.kind {
             TokenKind::F64(val) => Ok(self.node(Expression::F64(*val))),
+            TokenKind::I32(val) => Ok(self.node(Expression::I32(*val))),
             TokenKind::LeftParen => {
                 let expr = Expression::Grouping(expression::Grouping(Box::new(self.expression()?)));
 
