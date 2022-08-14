@@ -39,7 +39,7 @@ fn it_tokenizes_all_tokens() {
     assert_token_kind_of!(TokenKind::Identifier(_), tokens[20]);
     assert_token_kind_of!(TokenKind::Identifier(_), tokens[21]);
     assert_token_kind_of!(TokenKind::F64(_), tokens[22]);
-    assert_token_kind_of!(TokenKind::F64(_), tokens[23]);
+    assert_token_kind_of!(TokenKind::I32(_), tokens[23]);
     assert_token_kind_of!(TokenKind::LessOrEqual, tokens[24]);
     assert_token_kind_of!(TokenKind::GreaterOrEqual, tokens[25]);
     assert_token_kind_of!(TokenKind::Colon, tokens[26]);
