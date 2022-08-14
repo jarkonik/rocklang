@@ -905,24 +905,48 @@ fn it_parses_func_declaration_with_no_params() {
         json!(
             [
                 {
-                    "FuncDecl": {
-                        "return_type": "Null",
-                        "params": [],
-                        "body": [
-                            {
-                                "FuncCall": {
-                                    "args": [
-                                        {
-                                            "String": "hello"
-                                        }
-                                    ],
-                                    "calee": {
-                                        "Identifier": "print"
-                                    }
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "FuncDecl": {
+                            "return_type": "Void",
+                            "params": [],
+                            "body": [
+                                {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "FuncCall": {
+                                            "args": [
+                                                {
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                    "expression": {
+                                                        "String": "hello"
+                                                    }
+                                                }
+                                            ],
+                                            "calee": {
+                                                "span": {
+                                                    "column": 0,
+                                                    "line": 0
+                                                },
+                                                "expression": {
+                                                    "Identifier": "print"
+                                                }
+                                            }
 
+                                        }
+                                    }
                                 }
-                            }
-                        ]
+                            ]
+                        }
                     }
                 }
             ]
