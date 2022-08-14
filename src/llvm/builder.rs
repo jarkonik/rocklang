@@ -84,6 +84,10 @@ impl Builder {
         Value::from(unsafe { LLVMBuildFNeg(self.0, rhs.0, c_str(name).as_ptr()) })
     }
 
+    pub fn build_neg(&self, rhs: Value, name: &str) -> Value {
+        Value::from(unsafe { LLVMBuildNeg(self.0, rhs.0, c_str(name).as_ptr()) })
+    }
+
     pub fn build_fcmp(&self, lhs: Value, rhs: Value, operator: Cmp, name: &str) -> Value {
         Value::from(unsafe {
             LLVMBuildFCmp(

@@ -13,18 +13,15 @@ impl UnaryVisitor<CompilerResult<Value>> for Compiler {
         span: Span,
     ) -> CompilerResult<Value> {
         match &expr.operator {
-            expression::Operator::Minus => {
-                let r = match self.walk(&expr.right)? {
-                    Value::F64(p) => p,
-                    val => Err(CompilerError::TypeError {
-                        expected: parser::Type::F64,
-                        actual: val.get_type(),
-                        span,
-                    })?,
-                };
-
-                Ok(Value::F64(self.builder.build_fneg(r, "")))
-            }
+            expression::Operator::Minus => match self.walk(&expr.right)? {
+                Value::F64(p) => Ok(Value::F64(self.builder.build_fneg(p, ""))),
+                Value::I32(p) => Ok(Value::F64(self.builder.build_neg(p, ""))),
+                val => Err(CompilerError::TypeError {
+                    expected: parser::Type::F64,
+                    actual: val.get_type(),
+                    span,
+                })?,
+            },
             operator => Err(CompilerError::WrongOperator {
                 expected: expression::Operator::Minus,
                 actual: operator.clone(),
