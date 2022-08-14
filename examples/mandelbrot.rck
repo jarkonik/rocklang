@@ -1,0 +1,77 @@
+WIDTH = 30
+HEIGHT = 30
+
+complexprint = (c: vec): void => {
+	print(string(vec_get(c, 0)))
+	print("+")
+	print(string(vec_get(c, 1)))
+	print("i")
+	print("\n")
+}
+
+complexadd = (a: vec, b: vec): vec => {
+	r = vec_get(a, 0) + vec_get(b, 0)
+	img = vec_get(a, 1) + vec_get(b, 1)
+
+	res = vec_new()
+	vec_set(res, 0, r)
+	vec_set(res, 1, img)
+
+	res
+}
+
+
+complexmul = (a: vec, b: vec): vec => {
+	r = vec_get(a, 0) * vec_get(b, 0) - vec_get(a, 1) * vec_get(b, 1)
+	img = vec_get(a, 0) * vec_get(b, 1) + vec_get(a, 1) * vec_get(b, 0)
+
+	res = vec_new()
+	vec_set(res, 0, r)
+	vec_set(res, 1, img)
+
+	res
+}
+
+y = 0
+while y < HEIGHT {
+	x = 0
+	while x < WIDTH {
+		c = vec_new()
+		halfwidth = WIDTH * 0.5
+		halfheight = HEIGHT * 0.5
+
+		rx = y - halfwidth
+		ry = x - halfheight
+		vec_set(c, 0, rx * 0.1)
+		vec_set(c, 1, ry * 0.1)
+
+		i = 0
+
+		acc = vec_new()
+		vec_set(acc, 0, 0)
+		vec_set(acc, 1, 0)
+
+		isstable = 1
+
+		while i < 50 {
+			acc = complexadd(complexmul(acc, acc), c)
+			if sqrt(vec_get(acc, 0) * vec_get(acc, 0) + vec_get(acc, 1) * vec_get(acc, 1)) > 2 {
+				isstable = 0
+			}
+			if sqrt(vec_get(acc, 0) * vec_get(acc, 0) + vec_get(acc, 1) * vec_get(acc, 1)) < -2 {
+				isstable = 0
+			}
+			i = i + 1
+		}
+
+		if isstable == 1 {
+			print("*")
+		} else {
+			print(".")
+		}
+
+		x = x + 1
+	}
+	y = y + 1
+	print("\n")
+}

@@ -4,7 +4,7 @@ version = "0.2.8"
 edition = "2021"
 authors = ["Jaroslaw Konik"]
 license = "MIT"
-description = "JIT-compiled functional programming language."
+description = "JIT-compiled programming language."
 documentation = "https://jarkonik.github.io/rocklang/"
 homepage = "https://jarkonik.github.io/rocklang/"
 repository = "https://github.com/jarkonik/rocklang"
@@ -14,7 +14,8 @@ repository = "https://github.com/jarkonik/rocklang"
 
 [workspace]
 members = [
-	"stdlib"
+	"stdlib",
+	"test_utils"
 ]
 
 [dependencies]
@@ -24,10 +25,16 @@ assert-json-diff = "2.0.1"
 stdlib = { path = "./stdlib" }
 llvm-sys = "130"
 backtrace = "0.3"
+test_utils = { path = "./test_utils" }
+libc = "0.2"
+anyhow = "1.0"
 
 [dev-dependencies]
 assert_cmd = "0.10"
 predicates = "2.1.0"
+pretty_assertions = "1.2"
+indoc = "1.0"
+mockall = "0.11"
 
 # [profile.release]
 # debug = true

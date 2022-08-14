@@ -12,7 +12,7 @@ Discord](https://badgen.net/discord/members/NK3baHRTve)](https://discord.gg/NK3b
 
 <img src="./rock.svg" width="100" height="100">
 
-JIT-compiled functional programming language.
+JIT-compiled programming language.
 
 ## Getting started
 
@@ -21,7 +21,7 @@ JIT-compiled functional programming language.
 1. [Download and run the installer.](https://github.com/jarkonik/rocklang/releases/latest/download/rocklang-windows-latest.msi)
 2. At this point, if you haven't changed the default installer options,
    `rocklang.exe` should be installed and added to your `PATH`.
-3. Create a file named `main.rc` in a directory of your choice, with following
+3. Create a file named `main.rck` in a directory of your choice, with following
    content:
 ```
 print("Hello from rocklang")
@@ -35,26 +35,26 @@ print("Hello from rocklang")
 Sample implementation of Sieve of Eratosthenes written in Rock
 
 ```c
-memset = (vec: vec, val: number, n: number): vec => {
+mem_set = (vec: vec, val: number, n: number): vec => {
 	i = 0
 	while i < n {
-		vec = vecset(vec, i, val)
+		vec_set(vec, i, val)
 		i = i + 1
 	}
 	vec
 }
 
 sieve = (n: number): void => {
-	v = vecnew()
-	prime = memset(v, 1, n + 1)
+	v = vec_new()
+	prime = mem_set(v, 1, n + 1)
 
 	p = 2
 
 	while p * p <= n {
-		if vecget(prime, p) == 1 {
+		if vec_get(prime, p) == 1 {
 			i = p * p
 			while i <= n {
-				prime = vecset(prime, i, 0)
+				vec_set(prime, i, 0)
 				i = i + p
 			}
 		}
@@ -65,7 +65,7 @@ sieve = (n: number): void => {
 	p = 2
 
 	while p <= n {
-		if vecget(prime, p) == 1 {
+		if vec_get(prime, p) == 1 {
 			print(string(p))
 			print("\n")
 		}
@@ -74,13 +74,13 @@ sieve = (n: number): void => {
 	}
 }
 
-sieve(100)
+sieve(10)
 ```
 
 ## Building from source
 1. Install Rust compiler that supports Rust Edition 2021, along with `cargo` tool, in your favorite fashion.
 2. Install llvm 13
-3. Run `cargo build` to build binaries or `cargo run examples/sieve.rc` to run a sample program.
+3. Run `cargo build` to build binaries or `cargo run examples/sieve.rck` to run a sample program.
 
 ## License
 

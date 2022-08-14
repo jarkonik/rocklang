@@ -1,4 +1,5 @@
 use crate::parser::Param;
+use crate::parser::Span;
 use crate::parser::Type;
 use serde::Serialize;
 
@@ -19,46 +20,46 @@ pub enum Operator {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Binary {
-    pub left: Box<Expression>,
+    pub left: Box<Node>,
     pub operator: Operator,
-    pub right: Box<Expression>,
+    pub right: Box<Node>,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Conditional {
-    pub predicate: Box<Expression>,
-    pub body: Vec<Expression>,
-    pub else_body: Vec<Expression>,
+    pub predicate: Box<Node>,
+    pub body: Vec<Node>,
+    pub else_body: Vec<Node>,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Assignment {
-    pub left: Box<Expression>,
-    pub right: Box<Expression>,
+    pub left: Box<Node>,
+    pub right: Box<Node>,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct While {
-    pub predicate: Box<Expression>,
-    pub body: Vec<Expression>,
+    pub predicate: Box<Node>,
+    pub body: Vec<Node>,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Unary {
     pub operator: Operator,
-    pub right: Box<Expression>,
+    pub right: Box<Node>,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct FuncCall {
-    pub calee: Box<Expression>,
-    pub args: Vec<Expression>,
+    pub calee: Box<Node>,
+    pub args: Vec<Node>,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct FuncDecl {
     pub params: Vec<Param>,
-    pub body: Vec<Expression>,
+    pub body: Vec<Node>,
     pub return_type: Type,
 }
 
@@ -68,6 +69,9 @@ pub struct Extern {
     pub return_type: Type,
     pub name: String,
 }
+
+#[derive(Serialize, Debug, Clone)]
+pub struct Grouping(pub Box<Node>);
 
 #[derive(Serialize, Debug, Clone)]
 pub enum Expression {
@@ -81,9 +85,15 @@ pub enum Expression {
     Binary(Binary),
     While(While),
     Unary(Unary),
-    Grouping(Box<Expression>),
+    Grouping(Grouping),
     FuncCall(FuncCall),
     FuncDecl(FuncDecl),
     Load(String),
     Extern(Extern),
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct Node {
+    pub expression: Expression,
+    pub span: Span,
 }

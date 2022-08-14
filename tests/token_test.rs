@@ -1,8 +1,8 @@
-use rocklang::token::Token;
+use rocklang::token::TokenKind;
 
 macro_rules! assert_format_string {
     ($token:ident, $results:expr) => {
-        let token = Token::$token;
+        let token = TokenKind::$token;
 
         let token_name = format!("{}", token);
         assert_eq!(token_name, $results);
@@ -11,7 +11,7 @@ macro_rules! assert_format_string {
 
 macro_rules! assert_angle_brackets_format_string {
     ($token:ident, $first_param:expr, $results:expr ) => {
-        let token = Token::$token($first_param);
+        let token = TokenKind::$token($first_param);
 
         let token_name = format!("{}", token);
         assert_eq!(token_name, $results);

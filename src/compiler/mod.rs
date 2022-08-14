@@ -1,697 +1,166 @@
-mod frame;
+mod assignment;
+mod binary;
+mod bool;
+mod break_visitor;
+mod conditional;
+mod extern_visitor;
+mod func_call;
+mod func_decl_vistor;
+mod grouping;
+mod identifier;
+mod load;
+mod numeric;
+mod program;
+mod scope;
+mod string;
+mod unary;
+mod utils;
 mod value;
-mod var;
+mod variable;
+mod while_visitor;
 
-use crate::compiler::frame::Frame;
-use crate::compiler::value::Value;
-use crate::compiler::var::Var;
 use crate::expression;
+use crate::expression::Expression;
 use crate::llvm;
-use crate::llvm::BasicBlock;
-use crate::llvm::PassManager;
+use crate::llvm::Builder;
+use crate::llvm::Context;
+use crate::llvm::Function;
+use crate::llvm::Module;
+use crate::llvm::Type;
 use crate::parser;
 use crate::parser::Program;
-use crate::visitor::Visitor;
-use std::convert::TryInto;
+use crate::parser::Span;
+use crate::visitor::*;
+use std::collections::HashMap;
 use std::error::Error;
+use std::ffi::c_void;
+use std::fmt;
 
-const MAIN_FUNCTION: &str = "__main__";
+use self::scope::Scope;
+pub use self::value::Value;
+use self::variable::Variable;
 
-pub trait Compile {
-    fn compile(&mut self) -> Result<(), Box<dyn Error>>;
+#[derive(Clone, Debug)]
+pub enum CompilerError {
+    VoidAssignment,
+    NonIdentifierAssignment {
+        span: Span,
+    },
+    TypeError {
+        expected: parser::Type,
+        actual: parser::Type,
+        span: Span,
+    },
+    EngineInitError,
+    UndefinedIdentifier(String),
+    LLVMError(String),
+    LoadLibaryError(String),
+    WrongOperator {
+        expected: expression::Operator,
+        actual: expression::Operator,
+        span: Span,
+    },
+}
+
+impl fmt::Display for CompilerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let msg = match self {
+            CompilerError::TypeError {
+                expected,
+                actual,
+                span,
+            } => {
+                format!(
+                    "type error expected {}, but got {} at {}",
+                    expected, actual, span
+                )
+            }
+            CompilerError::EngineInitError => "engine init error".to_string(),
+            CompilerError::UndefinedIdentifier(x) => {
+                format!("undefined identifier {}", x)
+            }
+            CompilerError::LLVMError(err) => format!("llvm error: {}", err),
+            CompilerError::LoadLibaryError(lib) => format!("error loading {}", lib),
+            CompilerError::VoidAssignment => "void assignment".to_string(),
+            CompilerError::NonIdentifierAssignment { span } => {
+                format!("non identifier assignment at {}", span)
+            }
+            CompilerError::WrongOperator {
+                expected,
+                actual,
+                span,
+            } => format!(
+                "wrong operator, expected {:#?}, but got {:#?} at {}",
+                expected, actual, span
+            ),
+        };
+        write!(f, "{}", msg)
+    }
+}
+
+impl Error for CompilerError {}
+
+type CompilerResult<T> = Result<T, CompilerError>;
+
+const MAIN_FUNCTION: &str = "main";
+
+pub trait Compile: ProgramVisitor<CompilerResult<Value>> {
+    fn compile(&mut self) -> CompilerResult<Value>;
 }
 
 pub struct Compiler {
+    after_loop_blocks: Vec<llvm::BasicBlock>,
+    maybe_orphaned: Vec<Value>,
     program: Program,
     engine: llvm::Engine,
     context: llvm::Context,
     module: llvm::Module,
     builder: llvm::Builder,
-    fpm: PassManager,
-    opt: bool,
-    stack: Vec<Frame>,
-    after_loop_blocks: Vec<BasicBlock>,
+    pass_manager: llvm::PassManager,
+    optimization: bool,
+    scopes: Vec<Scope>,
+    builtins: HashMap<String, Variable>,
 }
 
-impl Visitor<Value> for Compiler {
-    fn visit_binary(&mut self, expr: &expression::Binary) -> Value {
-        match expr.operator {
-            expression::Operator::Plus => {
-                let l = match self.walk(&expr.left) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Numeric(self.builder.build_fadd(l, r, ""))
-            }
-            expression::Operator::Asterisk => {
-                let l = match self.walk(&expr.left) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Numeric(self.builder.build_fmul(l, r, ""))
-            }
-            expression::Operator::LessOrEqual => {
-                let l = match self.walk(&expr.left) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::LessOrEqual, ""))
-            }
-            expression::Operator::Less => {
-                let l = match self.walk(&expr.left) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::Less, ""))
-            }
-            expression::Operator::Greater => {
-                let l = match self.walk(&expr.left) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::Greater, ""))
-            }
-            expression::Operator::Equal => {
-                let l = match self.walk(&expr.left) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::Equal, ""))
-            }
-            expression::Operator::Minus => {
-                let l = match self.walk(&expr.left) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Numeric(self.builder.build_fsub(l, r, ""))
-            }
-            expression::Operator::Slash => {
-                let l = match self.walk(&expr.left) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Numeric(self.builder.build_fdiv(l, r, ""))
-            }
-            expression::Operator::GreaterOrEqual => {
-                let l = match self.walk(&expr.left) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::GreaterOrEqual, ""))
-            }
-            expression::Operator::NotEqual => {
-                let l = match self.walk(&expr.left) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Bool(self.builder.build_fcmp(l, r, llvm::Cmp::NotEqual, ""))
-            }
-            _ => todo!("{:?}", expr.operator),
-        }
-    }
-
-    fn visit_numeric(&mut self, f: &f64) -> Value {
-        Value::Numeric(self.context.const_double(*f))
-    }
-
-    fn visit_conditional(&mut self, expr: &expression::Conditional) -> Value {
-        let fun = self.builder.get_insert_block().get_parent();
-
-        let then_block = self.context.append_basic_block(&fun, "then");
-        let else_block = self.context.append_basic_block(&fun, "else");
-        let after_if_block = self.context.append_basic_block(&fun, "afterif");
-
-        let predicate = self.walk(&expr.predicate);
-        match predicate {
-            Value::Bool(b) => {
-                self.builder.build_cond_br(&b, &then_block, &else_block);
-                self.builder.position_builder_at_end(&then_block);
-
-                let mut is_break = false;
-                for stmt in &expr.body {
-                    self.walk(stmt);
-
-                    if matches!(stmt, expression::Expression::Break) {
-                        is_break = true;
-                        break;
-                    }
-                }
-
-                if !is_break {
-                    self.builder.create_br(&after_if_block);
-                }
-                self.builder.position_builder_at_end(&else_block);
-                for stmt in &expr.else_body {
-                    self.walk(stmt);
-                }
-                self.builder.create_br(&after_if_block);
-
-                self.builder.position_builder_at_end(&after_if_block);
-
-                Value::Null
-            }
-            _ => todo!("{:?}", predicate),
-        }
-    }
-
-    fn visit_assignment(&mut self, expr: &expression::Assignment) -> Value {
-        let literal = match &*expr.left {
-            expression::Expression::Identifier(literal) => literal,
-            _ => panic!("panic"),
-        };
-
-        let val = self.walk(&expr.right);
-        self.set_var(literal, val);
-
-        if let expression::Expression::FuncDecl(e) = &*expr.right {
-            self.build_function(val, &*e)
-        }
-
-        val
-    }
-
-    fn visit_unary(&mut self, expr: &expression::Unary) -> Value {
-        match expr.operator {
-            expression::Operator::Minus => {
-                let r = match self.walk(&expr.right) {
-                    Value::Numeric(p) => p,
-                    _ => panic!("panic"),
-                };
-
-                Value::Numeric(self.builder.build_fneg(r, ""))
-            }
-            _ => panic!(
-                "operator {:?} is not valid for unary operations",
-                expr.operator
-            ),
-        }
-    }
-
-    fn visit_grouping(&mut self, expr: &expression::Expression) -> Value {
-        self.walk(expr)
-    }
-
-    fn visit_func_call(&mut self, expr: &expression::FuncCall) -> Value {
-        match &*expr.calee {
-            expression::Expression::Identifier(literal) => match literal.as_str() {
-                "print" => {
-                    if expr.args.len() != 1 {
-                        panic!("arity 1 expected");
-                    }
-                    let res = self.walk(&expr.args[0]);
-
-                    match res {
-                        Value::GlobalString(s) => {
-                            let void_type = self.context.void_type();
-                            let i8_pointer_type = self.context.i8_type().pointer_type(0);
-                            let func_type =
-                                self.context
-                                    .function_type(void_type, &[i8_pointer_type], false);
-                            let printf_func = self
-                                .module
-                                .get_function("printf")
-                                .unwrap_or_else(|| self.module.add_function("printf", func_type));
-                            let p = self.builder.build_bitcast(&s, i8_pointer_type, "");
-                            self.builder.build_call(&printf_func, &[p], "");
-                        }
-                        Value::String(s) => {
-                            let void_type = self.context.void_type();
-                            let i8_pointer_type = self.context.i8_type().pointer_type(0);
-                            let func_type =
-                                self.context
-                                    .function_type(void_type, &[i8_pointer_type], false);
-                            let printf_func = self
-                                .module
-                                .get_function("printf")
-                                .unwrap_or_else(|| self.module.add_function("printf", func_type));
-                            let p = self.builder.build_bitcast(&s, i8_pointer_type, "");
-                            self.builder.build_call(&printf_func, &[p], "");
-                            self.builder.build_free(s);
-                        }
-                        _ => panic!("type error, not a string"),
-                    }
-
-                    Value::Null
-                }
-                "string" => {
-                    if expr.args.len() != 1 {
-                        panic!("arity 1 expected");
-                    }
-                    let res = self.walk(&expr.args[0]);
-
-                    match res {
-                        Value::Numeric(f) => {
-                            let i8_pointer_type = self.context.i8_type().pointer_type(0);
-
-                            let func_type = self.context.function_type(
-                                i8_pointer_type,
-                                &[i8_pointer_type, i8_pointer_type, self.context.double_type()],
-                                true,
-                            );
-                            let sprintf = self
-                                .module
-                                .get_function("sprintf")
-                                .unwrap_or_else(|| self.module.add_function("sprintf", func_type));
-
-                            let arr_type = self.context.array_type(self.context.i8_type(), 100);
-
-                            let format_str = self.builder.build_global_string_ptr("%f", "");
-
-                            // 							/// CreateEntryBlockAlloca - Create an alloca instruction in the entry block of
-                            // /// the function.  This is used for mutable variables etc.
-                            // static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
-                            //                                           const std::string &VarName) {
-                            //   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
-                            //                  TheFunction->getEntryBlock().begin());
-                            //   return TmpB.CreateAlloca(Type::getDoubleTy(TheContext), 0,
-                            //                            VarName.c_str());
-                            let arr = self.builder.build_malloc(arr_type, "");
-                            let p = self.builder.build_bitcast(&arr, i8_pointer_type, "");
-                            self.builder.build_call(&sprintf, &[p, format_str, f], "");
-
-                            Value::String(arr)
-                        }
-                        _ => panic!("type error, not a string"),
-                    }
-                }
-                "len" => {
-                    let args: Vec<llvm::Value> = expr
-                        .args
-                        .iter()
-                        .map(|arg| match self.walk(arg) {
-                            Value::Vec(n) => n,
-                            Value::Numeric(n) => n,
-                            _ => panic!("{:?}", self.walk(arg)),
-                        })
-                        .collect();
-
-                    let fun_type = self.context.function_type(
-                        self.context.double_type(),
-                        &[self.context.double_type().pointer_type(0)],
-                        false,
-                    );
-
-                    let fun_addr = stdlib::len as usize;
-                    let ptr = self.context.const_u64_to_ptr(
-                        self.context.const_u64(fun_addr.try_into().unwrap()),
-                        fun_type.pointer_type(0),
-                    );
-
-                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
-                }
-                "vecnew" => {
-                    let fun_type = self.context.function_type(
-                        self.context.double_type().pointer_type(0),
-                        &[],
-                        false,
-                    );
-
-                    let fun_addr = stdlib::vecnew as usize;
-                    let ptr = self.context.const_u64_to_ptr(
-                        self.context.const_u64(fun_addr.try_into().unwrap()),
-                        fun_type.pointer_type(0),
-                    );
-                    Value::Vec(self.builder.build_call(&ptr, &[], ""))
-                }
-                "vecset" => {
-                    let args: Vec<llvm::Value> = expr
-                        .args
-                        .iter()
-                        .map(|arg| match self.walk(arg) {
-                            Value::Vec(n) => n,
-                            Value::Numeric(n) => n,
-                            _ => todo!("{:?}", self.walk(arg)),
-                        })
-                        .collect();
-
-                    let fun_type = self.context.function_type(
-                        self.context.double_type().pointer_type(0),
-                        &[
-                            self.context.double_type().pointer_type(0),
-                            self.context.double_type(),
-                            self.context.double_type(),
-                        ],
-                        false,
-                    );
-
-                    let fun_addr = stdlib::vecset as usize;
-                    let ptr = self.context.const_u64_to_ptr(
-                        self.context.const_u64(fun_addr.try_into().unwrap()),
-                        fun_type.pointer_type(0),
-                    );
-
-                    Value::Vec(self.builder.build_call(&ptr, &args, "vecset"))
-                }
-                "sqrt" => {
-                    let args: Vec<llvm::Value> = expr
-                        .args
-                        .iter()
-                        .map(|arg| match self.walk(arg) {
-                            Value::Numeric(n) => n,
-                            _ => panic!("{:?}", self.walk(arg)),
-                        })
-                        .collect();
-
-                    let fun_type = self.context.function_type(
-                        self.context.double_type(),
-                        &[self.context.double_type()],
-                        false,
-                    );
-
-                    let fun_addr = stdlib::sqrt as usize;
-                    let ptr = self.context.const_u64_to_ptr(
-                        self.context.const_u64(fun_addr.try_into().unwrap()),
-                        fun_type.pointer_type(0),
-                    );
-
-                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
-                }
-                "vecget" => {
-                    let args: Vec<llvm::Value> = expr
-                        .args
-                        .iter()
-                        .map(|arg| match self.walk(arg) {
-                            Value::Vec(n) => n,
-                            Value::Numeric(n) => n,
-                            _ => panic!("{:?}", self.walk(arg)),
-                        })
-                        .collect();
-
-                    let fun_type = self.context.function_type(
-                        self.context.double_type(),
-                        &[
-                            self.context.double_type().pointer_type(0),
-                            self.context.double_type(),
-                        ],
-                        false,
-                    );
-
-                    let fun_addr = stdlib::vecget as usize;
-                    let ptr = self.context.const_u64_to_ptr(
-                        self.context.const_u64(fun_addr.try_into().unwrap()),
-                        fun_type.pointer_type(0),
-                    );
-
-                    Value::Numeric(self.builder.build_call(&ptr, &args, ""))
-                }
-                _ => match &self.get_var(literal) {
-                    Some(Value::Function {
-                        typ: _,
-                        val,
-                        return_type,
-                    }) => {
-                        let args: Vec<llvm::Value> = expr
-                            .args
-                            .iter()
-                            .map(|arg| match self.walk(arg) {
-                                Value::Numeric(n) => n,
-                                Value::Ptr(n) => n,
-                                Value::Vec(v) => {
-                                    let fun_type = self.context.function_type(
-                                        self.context.double_type().pointer_type(0),
-                                        &[self.context.double_type().pointer_type(0)],
-                                        false,
-                                    );
-
-                                    let fun_addr = stdlib::veccopy as usize;
-                                    let ptr = self.context.const_u64_to_ptr(
-                                        self.context.const_u64(fun_addr.try_into().unwrap()),
-                                        fun_type.pointer_type(0),
-                                    );
-
-                                    self.builder.build_call(&ptr, &[v], "")
-                                }
-                                Value::Function { val, .. } => val,
-                                Value::GlobalString(s) => s,
-                                _ => todo!("{:?}", self.walk(arg)),
-                            })
-                            .collect();
-
-                        match return_type {
-                            parser::Type::Vector => {
-                                Value::Vec(self.builder.build_call(val, &args, ""))
-                            }
-                            parser::Type::Numeric => {
-                                Value::Numeric(self.builder.build_call(val, &args, ""))
-                            }
-                            parser::Type::String => {
-                                Value::String(self.builder.build_call(val, &args, ""))
-                            }
-                            parser::Type::Function => Value::Function {
-                                val: self.builder.build_call(val, &args, ""),
-                                typ: self
-                                    .context
-                                    .function_type(self.context.void_type(), &[], false)
-                                    .pointer_type(0),
-                                return_type: parser::Type::Null,
-                            },
-                            parser::Type::Null => {
-                                self.builder.build_call(val, &args, "");
-                                Value::Null
-                            }
-                            parser::Type::Ptr => {
-                                Value::Ptr(self.builder.build_call(val, &args, ""))
-                            }
-                        }
-                    }
-                    Some(e) => panic!("unexpected {:?}", e),
-                    None => panic!("undefined function {}", literal),
-                },
-            },
-            _ => panic!("evaluation error"),
-        }
-    }
-
-    fn visit_while(&mut self, expr: &expression::While) -> Value {
-        let predicate = self.walk(&expr.predicate);
-        match predicate {
-            Value::Bool(b) => {
-                let fun = self.builder.get_insert_block().get_parent();
-
-                let loop_block = self.context.append_basic_block(&fun, "loop");
-                let after_loop_block = self.context.append_basic_block(&fun, "afterloop");
-
-                self.builder
-                    .build_cond_br(&b, &loop_block, &after_loop_block);
-
-                self.builder.position_builder_at_end(&loop_block);
-
-                self.after_loop_blocks.push(after_loop_block);
-                let mut is_break = false;
-
-                for stmt in &expr.body {
-                    self.walk(stmt);
-                    if matches!(stmt, expression::Expression::Break) {
-                        is_break = true;
-                        break;
-                    }
-                }
-
-                if !is_break {
-                    let term_pred = self.walk(&expr.predicate);
-
-                    match term_pred {
-                        Value::Bool(b) => {
-                            self.builder
-                                .build_cond_br(&b, &loop_block, &after_loop_block);
-                        }
-                        _ => panic!("type error"),
-                    }
-                    self.builder.position_builder_at_end(&after_loop_block);
-                }
-
-                self.after_loop_blocks.pop();
-            }
-            _ => panic!("type error"),
-        }
-
-        Value::Null
-    }
-
-    fn visit_identifier(&mut self, expr: &str) -> Value {
-        self.get_var(expr)
-            .unwrap_or_else(|| panic!("undefined variable {}", expr))
-        // match &self.get_var(expr) {
-        //     Some(Value::Numeric(n)) => Value::Numeric(self.builder.build_load(n, expr)),
-        //     Some(Value::Function {
-        //         typ,
-        //         val,
-        //         return_type,
-        //     }) => Value::Function {
-        //         typ: *typ,
-        //         val: *val,
-        //         return_type: return_type.clone(),
-        //     },
-        //     Some(Value::Vec(n)) => Value::Vec(*n),
-        //     Some(Value::Pending) | None => panic!("undefined identifier {}", expr),
-        //     _ => todo!("{:?}", &self.get_var(expr)),
-        // }
-    }
-
-    fn visit_string(&mut self, expr: &str) -> Value {
-        let with_newlines = expr.to_string().replace("\\n", "\n");
-        Value::GlobalString(
-            self.builder
-                .build_global_string_ptr(with_newlines.as_str(), ""),
-        )
-    }
-
-    fn visit_bool(&mut self, expr: &bool) -> Value {
-        Value::Bool(self.context.const_bool(*expr))
-    }
-
-    fn visit_break(&mut self) -> Value {
-        let after_loop_block = self.after_loop_blocks.first().unwrap();
-
-        self.builder.build_br(after_loop_block);
-        self.builder.position_builder_at_end(after_loop_block);
-
-        Value::Break
-    }
-
-    fn visit_program(&mut self, program: parser::Program) -> Value {
-        let void_t = self.context.void_type();
-        let sum_type = self.context.function_type(void_t, &[], false);
-        let sum_fun = self.module.add_function(MAIN_FUNCTION, sum_type);
-        self.stack.push(Frame::new(sum_fun));
-        let block = self.context.append_basic_block(&sum_fun, "entry");
-        self.builder.position_builder_at_end(&block);
-
-        for stmt in program.body {
-            self.walk(&stmt);
-        }
-
-        self.builder.build_ret_void();
-
-        sum_fun.verify_function().unwrap_or_else(|_x| {
-            println!("IR Dump:");
-            self.dump_ir();
-            panic!()
-        });
-
-        if self.opt {
-            self.fpm.run(&sum_fun);
-        }
-
-        self.stack.pop();
-
-        Value::Null
-    }
-
-    fn visit_func_decl(&mut self, expr: &expression::FuncDecl) -> Value {
-        let types: Vec<llvm::Type> = expr
-            .params
-            .iter()
-            .map(|arg| self.get_llvm_type(arg.typ))
-            .collect();
-
-        let fun_type =
-            self.context
-                .function_type(self.get_llvm_type(expr.return_type), &types, false);
-        let fun = self.module.add_function("fun", fun_type);
-
-        Value::Function {
-            return_type: expr.return_type,
-            typ: fun_type,
-            val: fun,
-        }
-    }
-
-    fn visit_load(&mut self, name: &str) -> Value {
-        self.context.load_libary_permanently(name);
-        Value::Null
-    }
-
-    fn visit_extern(&mut self, extern_stmt: &expression::Extern) -> Value {
-        let types: Vec<llvm::Type> = extern_stmt
-            .types
-            .iter()
-            .map(|typ| self.get_llvm_type(*typ))
-            .collect();
-
-        let fun_type =
-            self.context
-                .function_type(self.get_llvm_type(extern_stmt.return_type), &types, false);
-        let fun = self
-            .module
-            .add_function(extern_stmt.name.as_str(), fun_type);
-
-        Value::Function {
-            val: fun,
-            typ: fun_type,
-            return_type: extern_stmt.return_type,
+impl Visitor<CompilerResult<Value>> for Compiler {
+    fn walk(&mut self, node: &crate::expression::Node) -> CompilerResult<Value> {
+        let span = node.span.clone();
+        match &node.expression {
+            Expression::Binary(expr) => self.visit_binary(expr, span),
+            Expression::Unary(expr) => self.visit_unary(expr, span),
+            Expression::FuncCall(expr) => self.visit_func_call(expr, span),
+            Expression::Numeric(expr) => self.visit_numeric(expr),
+            Expression::Assignment(expr) => self.visit_assignment(expr, span),
+            Expression::Identifier(expr) => self.visit_identifier(expr),
+            Expression::Conditional(expr) => self.visit_conditional(expr, span),
+            Expression::String(expr) => self.visit_string(expr),
+            Expression::Bool(expr) => self.visit_bool(expr),
+            Expression::Break => self.visit_break(),
+            Expression::While(expr) => self.visit_while(expr, span),
+            Expression::FuncDecl(expr) => self.visit_func_decl(expr),
+            Expression::Load(expr) => self.visit_load(expr),
+            Expression::Extern(expr) => self.visit_extern(expr),
+            Expression::Grouping(expr) => self.visit_grouping(expr),
         }
     }
 }
 
 impl Compile for Compiler {
-    fn compile(&mut self) -> Result<(), Box<dyn Error>> {
-        self.visit_program(self.program.clone());
-        Ok(())
+    fn compile(&mut self) -> CompilerResult<Value> {
+        self.visit_program(self.program.clone())
     }
 }
 
 impl Compiler {
+    fn verify_function(&mut self, fun: Function) -> CompilerResult<()> {
+        if fun.verify_function().is_ok() {
+            Ok(())
+        } else {
+            println!("{}", self.ir_string());
+            Err(CompilerError::LLVMError(self.ir_string()))
+        }
+    }
+
     pub fn dump_ir(&self) {
         println!("{}", self.module);
     }
@@ -700,200 +169,329 @@ impl Compiler {
         format!("{}", self.module)
     }
 
-    fn set_var(&mut self, literal: &str, val: Value) {
-        let typ = match val {
-            Value::Ptr(_) => self.context.void_type().pointer_type(0),
-            Value::Numeric(_) => self.context.double_type(),
-            Value::Vec(_) => self.context.double_type().pointer_type(0),
-            Value::Null => self.context.void_type(),
-            Value::String(_) => self.context.i8_type().pointer_type(0),
-            Value::GlobalString(_) => self.context.i8_type().pointer_type(0),
-            Value::Bool(_) => self.context.i1_type(),
-            Value::Function { typ, .. } => typ.pointer_type(0),
-            Value::Break => self.context.void_type(),
-        };
-
-        let existing_ptr: Option<llvm::Value> = match self.get_var_ptr(literal) {
-            Some(v) => match v {
-                Var::Numeric(v)
-                | Var::String(v)
-                | Var::GlobalString(v)
-                | Var::Vec(v)
-                | Var::Bool(v)
-                | Var::Function { val: v, .. } => Some(v),
-                _ => todo!(),
-            },
-            None => None,
-        };
-        if self.get_var(literal).is_none() && self.stack.len() <= 1 {
-            let ptr = match val {
-                Value::Null => unreachable!(),
-                Value::Numeric(_)
-                | Value::Ptr(_)
-                | Value::String(_)
-                | Value::GlobalString(_)
-                | Value::Break
-                | Value::Vec(_)
-                | Value::Bool(_) => self.module.add_global(typ, literal),
-                Value::Function { val: v, .. } => v,
-            };
-
-            match val {
-                Value::Numeric(_) | Value::GlobalString(_) | Value::Vec(_) => {
-                    ptr.set_initializer(self.context.const_double(0.0));
-                }
-                Value::Ptr(_) => {
-                    ptr.set_initializer(self.context.const_double(0.0));
-                }
-                Value::Null => unreachable!(),
-                Value::String(_) => todo!(),
-                Value::Function { .. } => (),
-                Value::Break => unreachable!(),
-                Value::Bool(_) => {
-                    ptr.set_initializer(self.context.const_bool(false));
-                }
-            }
-
-            let var = match val {
-                Value::Numeric(_) => Var::Numeric(ptr),
-                Value::Ptr(_) => Var::Ptr(ptr),
-                Value::Null => Var::Null,
-                Value::String(_) => Var::String(ptr),
-                Value::GlobalString(_) => Var::GlobalString(ptr),
-                Value::Vec(_) => Var::Vec(ptr),
-                Value::Bool(_) => Var::Bool(ptr),
-                Value::Break => Var::Null,
-                Value::Function {
-                    typ,
-                    return_type,
-                    val,
-                    ..
-                } => Var::Function {
-                    val,
-                    typ,
-                    return_type,
-                },
-            };
-
-            self.stack
-                .last_mut()
-                .unwrap()
-                .set(&self.context, &self.builder, literal, var);
-
-            match val {
-                Value::Numeric(v)
-                | Value::Ptr(v)
-                | Value::String(v)
-                | Value::GlobalString(v)
-                | Value::Vec(v)
-                | Value::Bool(v) => self.builder.create_store(v, &ptr),
-                Value::Function { val: v, .. } => v,
-                _ => todo!("{:?}", val),
-            };
-        } else {
-            let ptr = existing_ptr.unwrap_or_else(|| self.builder.build_alloca(typ, literal));
-
-            let var = match val {
-                Value::Numeric(_) => Var::Numeric(ptr),
-                Value::Ptr(_) => Var::Ptr(ptr),
-                Value::Null => Var::Null,
-                Value::String(_) => Var::String(ptr),
-                Value::GlobalString(_) => Var::GlobalString(ptr),
-                Value::Vec(_) => Var::Vec(ptr),
-                Value::Bool(_) => Var::Bool(ptr),
-                Value::Break => Var::Null,
-                Value::Function {
-                    typ,
-                    return_type,
-                    val,
-                    ..
-                } => Var::Function {
-                    val,
-                    typ,
-                    return_type,
-                },
-            };
-
-            self.stack
-                .last_mut()
-                .unwrap()
-                .set(&self.context, &self.builder, literal, var);
-
-            match val {
-                Value::Numeric(v)
-                | Value::String(v)
-                | Value::GlobalString(v)
-                | Value::Vec(v)
-                | Value::Bool(v) => self.builder.create_store(v, &ptr),
-                Value::Function { val: v, .. } => v,
-                _ => todo!("{:?}", val),
-            };
-        }
-    }
-
-    #[allow(dead_code)]
-    fn remove_var(&mut self, literal: &str) {
-        self.stack.last_mut().unwrap().remove(literal);
-    }
-
-    fn get_var_ptr(&mut self, literal: &str) -> Option<Var> {
-        for frame in self.stack.iter().rev() {
-            if let Some(v) = frame.get(literal) {
-                return Some(*v);
-            };
-        }
-        None
-    }
-
-    fn get_var(&mut self, literal: &str) -> Option<Value> {
-        match self.get_var_ptr(literal) {
-            Some(v) => {
-                let val: llvm::Value = match v {
-                    Var::Numeric(p)
-                    | Var::String(p)
-                    | Var::GlobalString(p)
-                    | Var::Vec(p)
-                    | Var::Ptr(p)
-                    | Var::Bool(p) => self.builder.build_load(&p, ""),
-                    Var::Function { val: p, .. } => p,
-                    _ => todo!(),
-                };
-
-                Some(match v {
-                    Var::Numeric(_) => Value::Numeric(val),
-                    Var::Ptr(_) => Value::Ptr(val),
-                    Var::String(_) => Value::String(val),
-                    Var::GlobalString(_) => Value::GlobalString(val),
-                    Var::Vec(_) => Value::Vec(val),
-                    Var::Bool(_) => Value::Bool(val),
-                    Var::Function {
-                        val,
-                        return_type,
-                        typ,
-                    } => Value::Function {
-                        val,
-                        return_type,
-                        typ,
-                    },
-                    _ => todo!(),
-                })
-            }
-            None => None,
-        }
-    }
-
     pub fn run(&self) {
         self.engine.call(MAIN_FUNCTION);
     }
 
-    pub fn no_opt(&mut self) {
-        self.opt = false;
+    pub fn turn_off_optimization(&mut self) {
+        self.optimization = false;
     }
 
-    fn build_function(&mut self, fun_compiler_val: Value, expr: &expression::FuncDecl) {
+    pub fn new(program: Program) -> CompilerResult<Self> {
+        let context = llvm::Context::new();
+        let module = llvm::Module::new("main", &context);
+        let builder = llvm::Builder::new(&context);
+        let engine = match llvm::Engine::new(&module) {
+            Ok(e) => e,
+            Err(_) => Err(CompilerError::EngineInitError {})?,
+        };
+        let pass_manager = llvm::PassManager::new(&module);
+
+        Ok(Compiler {
+            after_loop_blocks: Vec::new(),
+            maybe_orphaned: Vec::new(),
+            builtins: HashMap::new(),
+            scopes: vec![],
+            program,
+            context,
+            module,
+            builder,
+            engine,
+            pass_manager,
+            optimization: true,
+        })
+    }
+
+    fn init_builtin(&mut self, name: &str, typ: Type, fun: *mut c_void, return_type: parser::Type) {
+        self.context.add_symbol(name, fun);
+        let val = self.module.add_function(name, typ);
+        self.builtins.insert(
+            name.to_string(),
+            Variable::Function {
+                val,
+                typ,
+                return_type,
+            },
+        );
+    }
+
+    fn init_builtins(&mut self) {
+        let string_type = self.context.function_type(
+            self.context.void_type().pointer_type(0),
+            &[self.context.double_type()],
+            false,
+        );
+        self.init_builtin(
+            "string",
+            string_type,
+            stdlib::string as *mut c_void,
+            parser::Type::String,
+        );
+
+        let print_type = self.context.function_type(
+            self.context.void_type(),
+            &[self.context.void_type().pointer_type(0)],
+            false,
+        );
+        self.init_builtin(
+            "print",
+            print_type,
+            stdlib::print as *mut c_void,
+            parser::Type::Void,
+        );
+
+        self.init_builtin(
+            "release_string_reference",
+            self.context.function_type(
+                self.context.void_type(),
+                &[self.context.void_type().pointer_type(0)],
+                false,
+            ),
+            stdlib::release_string_reference as *mut c_void,
+            parser::Type::Void,
+        );
+
+        self.init_builtin(
+            "inc_string_reference",
+            self.context.function_type(
+                self.context.void_type(),
+                &[self.context.void_type().pointer_type(0)],
+                false,
+            ),
+            stdlib::inc_string_reference as *mut c_void,
+            parser::Type::Void,
+        );
+
+        self.init_builtin(
+            "inc_vec_reference",
+            self.context.function_type(
+                self.context.void_type(),
+                &[self.context.void_type().pointer_type(0)],
+                false,
+            ),
+            stdlib::inc_vec_reference as *mut c_void,
+            parser::Type::Void,
+        );
+
+        self.init_builtin(
+            "release_vec_reference",
+            self.context.function_type(
+                self.context.void_type(),
+                &[self.context.void_type().pointer_type(0)],
+                false,
+            ),
+            stdlib::release_vec_reference as *mut c_void,
+            parser::Type::Void,
+        );
+
+        self.init_builtin(
+            "c_string_from_string",
+            self.context.function_type(
+                self.context.i8_type().pointer_type(0),
+                &[self.context.void_type().pointer_type(0)],
+                false,
+            ),
+            stdlib::c_string_from_string as *mut c_void,
+            parser::Type::CString,
+        );
+
+        self.init_builtin(
+            "string_from_c_string",
+            self.context.function_type(
+                self.context.void_type().pointer_type(0),
+                &[self.context.i8_type().pointer_type(0)],
+                false,
+            ),
+            stdlib::string_from_c_string as *mut c_void,
+            parser::Type::String,
+        );
+
+        let vec_new_type =
+            self.context
+                .function_type(self.context.void_type().pointer_type(0), &[], false);
+        self.init_builtin(
+            "vec_new",
+            vec_new_type,
+            stdlib::vec_new as *mut c_void,
+            parser::Type::Vector,
+        );
+
+        let vec_set_type = self.context.function_type(
+            self.context.void_type(),
+            &[
+                self.context.void_type().pointer_type(0),
+                self.context.double_type(),
+                self.context.double_type(),
+            ],
+            false,
+        );
+        self.init_builtin(
+            "vec_set",
+            vec_set_type,
+            stdlib::vec_set as *mut c_void,
+            parser::Type::Void,
+        );
+
+        let vec_get_type = self.context.function_type(
+            self.context.double_type(),
+            &[
+                self.context.void_type().pointer_type(0),
+                self.context.double_type(),
+            ],
+            false,
+        );
+        self.init_builtin(
+            "vec_get",
+            vec_get_type,
+            stdlib::vec_get as *mut c_void,
+            parser::Type::Numeric,
+        );
+
+        let vec_len_type = self.context.function_type(
+            self.context.double_type(),
+            &[self.context.void_type().pointer_type(0)],
+            false,
+        );
+        self.init_builtin(
+            "vec_len",
+            vec_len_type,
+            stdlib::vec_len as *mut c_void,
+            parser::Type::Numeric,
+        );
+
+        let sqrt_type = self.context.function_type(
+            self.context.double_type(),
+            &[self.context.double_type()],
+            false,
+        );
+        let val = self.module.add_function("sqrt", sqrt_type);
+        self.builtins.insert(
+            "sqrt".to_string(),
+            Variable::Function {
+                val,
+                typ: sqrt_type,
+                return_type: parser::Type::Numeric,
+            },
+        );
+    }
+
+    fn set_param(&mut self, name: &str, val: Value) {
+        self.scopes.last_mut().unwrap().set_param(name, val);
+    }
+
+    fn get_param(&self, expr: &str) -> Option<Value> {
+        for scope in self.scopes.iter().rev() {
+            if let Some(val) = scope.get_param(expr) {
+                return Some(*val);
+            }
+        }
+        None
+    }
+}
+
+trait LLVMCompiler: Visitor<CompilerResult<Value>> {
+    fn builder(&self) -> &Builder;
+    fn context(&self) -> &Context;
+    fn module(&self) -> &Module;
+    fn enter_scope(&mut self);
+    fn exit_scope(&mut self) -> CompilerResult<()>;
+    fn after_loop_blocks(&self) -> &Vec<llvm::BasicBlock>;
+    fn get_var(&self, name: &str) -> Option<Variable>;
+    fn get_builtin(&self, name: &str) -> Option<Variable>;
+    fn track_maybe_orphaned(&mut self, val: Value);
+    fn release_maybe_orphaned(&mut self);
+    fn set_var(&mut self, name: &str, val: Variable);
+    fn build_function(
+        &mut self,
+        fun_compiler_val: Value,
+        expr: &expression::FuncDecl,
+    ) -> Result<(), CompilerError>;
+}
+
+impl LLVMCompiler for Compiler {
+    fn builder(&self) -> &Builder {
+        &self.builder
+    }
+
+    fn context(&self) -> &Context {
+        &self.context
+    }
+
+    fn module(&self) -> &Module {
+        &self.module
+    }
+
+    fn enter_scope(&mut self) {
+        self.scopes.push(Scope::new());
+    }
+
+    fn exit_scope(&mut self) -> CompilerResult<()> {
+        let scope = self.scopes.pop().unwrap();
+        self.release_maybe_orphaned();
+        scope.release_references(self.context(), self.module(), self.builder())
+    }
+
+    fn get_var(&self, name: &str) -> Option<Variable> {
+        for scope in self.scopes.iter().rev() {
+            if let Some(val) = scope.get(name) {
+                return Some(*val);
+            }
+        }
+        None
+    }
+
+    fn get_builtin(&self, name: &str) -> Option<Variable> {
+        self.builtins.get(name).copied()
+    }
+
+    fn track_maybe_orphaned(&mut self, val: Value) {
+        self.maybe_orphaned.push(val);
+    }
+
+    fn release_maybe_orphaned(&mut self) {
+        while let Some(val) = self.maybe_orphaned.pop() {
+            match val {
+                Value::Void => todo!(),
+                Value::String(v) => {
+                    let release = self
+                        .module
+                        .get_function("release_string_reference")
+                        .unwrap();
+                    self.builder.build_call(&release, &[v], "");
+                }
+                Value::Numeric(_) => todo!(),
+                Value::Bool(_) => todo!(),
+                Value::Function { .. } => todo!(),
+                Value::Vec(v) => {
+                    let release = self.module.get_function("release_vec_reference").unwrap();
+                    self.builder.build_call(&release, &[v], "");
+                }
+                Value::Break => todo!(),
+                Value::Ptr(_) => todo!(),
+                Value::CString(_) => todo!(),
+            }
+        }
+    }
+
+    fn set_var(&mut self, name: &str, val: Variable) {
+        self.scopes.last_mut().unwrap().set(name, val);
+    }
+
+    fn build_function(
+        &mut self,
+        fun_compiler_val: Value,
+        expr: &expression::FuncDecl,
+    ) -> Result<(), CompilerError> {
         let fun = match fun_compiler_val {
             Value::Function { val, .. } => val,
-            _ => panic!(),
+            Value::Void => todo!(),
+            Value::String(_) => todo!(),
+            Value::Numeric(_) => todo!(),
+            Value::Bool(_) => todo!(),
+            Value::Vec(_) => todo!(),
+            Value::Break => todo!(),
+            Value::Ptr(_) => todo!(),
+            Value::CString(_) => todo!(),
         };
 
         let curr = self.builder.get_insert_block();
@@ -901,58 +499,63 @@ impl Compiler {
         let block = self.context.append_basic_block(&fun, "entry");
         self.builder.position_builder_at_end(&block);
 
-        self.stack.push(Frame::new(fun));
+        self.enter_scope();
 
         for (i, param) in expr.params.iter().enumerate() {
-            self.set_var(
-                param.name.as_str(),
-                match param.typ {
-                    parser::Type::Vector => Value::Vec(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Numeric => Value::Numeric(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Ptr => Value::Ptr(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::String => Value::String(fun.get_param(i.try_into().unwrap())),
-                    parser::Type::Null => Value::Null,
-                    parser::Type::Function => Value::Function {
-                        val: fun.get_param(i.try_into().unwrap()),
-                        typ: self
-                            .context
-                            .function_type(self.context.void_type(), &[], false)
-                            .pointer_type(0),
-                        return_type: parser::Type::Null,
-                    },
-                },
-            )
+            let val = fun.get_param(i.try_into().unwrap());
+
+            let val = match param.typ {
+                parser::Type::String => {
+                    let release = self.module.get_function("inc_vec_reference").unwrap();
+                    self.builder.build_call(&release, &[val], "");
+
+                    Value::String(val)
+                }
+                parser::Type::Numeric => Value::Numeric(val),
+                parser::Type::Bool => Value::Bool(val),
+                parser::Type::Vector => {
+                    let release = self.module.get_function("inc_vec_reference").unwrap();
+                    self.builder.build_call(&release, &[val], "");
+
+                    Value::Vec(val)
+                }
+                parser::Type::Void => todo!(),
+                parser::Type::Function => todo!(),
+                parser::Type::Ptr => todo!(),
+                parser::Type::CString => todo!(),
+            };
+            self.set_param(param.name.as_str(), val);
         }
 
-        let mut last_val = Value::Null;
+        let mut last_val = Value::Void;
+
         for stmt in expr.body.clone() {
-            last_val = self.walk(&stmt);
+            self.release_maybe_orphaned();
+            last_val = self.walk(&stmt)?;
         }
-
-        let frame = self.stack.pop().unwrap();
 
         let ret_val = match last_val {
-            Value::Null => None,
+            Value::Void => None,
             Value::Numeric(n) => Some(n),
             Value::Vec(n) => {
-                let fun_type = self.context.function_type(
-                    self.context.double_type().pointer_type(0),
-                    &[self.context.double_type().pointer_type(0)],
-                    false,
-                );
-
-                let fun_addr = stdlib::veccopy as usize;
-                let ptr = self.context.const_u64_to_ptr(
-                    self.context.const_u64(fun_addr.try_into().unwrap()),
-                    fun_type.pointer_type(0),
-                );
-
-                Some(self.builder.build_call(&ptr, &[n], ""))
+                let release = self.module.get_function("inc_vec_reference").unwrap();
+                self.builder.build_call(&release, &[n], "");
+                Some(n)
             }
-            _ => todo!("{:?}", last_val),
+            Value::String(n) => {
+                let release = self.module.get_function("inc_string_reference").unwrap();
+                self.builder.build_call(&release, &[n], "");
+
+                Some(n)
+            }
+            Value::Bool(_) => todo!(),
+            Value::Function { .. } => todo!(),
+            Value::Break => todo!(),
+            Value::Ptr(_) => todo!(),
+            Value::CString(_) => todo!(),
         };
 
-        frame.dealloc(&self.context, &self.builder);
+        self.exit_scope()?;
 
         match ret_val {
             Some(v) => self.builder.build_ret(v),
@@ -961,49 +564,16 @@ impl Compiler {
 
         self.builder.position_builder_at_end(&curr);
 
-        fun.verify_function().unwrap_or_else(|_x| {
-            println!("IR Dump:");
-            self.dump_ir();
-            panic!()
-        });
+        self.verify_function(fun)?;
 
-        if self.opt {
-            self.fpm.run(&fun);
+        if self.optimization {
+            self.pass_manager.run(&fun);
         }
+
+        Ok(())
     }
 
-    fn get_llvm_type(&self, typ: parser::Type) -> llvm::Type {
-        match typ {
-            parser::Type::Vector => self.context.double_type().pointer_type(0),
-            parser::Type::Numeric => self.context.double_type(),
-            parser::Type::Function => self
-                .context
-                .function_type(self.context.void_type(), &[], false)
-                .pointer_type(0),
-            parser::Type::Null => self.context.void_type(),
-            parser::Type::Ptr => self.context.void_type().pointer_type(0),
-            parser::Type::String => self.context.i8_type().pointer_type(0),
-        }
-    }
-
-    pub fn new(program: Program) -> Self {
-        let context = llvm::Context::new();
-        let module = llvm::Module::new("main", &context);
-        let builder = llvm::Builder::new(&context);
-        let engine = llvm::Engine::new(&module);
-
-        let fpm = llvm::PassManager::new(&module);
-
-        Compiler {
-            program,
-            context,
-            module,
-            builder,
-            engine,
-            stack: vec![],
-            after_loop_blocks: vec![],
-            fpm,
-            opt: true,
-        }
+    fn after_loop_blocks(&self) -> &Vec<llvm::BasicBlock> {
+        &self.after_loop_blocks
     }
 }

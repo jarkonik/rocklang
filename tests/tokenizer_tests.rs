@@ -1,6 +1,12 @@
-use rocklang::token::Token;
+use rocklang::token::TokenKind;
 use rocklang::tokenizer::TokenizerError;
 use rocklang::tokenizer::{Tokenize, Tokenizer};
+
+macro_rules! assert_token_kind_of {
+    ($expected: pat, $actual: expr) => {
+        assert!(matches!($actual.kind, $expected));
+    };
+}
 
 #[test]
 fn it_tokenizes_all_tokens() {
@@ -10,44 +16,44 @@ fn it_tokenizes_all_tokens() {
          / identifier identifier123 23123.321 123 <= >= :",
     ));
     let tokens = tokenizer.tokenize().unwrap();
-    assert_eq!(Token::Less, tokens[0]);
-    assert_eq!(Token::Greater, tokens[1]);
-    assert_eq!(Token::LeftParen, tokens[2]);
-    assert_eq!(Token::RightParen, tokens[3]);
-    assert_eq!(Token::Plus, tokens[4]);
-    assert_eq!(Token::Minus, tokens[5]);
-    assert_eq!(Token::Asterisk, tokens[6]);
-    assert_eq!(Token::Percent, tokens[7]);
-    assert_eq!(Token::String(String::from("test")), tokens[8]);
-    assert_eq!(Token::Exclamation, tokens[9]);
-    assert_eq!(Token::NotEqual, tokens[10]);
-    assert_eq!(Token::Or, tokens[11]);
-    assert_eq!(Token::And, tokens[12]);
-    assert_eq!(Token::Equal, tokens[13]);
-    assert_eq!(Token::DoubleEqual, tokens[14]);
-    assert_eq!(Token::Arrow, tokens[15]);
-    assert_eq!(Token::LCurly, tokens[16]);
-    assert_eq!(Token::RCurly, tokens[17]);
-    assert_eq!(Token::Comma, tokens[18]);
-    assert_eq!(Token::Slash, tokens[19]);
-    assert_eq!(Token::Identifier(String::from("identifier")), tokens[20]);
-    assert_eq!(Token::Identifier(String::from("identifier123")), tokens[21]);
-    assert_eq!(Token::Numeric(23123.321), tokens[22]);
-    assert_eq!(Token::Numeric(123.0), tokens[23]);
-    assert_eq!(Token::LessOrEqual, tokens[24]);
-    assert_eq!(Token::GreaterOrEqual, tokens[25]);
-    assert_eq!(Token::Colon, tokens[26]);
-    assert_eq!(Token::Eof, tokens[27]);
+    assert_token_kind_of!(TokenKind::Less, tokens[0]);
+    assert_token_kind_of!(TokenKind::Greater, tokens[1]);
+    assert_token_kind_of!(TokenKind::LeftParen, tokens[2]);
+    assert_token_kind_of!(TokenKind::RightParen, tokens[3]);
+    assert_token_kind_of!(TokenKind::Plus, tokens[4]);
+    assert_token_kind_of!(TokenKind::Minus, tokens[5]);
+    assert_token_kind_of!(TokenKind::Asterisk, tokens[6]);
+    assert_token_kind_of!(TokenKind::Percent, tokens[7]);
+    assert_token_kind_of!(TokenKind::String(_), tokens[8]);
+    assert_token_kind_of!(TokenKind::Exclamation, tokens[9]);
+    assert_token_kind_of!(TokenKind::NotEqual, tokens[10]);
+    assert_token_kind_of!(TokenKind::Or, tokens[11]);
+    assert_token_kind_of!(TokenKind::And, tokens[12]);
+    assert_token_kind_of!(TokenKind::Equal, tokens[13]);
+    assert_token_kind_of!(TokenKind::DoubleEqual, tokens[14]);
+    assert_token_kind_of!(TokenKind::Arrow, tokens[15]);
+    assert_token_kind_of!(TokenKind::LCurly, tokens[16]);
+    assert_token_kind_of!(TokenKind::RCurly, tokens[17]);
+    assert_token_kind_of!(TokenKind::Comma, tokens[18]);
+    assert_token_kind_of!(TokenKind::Slash, tokens[19]);
+    assert_token_kind_of!(TokenKind::Identifier(_), tokens[20]);
+    assert_token_kind_of!(TokenKind::Identifier(_), tokens[21]);
+    assert_token_kind_of!(TokenKind::Numeric(_), tokens[22]);
+    assert_token_kind_of!(TokenKind::Numeric(_), tokens[23]);
+    assert_token_kind_of!(TokenKind::LessOrEqual, tokens[24]);
+    assert_token_kind_of!(TokenKind::GreaterOrEqual, tokens[25]);
+    assert_token_kind_of!(TokenKind::Colon, tokens[26]);
+    assert_token_kind_of!(TokenKind::Eof, tokens[27]);
     assert_eq!(28, tokens.len());
 }
 
 #[test]
 fn it_returns_error_for_unexpected_character() {
     let mut tokenizer = Tokenizer::new(String::from("~"));
-    assert_eq!(
+    assert!(matches!(
+        tokenizer.tokenize(),
         Err(TokenizerError { chr: '~', line: 1 }),
-        tokenizer.tokenize()
-    );
+    ));
 }
 
 #[test]

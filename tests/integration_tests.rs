@@ -7,10 +7,10 @@ use std::process::Command;
 fn prime_sieve() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("rocklang")?;
 
-    cmd.arg("examples/sieve.rc");
+    cmd.arg("examples/sieve.rck");
     cmd.assert()
         .success()
-        .stdout(predicate::eq("2.000000\n3.000000\n5.000000\n7.000000\n").normalize());
+        .stdout(predicate::eq("2\n3\n5\n7\n").normalize());
 
     Ok(())
 }
@@ -20,7 +20,7 @@ fn prime_sieve() -> Result<(), Box<dyn std::error::Error>> {
 fn mandelbrot() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("rocklang")?;
 
-    cmd.arg("examples/mandelbrot.rc");
+    cmd.arg("examples/mandelbrot.rck");
     cmd.assert().success().stdout(
         predicate::eq(
             "...............*..............
@@ -66,10 +66,10 @@ fn mandelbrot() -> Result<(), Box<dyn std::error::Error>> {
 fn ffi() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("rocklang")?;
 
-    cmd.arg("examples/ffi.rc");
+    cmd.arg("examples/ffi.rck");
     cmd.assert()
         .success()
-        .stdout(predicate::eq("2 + 3 is 5.000000\n").normalize());
+        .stdout(predicate::eq("2 + 3 is 5\n").normalize());
 
     Ok(())
 }

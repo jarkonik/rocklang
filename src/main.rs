@@ -1,3 +1,4 @@
+use anyhow::Result;
 use rocklang::compiler::{Compile, Compiler};
 
 use rocklang::parser::{Parse, Parser};
@@ -6,7 +7,7 @@ use std::error::Error;
 use std::fmt;
 use std::{env, fs};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct InputError {}
 
 impl fmt::Display for InputError {
@@ -18,10 +19,10 @@ impl fmt::Display for InputError {
 impl Error for InputError {}
 
 #[cfg(not(tarpaulin_include))]
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        return Err(Box::new(InputError {}));
+        Err(InputError {})?;
     }
     let filename = &args[1];
 
@@ -47,20 +48,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ast = parser.parse()?;
 
     if dump_ast {
-        let json = serde_json::to_string_pretty(&ast).unwrap();
+        let json = serde_json::to_string_pretty(&ast).expect("Serialization error");
         println!("{}", json);
         return Ok(());
     }
 
-    // let mut evaluator = Evaluator::new(ast);
-    // evaluator.evaluate();
-
-    let mut compiler = Compiler::new(ast);
+    let mut compiler = Compiler::new(ast).expect("Compiler initialization error");
     if no_opt {
-        compiler.no_opt();
+        compiler.turn_off_optimization();
     }
 
     compiler.compile()?;
+
     if dump_ir {
         compiler.dump_ir();
     } else {
