@@ -66,6 +66,10 @@ macro_rules! mock_compiler {
                 fn visit_f64(&mut self, expr: &f64) -> CompilerResult<Value>;
             }
 
+            impl I32Visitor<CompilerResult<Value>> for Compiler {
+                fn visit_i32(&mut self, expr: &i32) -> CompilerResult<Value>;
+            }
+
             impl BinaryVisitor<CompilerResult<Value>> for Compiler {
                 fn visit_binary(&mut self, expr: &expression::Binary, span: Span) -> CompilerResult<Value>;
             }

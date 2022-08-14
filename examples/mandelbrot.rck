@@ -1,40 +1,40 @@
-WIDTH = 30
-HEIGHT = 30
+WIDTH = 30.0
+HEIGHT = 30.0
 
 complexprint = (c: vec): void => {
-	print(string(vec_get(c, 0)))
+	print(string(vec_get(c, 0.0)))
 	print("+")
-	print(string(vec_get(c, 1)))
+	print(string(vec_get(c, 1.0)))
 	print("i")
 	print("\n")
 }
 
 complexadd = (a: vec, b: vec): vec => {
-	r = vec_get(a, 0) + vec_get(b, 0)
-	img = vec_get(a, 1) + vec_get(b, 1)
+	r = vec_get(a, 0.0) + vec_get(b, 0.0)
+	img = vec_get(a, 1.0) + vec_get(b, 1.0)
 
 	res = vec_new()
-	vec_set(res, 0, r)
-	vec_set(res, 1, img)
+	vec_set(res, 0.0, r)
+	vec_set(res, 1.0, img)
 
 	res
 }
 
 
 complexmul = (a: vec, b: vec): vec => {
-	r = vec_get(a, 0) * vec_get(b, 0) - vec_get(a, 1) * vec_get(b, 1)
-	img = vec_get(a, 0) * vec_get(b, 1) + vec_get(a, 1) * vec_get(b, 0)
+	r = vec_get(a, 0.0) * vec_get(b, 0.0) - vec_get(a, 1.0) * vec_get(b, 1.0)
+	img = vec_get(a, 0.0) * vec_get(b, 1.0) + vec_get(a, 1.0) * vec_get(b, 0.0)
 
 	res = vec_new()
-	vec_set(res, 0, r)
-	vec_set(res, 1, img)
+	vec_set(res, 0.0, r)
+	vec_set(res, 1.0, img)
 
 	res
 }
 
-y = 0
+y = 0.0
 while y < HEIGHT {
-	x = 0
+	x = 0.0
 	while x < WIDTH {
 		c = vec_new()
 		halfwidth = WIDTH * 0.5
@@ -42,36 +42,36 @@ while y < HEIGHT {
 
 		rx = y - halfwidth
 		ry = x - halfheight
-		vec_set(c, 0, rx * 0.1)
-		vec_set(c, 1, ry * 0.1)
+		vec_set(c, 0.0, rx * 0.1)
+		vec_set(c, 1.0, ry * 0.1)
 
-		i = 0
+		i = 0.0
 
 		acc = vec_new()
-		vec_set(acc, 0, 0)
-		vec_set(acc, 1, 0)
+		vec_set(acc, 0.0, 0.0)
+		vec_set(acc, 1.0, 0.0)
 
-		isstable = 1
+		isstable = 1.0
 
-		while i < 50 {
+		while i < 50.0 {
 			acc = complexadd(complexmul(acc, acc), c)
-			if sqrt(vec_get(acc, 0) * vec_get(acc, 0) + vec_get(acc, 1) * vec_get(acc, 1)) > 2 {
-				isstable = 0
+			if sqrt(vec_get(acc, 0.0) * vec_get(acc, 0.0) + vec_get(acc, 1.0) * vec_get(acc, 1.0)) > 2.0 {
+				isstable = 0.0
 			}
-			if sqrt(vec_get(acc, 0) * vec_get(acc, 0) + vec_get(acc, 1) * vec_get(acc, 1)) < -2 {
-				isstable = 0
+			if sqrt(vec_get(acc, 0.0) * vec_get(acc, 0.0) + vec_get(acc, 1.0) * vec_get(acc, 1.0)) < -2.0 {
+				isstable = 0.0
 			}
-			i = i + 1
+			i = i + 1.0
 		}
 
-		if isstable == 1 {
+		if isstable == 1.0 {
 			print("*")
 		} else {
 			print(".")
 		}
 
-		x = x + 1
+		x = x + 1.0
 	}
-	y = y + 1
+	y = y + 1.0
 	print("\n")
 }

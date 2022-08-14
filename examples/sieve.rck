@@ -1,40 +1,40 @@
 mem_set = (vec: vec, val: f64, n: f64): vec => {
-	i = 0
+	i = 0.0
 	while i < n {
 		vec_set(vec, i, val)
-		i = i + 1
+		i = i + 1.0
 	}
 	vec
 }
 
 sieve = (n: f64): void => {
 	v = vec_new()
-	prime = mem_set(v, 1, n + 1)
+	prime = mem_set(v, 1.0, n + 1.0)
 
-	p = 2
+	p = 2.0
 
 	while p * p <= n {
-		if vec_get(prime, p) == 1 {
+		if vec_get(prime, p) == 1.0 {
 			i = p * p
 			while i <= n {
-				vec_set(prime, i, 0)
+				vec_set(prime, i, 0.0)
 				i = i + p
 			}
 		}
 
-		p = p + 1
+		p = p + 1.0
 	}
 
-	p = 2
+	p = 2.0
 
 	while p <= n {
-		if vec_get(prime, p) == 1 {
+		if vec_get(prime, p) == 1.0 {
 			print(string(p))
 			print("\n")
 		}
 
-		p = p + 1
+		p = p + 1.0
 	}
 }
 
-sieve(10)
+sieve(10.0)
