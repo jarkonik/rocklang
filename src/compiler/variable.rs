@@ -3,7 +3,7 @@ use crate::{
     parser,
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Variable {
     String(llvm::Value),
     Numeric(llvm::Value),

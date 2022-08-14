@@ -44,31 +44,12 @@ impl Error for ParserError {}
 
 type Result<T> = std::result::Result<T, ParserError>;
 
-#[derive(Copy, Clone, Serialize, Debug)]
-pub enum Type {
-    Numeric,
-    Bool,
-    Vector,
-    Void,
-    Function,
-    Ptr,
-    String,
-    CString,
-}
+#[derive(Clone, Serialize, Debug)]
+pub struct Type(String);
 
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let name = match self {
-            Type::Numeric => "Numeric",
-            Type::Bool => "Bool",
-            Type::Vector => "Vector",
-            Type::Void => "Void",
-            Type::Function => "Function",
-            Type::Ptr => "Ptr",
-            Type::String => "String",
-            Type::CString => "CString",
-        };
-        write!(f, "{}", name)
+        write!(f, "{}", self.0)
     }
 }
 
@@ -423,7 +404,7 @@ impl Parser {
                     let token = self.advance().clone();
                     match token.kind {
                         TokenKind::Identifier(ref s) => {
-                            types.push(self.type_from_literal(s)?);
+                            types.push(self.type_from_literal(s));
                         }
                         TokenKind::Comma => (),
                         TokenKind::Greater => {
@@ -499,7 +480,7 @@ impl Parser {
                                     TokenKind::Identifier(type_literal) => {
                                         params.push(Param {
                                             name: name_literal.to_string(),
-                                            typ: self.type_from_literal(&type_literal)?,
+                                            typ: self.type_from_literal(&type_literal),
                                         });
                                     }
                                     _ => {
@@ -535,17 +516,7 @@ impl Parser {
                 }
 
                 let return_type = match &self.advance().kind {
-                    TokenKind::Identifier(type_literal) => match type_literal.as_str() {
-                        "number" => Type::Numeric,
-                        "vec" => Type::Vector,
-                        "void" => Type::Void,
-                        _ => {
-                            return Err(ParserError::SyntaxError {
-                                token: self.previous().clone(),
-                                backtrace: Backtrace::new(),
-                            })
-                        }
-                    },
+                    TokenKind::Identifier(type_literal) => self.type_from_literal(type_literal),
                     _ => {
                         return Err(ParserError::SyntaxError {
                             token: self.previous().clone(),
@@ -720,20 +691,8 @@ impl Parser {
         self.previous()
     }
 
-    fn type_from_literal(&mut self, type_literal: &str) -> Result<Type> {
-        match type_literal {
-            "void" => Ok(Type::Void),
-            "string" => Ok(Type::String),
-            "cstring" => Ok(Type::CString),
-            "number" => Ok(Type::Numeric),
-            "vec" => Ok(Type::Vector),
-            "fun" => Ok(Type::Function),
-            "ptr" => Ok(Type::Ptr),
-            _ => Err(ParserError::SyntaxError {
-                token: self.previous().clone(),
-                backtrace: Backtrace::new(),
-            }),
-        }
+    fn type_from_literal(&mut self, type_literal: &str) -> Type {
+        Type(type_literal.to_string())
     }
 
     fn at_end(&mut self) -> bool {

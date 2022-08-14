@@ -2,7 +2,7 @@ use crate::llvm::Context;
 use crate::llvm::{self};
 use crate::parser;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Void,
     String(llvm::Value),
