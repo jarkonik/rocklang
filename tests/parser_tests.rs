@@ -30,13 +30,31 @@ fn it_parses_addition() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Numeric":5.2
-                        },
-                        "operator":"Plus",
-                        "right": {
-                            "Numeric":10.0
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric":5.2
+                                }
+                            },
+                            "operator":"Plus",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric":10.0
+                                }
+                            }
                         }
                     }
                 }
@@ -277,33 +295,63 @@ fn it_parses_conditionals() {
         json!(
             [
                 {
-                    "Conditional": {
-                        "predicate": {
-                            "Binary": {
-                                "left":{
-                                    "Identifier": "x"
-                                },
-                                "operator": "Less",
-                                "right":{
-                                    "Numeric": 10.0
-                                }
-                            }
-                        },
-                        "body": [
-                            {
-                                "FuncCall": {
-                                    "args": [
-                                        {
-                                        "String": "hello"
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Conditional": {
+                            "predicate": {
+                                "Binary": {
+                                    "left":{
+                                        "span": {
+                                            "column": 0,
+                                            "line": 0
+                                        },
+                                        "expression": {
+                                            "Identifier": "x"
                                         }
-                                    ],
-                                    "calee": {
-                                        "Identifier": "print"
+                                    },
+                                    "operator": "Less",
+                                    "right":{
+                                        "span": {
+                                            "column": 0,
+                                            "line": 0
+                                        },
+                                        "expression": {
+                                            "Numeric": 10.0
+                                        }
                                     }
                                 }
-                            }
-                        ],
-                        "else_body": []
+                            },
+                            "body": [
+                                {
+                                    "FuncCall": {
+                                        "args": [
+                                            {
+                                                "span": {
+                                                    "column": 0,
+                                                    "line": 0
+                                                },
+                                                "expression": {
+                                                    "String": "hello"
+                                                }
+                                            }
+                                        ],
+                                        "calee": {
+                                            "span": {
+                                                "column": 0,
+                                                "line": 0
+                                            },
+                                            "expression": {
+                                                "Identifier": "print"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "else_body": []
+                        }
                     }
                 }
             ]
@@ -342,46 +390,88 @@ fn it_parses_conditionals_with_else() {
         json!(
             [
                 {
-                    "Conditional": {
-                        "predicate": {
-                            "Binary": {
-                                "left":{
-                                    "Identifier": "x"
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Conditional": {
+                            "predicate": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
                                 },
-                                "operator": "Less",
-                                "right":{
-                                    "Numeric": 10.0
-                                }
-                            }
-                        },
-                        "body": [
-                            {
-                                "FuncCall": {
-                                    "args": [
-                                        {
-                                        "String": "hello"
+                                "expression": {
+                                    "Binary": {
+                                        "left":{
+                                            "span": {
+                                                "column": 0,
+                                                "line": 0
+                                            },
+                                            "expression": {
+                                                "Identifier": "x"
+                                            }
+                                        },
+                                        "operator": "Less",
+                                        "right":{
+                                            "span": {
+                                                "column": 0,
+                                                "line": 0
+                                            },
+                                            "expression": {
+                                                "Numeric": 10.0
+                                            }
                                         }
-                                    ],
-                                    "calee": {
-                                        "Identifier": "print"
                                     }
                                 }
-                            }
-                        ],
-                        "else_body": [
-                            {
-                                "FuncCall": {
-                                    "args": [
-                                        {
-                                        "String": "else"
+                            },
+                            "body": [
+                                {
+                                    "FuncCall": {
+                                        "args": [
+                                            {
+                                                "span": {
+                                                    "column": 0,
+                                                    "line": 0
+                                                },
+                                                "expression": {
+                                                    "String": "hello"
+                                                }
+                                            }
+                                        ],
+                                        "calee": {
+                                            "span": {
+                                                "column": 0,
+                                                "line": 0
+                                            },
+                                            "expression": {
+                                                "Identifier": "print"
+                                            }
                                         }
-                                    ],
-                                    "calee": {
-                                        "Identifier": "print"
                                     }
                                 }
-                            }
-                        ]
+                            ],
+                            "else_body": [
+                                {
+                                    "expression": {
+                                        "FuncCall": {
+                                            "args": [
+                                                {
+                                                    "expression": {
+                                                        "String": "else"
+                                                    }
+                                                }
+                                            ],
+                                            "calee": {
+                                                    "expression": {
+                                                        "Identifier": "print"
+                                                    }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             ]
@@ -482,12 +572,18 @@ fn it_parses_assignments() {
         json!(
             [
                 {
-                    "Assignment": {
-                        "left": {
-                            "Identifier": "x"
-                        },
-                        "right": {
-                            "Numeric": 10.0
+                    "expression": {
+                        "Assignment": {
+                            "left": {
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            },
+                            "right": {
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            }
                         }
                     }
                 }
@@ -513,13 +609,31 @@ fn it_parses_binary_equal() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Identifier": "x"
-                        },
-                        "operator": "Equal",
-                        "right": {
-                            "Numeric": 10.0
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            },
+                            "operator": "Equal",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            }
                         }
                     }
                 }
@@ -595,13 +709,31 @@ fn it_parses_less_or_equal() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Identifier": "x"
-                        },
-                        "operator": "LessOrEqual",
-                        "right": {
-                            "Numeric": 10.0
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            },
+                            "operator": "LessOrEqual",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            }
                         }
                     }
                 }
@@ -627,13 +759,31 @@ fn it_parses_less() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Identifier": "x"
-                        },
-                        "operator": "Less",
-                        "right": {
-                            "Numeric": 10.0
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            },
+                            "operator": "Less",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            }
                         }
                     }
                 }
@@ -659,13 +809,31 @@ fn it_parses_greater() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Identifier": "x"
-                        },
-                        "operator": "Greater",
-                        "right": {
-                            "Numeric": 10.0
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            },
+                            "operator": "Greater",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            }
                         }
                     }
                 }
@@ -691,13 +859,31 @@ fn it_parses_greater_or_equal() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Identifier": "x"
-                        },
-                        "operator": "GreaterOrEqual",
-                        "right": {
-                            "Numeric": 10.0
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            },
+                            "operator": "GreaterOrEqual",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            }
                         }
                     }
                 }
@@ -823,15 +1009,27 @@ fn it_parses_multiplication() {
         json!(
             [
                 {
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
                     "expression": {
                         "Binary": {
                             "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
                                 "expression": {
                                     "Numeric": 10.0
                                 }
                             },
                             "operator": "Asterisk",
                             "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
                                 "expression": {
                                     "Identifier": "x"
                                 }
@@ -861,15 +1059,27 @@ fn it_parses_division() {
         json!(
             [
                 {
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
                     "expression": {
                         "Binary": {
                             "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
                                 "expression": {
                                     "Numeric": 10.0
                                 }
                             },
                             "operator": "Slash",
                             "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
                                 "expression": {
                                     "Identifier": "x"
                                 }
@@ -1301,11 +1511,23 @@ fn it_parses_func_declaration_with_multiple_params() {
                                         "FuncCall": {
                                             "args": [
                                                 {
-                                                    "String": "hello"
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                    "expression": {
+                                                        "String": "hello"
+                                                    }
                                                 }
                                             ],
                                             "calee": {
-                                                "Identifier": "print"
+                                                "span": {
+                                                    "column": 0,
+                                                    "line": 0
+                                                },
+                                                "expression": {
+                                                    "Identifier": "print"
+                                                }
                                             }
 
                                         }
@@ -1666,16 +1888,34 @@ fn it_parses_func_call_with_one_arg() {
         json!(
             [
                 {
-                    "FuncCall": {
-                        "args": [
-                            {
-                                "String": "hello"
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "FuncCall": {
+                            "args": [
+                                {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "String": "hello"
+                                    }
+                                }
+                            ],
+                            "calee": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "print"
+                                }
                             }
-                        ],
-                        "calee": {
-                            "Identifier": "print"
-                        }
 
+                        }
                     }
                 }
             ]
@@ -1703,19 +1943,42 @@ fn it_parses_func_call_with_two_args() {
         json!(
             [
                 {
-                    "FuncCall": {
-                        "args": [
-                            {
-                                "String": "hello"
-                            },
-                            {
-                                "Numeric": 10.0
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "FuncCall": {
+                            "args": [
+                                {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "String": "hello"
+                                    }
+                                },
+                                {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "Numeric": 10.0
+                                    }
+                                }
+                            ],
+                            "calee": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "print"
+                                }
                             }
-                        ],
-                        "calee": {
-                            "Identifier": "print"
                         }
-
                     }
                 }
             ]
@@ -1769,8 +2032,20 @@ fn it_parses_grouping_expression() {
         json!(
             [
                 {
-                    "Grouping": {
-                        "String": "hello"
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Grouping": {
+                            "span": {
+                                "column": 0,
+                                "line": 0
+                            },
+                            "expression": {
+                                "String": "hello"
+                            }
+                        }
                     }
                 }
             ]
@@ -1840,7 +2115,13 @@ fn it_parses_false_bool_literal() {
         json!(
             [
                 {
-                    "Bool": false
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Bool": false
+                    }
                 }
             ]
         ),
@@ -1856,10 +2137,13 @@ fn it_parses_break_expression() {
     let json = serde_json::to_value(&ast).unwrap();
 
     assert_json_eq!(
-        json!([{ "expression": "Break", "span": {
-        "column": 0,
-        "line": 0
-    } }]),
+        json!([{
+            "expression": "Break",
+            "span": {
+                "column": 0,
+                "line": 0
+            }
+        }]),
         json
     )
 }
