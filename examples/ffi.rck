@@ -2,5 +2,5 @@ load("./tests/rockffitestlib.so")
 rockffitestlib = extern<f64, f64, f64>("rockffitest")
 
 print("2 + 3 is ")
-print(string(rockffitestlib(2, 3)))
+print(string(rockffitestlib(2.0, 3.0)))
 print("\n")
