@@ -6,6 +6,20 @@ use serde::Serialize;
 use std::error::Error;
 use std::fmt::Display;
 
+macro_rules! consume {
+    ($self: ident,$kind: pat) => {{
+        let token = $self.advance();
+        if matches!(token.kind, $kind) {
+            Ok(())
+        } else {
+            Err(ParserError::SyntaxError {
+                token: token.clone(),
+                backtrace: Backtrace::new(),
+            })
+        }
+    }};
+}
+
 #[derive(Clone, Debug)]
 pub enum ParserError {
     SyntaxError { token: Token, backtrace: Backtrace },
@@ -594,18 +608,16 @@ impl Parser {
                     let mut args: Vec<Node> = Vec::new();
 
                     loop {
-                        match self.peek().kind {
-                            TokenKind::Comma => {
-                                self.advance();
-                            }
-                            TokenKind::RightParen => {
-                                self.advance();
-                                break;
-                            }
-                            _ => {
-                                args.push(self.expression()?);
-                            }
+                        if let TokenKind::RightParen = self.peek().kind {
+                            self.advance();
+                            break;
                         }
+                        args.push(self.expression()?);
+                        if let TokenKind::RightParen = self.peek().kind {
+                            self.advance();
+                            break;
+                        }
+                        consume!(self, TokenKind::Comma)?;
                     }
 
                     expr = self.node(Expression::FuncCall(expression::FuncCall {
@@ -726,5 +738,38 @@ impl Parser {
 
     fn at_end(&mut self) -> bool {
         matches!(self.peek().kind, TokenKind::Eof)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    macro_rules! token {
+        ($expr: expr) => {
+            Token {
+                kind: $expr,
+                span: Span::default(),
+            }
+        };
+    }
+
+    macro_rules! assert_is_err {
+        ($val: expr) => {
+            assert!(matches!($val, Err(_)));
+        };
+    }
+
+    #[test]
+    fn dont_allow_args_without_commas_in_between() {
+        let mut parser = Parser::new(&[
+            token!(TokenKind::Identifier("test".to_string())),
+            token!(TokenKind::LeftParen),
+            token!(TokenKind::Identifier("a".to_string())),
+            token!(TokenKind::Identifier("b".to_string())),
+            token!(TokenKind::RightParen),
+        ]);
+
+        assert_is_err!(parser.parse());
     }
 }
