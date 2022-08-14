@@ -17,9 +17,9 @@ macro_rules! token {
 #[test]
 fn it_parses_addition() {
     let mut parser = Parser::new(&[
-        token!(TokenKind::Numeric(5.2)),
+        token!(TokenKind::F64(5.2)),
         token!(TokenKind::Plus),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -42,7 +42,7 @@ fn it_parses_addition() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric":5.2
+                                    "F64":5.2
                                 }
                             },
                             "operator":"Plus",
@@ -52,7 +52,7 @@ fn it_parses_addition() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric":10.0
+                                    "F64":10.0
                                 }
                             }
                         }
@@ -68,12 +68,12 @@ fn it_parses_addition() {
 fn it_parses_parentheses() {
     let mut parser = Parser::new(&vec![
         token!(TokenKind::LeftParen),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Plus),
-        token!(TokenKind::Numeric(2.0)),
+        token!(TokenKind::F64(2.0)),
         token!(TokenKind::RightParen),
         token!(TokenKind::Slash),
-        token!(TokenKind::Numeric(3.0)),
+        token!(TokenKind::F64(3.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -109,7 +109,7 @@ fn it_parses_parentheses() {
                                                         "line": 0
                                                     },
                                                     "expression": {
-                                                        "Numeric": 10.0
+                                                        "F64": 10.0
                                                     }
                                                 },
                                                 "operator": "Plus",
@@ -119,7 +119,7 @@ fn it_parses_parentheses() {
                                                         "line": 0
                                                     },
                                                     "expression": {
-                                                        "Numeric": 2.0
+                                                        "F64": 2.0
                                                     }
                                                 }
                                             }
@@ -134,7 +134,7 @@ fn it_parses_parentheses() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 3.0
+                                    "F64": 3.0
                                 }
                             }
                         }
@@ -152,7 +152,7 @@ fn it_parses_while_loop() {
         token!(TokenKind::While),
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Less),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -198,7 +198,7 @@ fn it_parses_while_loop() {
                                                 "line": 0
                                             },
                                             "expression": {
-                                                "Numeric": 10.0
+                                                "F64": 10.0
                                             }
                                         }
                                     }
@@ -251,7 +251,7 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_while() {
         token!(TokenKind::While),
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Less),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::String("hello".to_string())),
     ]);
 
@@ -278,7 +278,7 @@ fn it_parses_conditionals() {
         token!(TokenKind::If),
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Less),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -324,7 +324,7 @@ fn it_parses_conditionals() {
                                                 "line": 0
                                             },
                                             "expression": {
-                                                "Numeric": 10.0
+                                                "F64": 10.0
                                             }
                                         }
                                     }
@@ -378,7 +378,7 @@ fn it_parses_conditionals_with_else() {
         token!(TokenKind::If),
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Less),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -431,7 +431,7 @@ fn it_parses_conditionals_with_else() {
                                                 "line": 0
                                             },
                                             "expression": {
-                                                "Numeric": 10.0
+                                                "F64": 10.0
                                             }
                                         }
                                     }
@@ -516,7 +516,7 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_if() {
         token!(TokenKind::If),
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Less),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -550,7 +550,7 @@ fn it_returns_error_when_no_curly_after_while_predicate_in_else() {
         token!(TokenKind::If),
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Less),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::String("hello".to_string())),
     ]);
 
@@ -591,7 +591,7 @@ fn it_parses_assignments() {
     let mut parser = Parser::new(&[
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Equal),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -623,7 +623,7 @@ fn it_parses_assignments() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             }
                         }
@@ -640,7 +640,7 @@ fn it_parses_binary_equal() {
     let mut parser = Parser::new(&[
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::DoubleEqual),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -673,7 +673,7 @@ fn it_parses_binary_equal() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             }
                         }
@@ -690,7 +690,7 @@ fn it_parses_binary_not_equal() {
     let mut parser = Parser::new(&[
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::NotEqual),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -723,7 +723,7 @@ fn it_parses_binary_not_equal() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             }
                         }
@@ -740,7 +740,7 @@ fn it_parses_less_or_equal() {
     let mut parser = Parser::new(&[
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::LessOrEqual),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -773,7 +773,7 @@ fn it_parses_less_or_equal() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             }
                         }
@@ -790,7 +790,7 @@ fn it_parses_less() {
     let mut parser = Parser::new(&[
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Less),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -823,7 +823,7 @@ fn it_parses_less() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             }
                         }
@@ -840,7 +840,7 @@ fn it_parses_greater() {
     let mut parser = Parser::new(&[
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Greater),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -873,7 +873,7 @@ fn it_parses_greater() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             }
                         }
@@ -890,7 +890,7 @@ fn it_parses_greater_or_equal() {
     let mut parser = Parser::new(&[
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::GreaterOrEqual),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -923,7 +923,7 @@ fn it_parses_greater_or_equal() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             }
                         }
@@ -938,7 +938,7 @@ fn it_parses_greater_or_equal() {
 #[test]
 fn it_parses_subtraction() {
     let mut parser = Parser::new(&[
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Minus),
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Eof),
@@ -963,7 +963,7 @@ fn it_parses_subtraction() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             },
                             "operator": "Minus",
@@ -988,7 +988,7 @@ fn it_parses_subtraction() {
 #[test]
 fn it_parses_modulo() {
     let mut parser = Parser::new(&[
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Percent),
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Eof),
@@ -1013,7 +1013,7 @@ fn it_parses_modulo() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             },
                             "operator": "Mod",
@@ -1038,7 +1038,7 @@ fn it_parses_modulo() {
 #[test]
 fn it_parses_multiplication() {
     let mut parser = Parser::new(&[
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Asterisk),
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Eof),
@@ -1063,7 +1063,7 @@ fn it_parses_multiplication() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             },
                             "operator": "Asterisk",
@@ -1088,7 +1088,7 @@ fn it_parses_multiplication() {
 #[test]
 fn it_parses_division() {
     let mut parser = Parser::new(&[
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Slash),
         token!(TokenKind::Identifier("x".to_string())),
         token!(TokenKind::Eof),
@@ -1113,7 +1113,7 @@ fn it_parses_division() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             },
                             "operator": "Slash",
@@ -1139,7 +1139,7 @@ fn it_parses_division() {
 fn it_parses_unary_minus() {
     let mut parser = Parser::new(&[
         token!(TokenKind::Minus),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -1163,7 +1163,7 @@ fn it_parses_unary_minus() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 10.0
+                                    "F64": 10.0
                                 }
                             }
                         }
@@ -1255,7 +1255,7 @@ fn it_parses_func_declaration_with_one_number_param() {
         token!(TokenKind::LeftParen),
         token!(TokenKind::Identifier("a".to_string())),
         token!(TokenKind::Colon),
-        token!(TokenKind::Identifier("number".to_string())),
+        token!(TokenKind::Identifier("f64".to_string())),
         token!(TokenKind::RightParen),
         token!(TokenKind::Colon),
         token!(TokenKind::Identifier("void".to_string())),
@@ -1285,7 +1285,7 @@ fn it_parses_func_declaration_with_one_number_param() {
                             "return_type": "Void",
                             "params": [
                                 {
-                                    "typ": "Numeric",
+                                    "typ": "F64",
                                     "name": "a"
                                 }
                             ],
@@ -1505,7 +1505,7 @@ fn it_parses_func_declaration_with_multiple_params() {
         token!(TokenKind::Comma),
         token!(TokenKind::Identifier("b".to_string())),
         token!(TokenKind::Colon),
-        token!(TokenKind::Identifier("number".to_string())),
+        token!(TokenKind::Identifier("f64".to_string())),
         token!(TokenKind::RightParen),
         token!(TokenKind::Colon),
         token!(TokenKind::Identifier("void".to_string())),
@@ -1539,7 +1539,7 @@ fn it_parses_func_declaration_with_multiple_params() {
                                     "name": "a"
                                 },
                                 {
-                                    "typ": "Numeric",
+                                    "typ": "F64",
                                     "name": "b"
                                 }
                             ],
@@ -1985,7 +1985,7 @@ fn it_parses_func_call_with_two_args() {
         token!(TokenKind::LeftParen),
         token!(TokenKind::String("hello".to_string())),
         token!(TokenKind::Comma),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::RightParen),
         token!(TokenKind::Eof),
     ]);
@@ -2019,7 +2019,7 @@ fn it_parses_func_call_with_two_args() {
                                         "line": 0
                                     },
                                     "expression": {
-                                        "Numeric": 10.0
+                                        "F64": 10.0
                                     }
                                 }
                             ],
@@ -2048,7 +2048,7 @@ fn it_returns_error_for_call_syntax_on_non_identifiers() {
         token!(TokenKind::LeftParen),
         token!(TokenKind::String("hello".to_string())),
         token!(TokenKind::Comma),
-        token!(TokenKind::Numeric(10.0)),
+        token!(TokenKind::F64(10.0)),
         token!(TokenKind::RightParen),
         token!(TokenKind::Eof),
     ]);
@@ -2210,10 +2210,10 @@ fn it_parses_grouping_expression_with_identifiers() {
         token!(TokenKind::LeftParen),
         token!(TokenKind::Identifier("a".to_string())),
         token!(TokenKind::Plus),
-        token!(TokenKind::Numeric(1.0)),
+        token!(TokenKind::F64(1.0)),
         token!(TokenKind::RightParen),
         token!(TokenKind::Asterisk),
-        token!(TokenKind::Numeric(2.0)),
+        token!(TokenKind::F64(2.0)),
         token!(TokenKind::Eof),
     ]);
 
@@ -2269,7 +2269,7 @@ fn it_parses_grouping_expression_with_identifiers() {
                                                 "operator": "Plus",
                                                 "right": {
                                                     "expression": {
-                                                        "Numeric": 1.0,
+                                                        "F64": 1.0,
                                                     },
                                                     "span": {
                                                         "column": 0,
@@ -2288,7 +2288,7 @@ fn it_parses_grouping_expression_with_identifiers() {
                                     "line": 0
                                 },
                                 "expression": {
-                                    "Numeric": 2.0
+                                    "F64": 2.0
                                 }
                             }
                         }

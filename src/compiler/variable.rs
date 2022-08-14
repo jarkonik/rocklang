@@ -6,7 +6,7 @@ use crate::{
 #[derive(Debug, Clone, Copy)]
 pub enum Variable {
     String(llvm::Value),
-    Numeric(llvm::Value),
+    F64(llvm::Value),
     Bool(llvm::Value),
     Function {
         val: llvm::Function,
@@ -21,7 +21,7 @@ impl From<Variable> for llvm::Value {
     fn from(v: Variable) -> Self {
         match v {
             Variable::String(lv) => lv,
-            Variable::Numeric(lv) => lv,
+            Variable::F64(lv) => lv,
             Variable::Bool(lv) => lv,
             Variable::Function { val, .. } => llvm::Value(val.0),
             Variable::Vec(lv) => lv,
@@ -34,7 +34,7 @@ impl From<&Variable> for llvm::Value {
     fn from(v: &Variable) -> Self {
         match *v {
             Variable::String(lv) => lv,
-            Variable::Numeric(lv) => lv,
+            Variable::F64(lv) => lv,
             Variable::Bool(lv) => lv,
             Variable::Function { val, .. } => llvm::Value(val.0),
             Variable::Vec(lv) => lv,
@@ -45,7 +45,7 @@ impl From<&Variable> for llvm::Value {
 impl Variable {
     pub fn llvm_type(&self, context: &Context) -> llvm::Type {
         match self {
-            Variable::Numeric(_) => context.double_type(),
+            Variable::F64(_) => context.double_type(),
             Variable::Bool(_) => context.i1_type(),
             Variable::Ptr(_) => context.void_type().pointer_type(0),
             Variable::String(_) => context.void_type().pointer_type(0),
@@ -56,7 +56,7 @@ impl Variable {
 
     pub fn get_type(&self) -> parser::Type {
         match self {
-            Variable::Numeric(_) => parser::Type::Numeric,
+            Variable::F64(_) => parser::Type::F64,
             Variable::Bool(_) => parser::Type::Bool,
             Variable::Ptr(_) => parser::Type::Ptr,
             Variable::String(_) => parser::Type::String,
@@ -70,7 +70,7 @@ impl Variable {
             Variable::String(v) => {
                 v.0 = ptr.0;
             }
-            Variable::Numeric(v) => {
+            Variable::F64(v) => {
                 v.0 = ptr.0;
             }
             Variable::Bool(v) => {

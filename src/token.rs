@@ -35,7 +35,7 @@ pub enum TokenKind {
     Colon,
     String(String),
     Identifier(String),
-    Numeric(f64),
+    F64(f64),
     Load,
     Extern,
     Eof,
@@ -54,7 +54,7 @@ fn token_name(token: &TokenKind) -> &str {
         TokenKind::RightParen => "RightParen",
         TokenKind::Slash => "Slash",
         TokenKind::Identifier { .. } => "Identifier",
-        TokenKind::Numeric { .. } => "Numeric",
+        TokenKind::F64 { .. } => "F64",
         TokenKind::Plus => "Plus",
         TokenKind::Minus => "Minus",
         TokenKind::Asterisk => "Asterisk",
@@ -89,7 +89,7 @@ fn token_name(token: &TokenKind) -> &str {
 impl Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
-            TokenKind::Numeric(value) => {
+            TokenKind::F64(value) => {
                 write!(f, "<{}({})>", token_name(self), value)
             }
             TokenKind::Identifier(literal) | TokenKind::String(literal) => {

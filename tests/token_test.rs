@@ -21,7 +21,7 @@ macro_rules! assert_angle_brackets_format_string {
 #[test]
 fn it_assert_token_types_formatng() {
     assert_angle_brackets_format_string!(Identifier, "ident".to_string(), "<Identifier(ident)>");
-    assert_angle_brackets_format_string!(Numeric, 10.0, "<Numeric(10)>");
+    assert_angle_brackets_format_string!(F64, 10.0, "<F64(10)>");
     assert_angle_brackets_format_string!(String, "string".to_string(), "<String(string)>");
     assert_format_string!(LeftParen, "<LeftParen>");
     assert_format_string!(NotEqual, "<NotEqual>");

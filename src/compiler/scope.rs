@@ -51,7 +51,7 @@ impl Scope {
                         "",
                     );
                 }
-                Variable::Numeric(_)
+                Variable::F64(_)
                 | Variable::Bool(_)
                 | Variable::Function { .. }
                 | Variable::Ptr(_) => {}
@@ -67,7 +67,7 @@ impl Scope {
                     let release = module.get_function("release_vec_reference").unwrap();
                     builder.build_call(&release, &[*val], "");
                 }
-                Value::Numeric(_) | Value::Bool(_) | Value::Function { .. } | Value::Ptr(_) => {}
+                Value::F64(_) | Value::Bool(_) | Value::Function { .. } | Value::Ptr(_) => {}
                 Value::Void => unreachable!(),
                 Value::Break => unreachable!(),
                 Value::CString(_) => todo!(),

@@ -46,7 +46,7 @@ type Result<T> = std::result::Result<T, ParserError>;
 
 #[derive(Copy, Clone, Serialize, Debug)]
 pub enum Type {
-    Numeric,
+    F64,
     Bool,
     Vector,
     Void,
@@ -59,7 +59,7 @@ pub enum Type {
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = match self {
-            Type::Numeric => "Numeric",
+            Type::F64 => "F64",
             Type::Bool => "Bool",
             Type::Vector => "Vector",
             Type::Void => "Void",
@@ -536,7 +536,7 @@ impl Parser {
 
                 let return_type = match &self.advance().kind {
                     TokenKind::Identifier(type_literal) => match type_literal.as_str() {
-                        "number" => Type::Numeric,
+                        "f64" => Type::F64,
                         "vec" => Type::Vector,
                         "void" => Type::Void,
                         _ => {
@@ -673,7 +673,7 @@ impl Parser {
     fn primary(&mut self) -> Result<Node> {
         let token = self.advance().clone();
         match &token.kind {
-            TokenKind::Numeric(val) => Ok(self.node(Expression::Numeric(*val))),
+            TokenKind::F64(val) => Ok(self.node(Expression::F64(*val))),
             TokenKind::LeftParen => {
                 let expr = Expression::Grouping(expression::Grouping(Box::new(self.expression()?)));
 
@@ -725,7 +725,7 @@ impl Parser {
             "void" => Ok(Type::Void),
             "string" => Ok(Type::String),
             "cstring" => Ok(Type::CString),
-            "number" => Ok(Type::Numeric),
+            "f64" => Ok(Type::F64),
             "vec" => Ok(Type::Vector),
             "fun" => Ok(Type::Function),
             "ptr" => Ok(Type::Ptr),

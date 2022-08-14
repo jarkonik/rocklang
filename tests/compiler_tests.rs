@@ -19,7 +19,7 @@ fn it_compiles_numeric_asignment() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::Assignment(Assignment {
             left: boxed_node!(Expression::Identifier("x".to_string())),
-            right: boxed_node!(Expression::Numeric(5.0)),
+            right: boxed_node!(Expression::F64(5.0)),
         }))],
     };
 
@@ -74,7 +74,7 @@ fn it_compiles_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
         body: vec![
             node!(Expression::Assignment(Assignment {
                 left: boxed_node!(Expression::Identifier("x".to_string())),
-                right: boxed_node!(Expression::Numeric(5.0)),
+                right: boxed_node!(Expression::F64(5.0)),
             })),
             node!(Expression::Assignment(Assignment {
                 left: boxed_node!(Expression::Identifier("y".to_string())),
@@ -137,7 +137,7 @@ fn it_returns_err_numeric_to_numeric_asignment() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::Assignment(Assignment {
             left: boxed_node!(Expression::String("x".to_string())),
-            right: boxed_node!(Expression::Numeric(5.0)),
+            right: boxed_node!(Expression::F64(5.0)),
         }))],
     };
 
@@ -198,7 +198,7 @@ fn it_compiles_print_function_with_string() -> Result<(), Box<dyn Error>> {
             calee: boxed_node!(Expression::Identifier("print".to_string())),
             args: vec![node!(Expression::FuncCall(FuncCall {
                 calee: boxed_node!(Expression::Identifier("string".to_string())),
-                args: vec![node!(Expression::Numeric(10.0))],
+                args: vec![node!(Expression::F64(10.0))],
             }))],
         }))],
     };
@@ -240,7 +240,7 @@ fn it_compiles_vec_get_function() -> Result<(), Box<dyn Error>> {
                 calee: boxed_node!(Expression::Identifier("vec_get".to_string())),
                 args: vec![
                     node!(Expression::Identifier("z".to_string())),
-                    node!(Expression::Numeric(0.0)),
+                    node!(Expression::F64(0.0)),
                 ],
             })),
         ],
@@ -256,7 +256,7 @@ fn it_compiles_sqrt_funcion() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::FuncCall(FuncCall {
             calee: boxed_node!(Expression::Identifier("sqrt".to_string())),
-            args: vec![node!(Expression::Numeric(4.0))],
+            args: vec![node!(Expression::F64(4.0))],
         }))],
     };
 
@@ -287,7 +287,7 @@ fn it_returns_err_when_non_sring_type_pass_to_print_funcions() -> Result<(), Box
     let program = Program {
         body: vec![node!(Expression::FuncCall(FuncCall {
             calee: boxed_node!(Expression::Identifier("print".to_string())),
-            args: vec![node!(Expression::Numeric(10.0))],
+            args: vec![node!(Expression::F64(10.0))],
         }))],
     };
 
@@ -399,11 +399,11 @@ fn it_test_visit_func_decl() -> Result<(), Box<dyn Error>> {
         body: vec![
             node!(Expression::FuncDecl(FuncDecl {
                 params: vec![Param {
-                    typ: Type::Numeric,
+                    typ: Type::F64,
                     name: "n".to_string(),
                 }],
                 body: vec![node!(Expression::String("n".to_string()))],
-                return_type: Type::Numeric,
+                return_type: Type::F64,
             })),
             node!(Expression::FuncDecl(FuncDecl {
                 params: vec![Param {
@@ -424,9 +424,9 @@ fn it_test_visit_func_decl() -> Result<(), Box<dyn Error>> {
 #[test]
 fn it_compiles_grouping_expressions() -> Result<(), Box<dyn Error>> {
     let grouping = expression::Grouping(boxed_node!(Expression::Binary(Binary {
-        left: boxed_node!(Expression::Numeric(10.0)),
+        left: boxed_node!(Expression::F64(10.0)),
         operator: Operator::NotEqual,
-        right: boxed_node!(Expression::Numeric(2.0)),
+        right: boxed_node!(Expression::F64(2.0)),
     })));
 
     let program = Program {
@@ -446,12 +446,12 @@ fn it_compiles_coditional() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::Conditional(Conditional {
             predicate: boxed_node!(Expression::Binary(Binary {
-                left: boxed_node!(Expression::Numeric(10.0)),
+                left: boxed_node!(Expression::F64(10.0)),
                 operator: Operator::NotEqual,
-                right: boxed_node!(Expression::Numeric(2.0)),
+                right: boxed_node!(Expression::F64(2.0)),
             })),
-            body: vec![node!(Expression::Numeric(10.0))],
-            else_body: vec![node!(Expression::Numeric(20.0))],
+            body: vec![node!(Expression::F64(10.0))],
+            else_body: vec![node!(Expression::F64(20.0))],
         }))],
     };
 
@@ -481,79 +481,79 @@ macro_rules! compile_operator {
 #[test]
 fn it_compiles_operators() -> Result<(), Box<dyn Error>> {
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::Plus,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::Minus,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::Asterisk,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::LessOrEqual,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::Less,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::Greater,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::GreaterOrEqual,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::Equal,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::Slash,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::Minus,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
     compile_operator!(
-        boxed_node!(Expression::Numeric(10.0)),
+        boxed_node!(Expression::F64(10.0)),
         Operator::NotEqual,
-        boxed_node!(Expression::Numeric(2.0))
+        boxed_node!(Expression::F64(2.0))
     )
     .unwrap();
 
@@ -564,7 +564,7 @@ fn it_compiles_operators() -> Result<(), Box<dyn Error>> {
 fn it_returns_err_when_adding_numeric_to_string() -> Result<(), Box<dyn Error>> {
     assert!(matches!(
         compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
+            boxed_node!(Expression::F64(10.0)),
             Operator::Plus,
             boxed_node!(Expression::String("test".to_string()))
         ),
@@ -579,7 +579,7 @@ fn it_returns_err_when_plus_string_to_numeric() -> Result<(), Box<dyn Error>> {
         compile_operator!(
             boxed_node!(Expression::String("test".to_string())),
             Operator::Plus,
-            boxed_node!(Expression::Numeric(10.0))
+            boxed_node!(Expression::F64(10.0))
         ),
         Err(_)
     ));
@@ -590,7 +590,7 @@ fn it_returns_err_when_plus_string_to_numeric() -> Result<(), Box<dyn Error>> {
 fn it_returns_err_when_substract_string_from_numeric() -> Result<(), Box<dyn Error>> {
     assert!(matches!(
         compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
+            boxed_node!(Expression::F64(10.0)),
             Operator::Minus,
             boxed_node!(Expression::String("test".to_string()))
         ),
@@ -605,7 +605,7 @@ fn it_returns_err_when_substract_numeric_from_string() -> Result<(), Box<dyn Err
         compile_operator!(
             boxed_node!(Expression::String("test".to_string())),
             Operator::Minus,
-            boxed_node!(Expression::Numeric(10.0))
+            boxed_node!(Expression::F64(10.0))
         ),
         Err(_)
     ));
@@ -616,7 +616,7 @@ fn it_returns_err_when_substract_numeric_from_string() -> Result<(), Box<dyn Err
 fn it_returns_err_when_multiple_numeric_by_string() -> Result<(), Box<dyn Error>> {
     assert!(matches!(
         compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
+            boxed_node!(Expression::F64(10.0)),
             Operator::Asterisk,
             boxed_node!(Expression::String("test".to_string()))
         ),
@@ -631,7 +631,7 @@ fn it_returns_err_when_multiple_string_to_numeric() -> Result<(), Box<dyn Error>
         compile_operator!(
             boxed_node!(Expression::String("test".to_string())),
             Operator::Asterisk,
-            boxed_node!(Expression::Numeric(10.0))
+            boxed_node!(Expression::F64(10.0))
         ),
         Err(_)
     ));
@@ -642,7 +642,7 @@ fn it_returns_err_when_multiple_string_to_numeric() -> Result<(), Box<dyn Error>
 fn it_returns_err_when_less_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     assert!(matches!(
         compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
+            boxed_node!(Expression::F64(10.0)),
             Operator::LessOrEqual,
             boxed_node!(Expression::String("test".to_string()))
         ),
@@ -657,7 +657,7 @@ fn it_returns_err_when_less_or_equal_string_to_numeric() -> Result<(), Box<dyn E
         compile_operator!(
             boxed_node!(Expression::String("test".to_string())),
             Operator::LessOrEqual,
-            boxed_node!(Expression::Numeric(10.0))
+            boxed_node!(Expression::F64(10.0))
         ),
         Err(_)
     ));
@@ -668,7 +668,7 @@ fn it_returns_err_when_less_or_equal_string_to_numeric() -> Result<(), Box<dyn E
 fn it_returns_err_when_less_numeric_and_string() -> Result<(), Box<dyn Error>> {
     assert!(matches!(
         compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
+            boxed_node!(Expression::F64(10.0)),
             Operator::Less,
             boxed_node!(Expression::String("test".to_string()))
         ),
@@ -683,7 +683,7 @@ fn it_returns_err_when_less_string_to_numeric() -> Result<(), Box<dyn Error>> {
         compile_operator!(
             boxed_node!(Expression::String("test".to_string())),
             Operator::Less,
-            boxed_node!(Expression::Numeric(10.0))
+            boxed_node!(Expression::F64(10.0))
         ),
         Err(_)
     ));
@@ -694,7 +694,7 @@ fn it_returns_err_when_less_string_to_numeric() -> Result<(), Box<dyn Error>> {
 fn it_returns_err_when_greater_numeric_and_string() -> Result<(), Box<dyn Error>> {
     assert!(matches!(
         compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
+            boxed_node!(Expression::F64(10.0)),
             Operator::Greater,
             boxed_node!(Expression::String("test".to_string()))
         ),
@@ -709,7 +709,7 @@ fn it_returns_err_when_greater_string_to_numeric() -> Result<(), Box<dyn Error>>
         compile_operator!(
             boxed_node!(Expression::String("test".to_string())),
             Operator::Greater,
-            boxed_node!(Expression::Numeric(10.0))
+            boxed_node!(Expression::F64(10.0))
         ),
         Err(_)
     ));
@@ -720,7 +720,7 @@ fn it_returns_err_when_greater_string_to_numeric() -> Result<(), Box<dyn Error>>
 fn it_returns_err_when_greater_or_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     assert!(matches!(
         compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
+            boxed_node!(Expression::F64(10.0)),
             Operator::GreaterOrEqual,
             boxed_node!(Expression::String("test".to_string()))
         ),
@@ -735,7 +735,7 @@ fn it_returns_err_when_greater_or_equal_string_to_numeric() -> Result<(), Box<dy
         compile_operator!(
             boxed_node!(Expression::String("test".to_string())),
             Operator::GreaterOrEqual,
-            boxed_node!(Expression::Numeric(10.0))
+            boxed_node!(Expression::F64(10.0))
         ),
         Err(_)
     ));
@@ -746,7 +746,7 @@ fn it_returns_err_when_greater_or_equal_string_to_numeric() -> Result<(), Box<dy
 fn it_returns_err_when_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     assert!(matches!(
         compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
+            boxed_node!(Expression::F64(10.0)),
             Operator::Equal,
             boxed_node!(Expression::String("test".to_string()))
         ),
@@ -761,7 +761,7 @@ fn it_returns_err_when_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
         compile_operator!(
             boxed_node!(Expression::String("test".to_string())),
             Operator::Equal,
-            boxed_node!(Expression::Numeric(10.0))
+            boxed_node!(Expression::F64(10.0))
         ),
         Err(_)
     ));
@@ -772,7 +772,7 @@ fn it_returns_err_when_equal_string_to_numeric() -> Result<(), Box<dyn Error>> {
 fn it_returns_err_when_slash_numeric_and_string() -> Result<(), Box<dyn Error>> {
     assert!(matches!(
         compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
+            boxed_node!(Expression::F64(10.0)),
             Operator::Slash,
             boxed_node!(Expression::String("test".to_string()))
         ),
@@ -787,7 +787,7 @@ fn it_returns_err_when_slash_string_to_numeric() -> Result<(), Box<dyn Error>> {
         compile_operator!(
             boxed_node!(Expression::String("test".to_string())),
             Operator::Slash,
-            boxed_node!(Expression::Numeric(10.0))
+            boxed_node!(Expression::F64(10.0))
         ),
         Err(_)
     ));
@@ -798,7 +798,7 @@ fn it_returns_err_when_slash_string_to_numeric() -> Result<(), Box<dyn Error>> {
 fn it_returns_err_when_not_equal_numeric_and_string() -> Result<(), Box<dyn Error>> {
     assert!(matches!(
         compile_operator!(
-            boxed_node!(Expression::Numeric(10.0)),
+            boxed_node!(Expression::F64(10.0)),
             Operator::NotEqual,
             boxed_node!(Expression::String("test".to_string()))
         ),
@@ -813,7 +813,7 @@ fn it_returns_err_when_not_equal_string_to_numeric() -> Result<(), Box<dyn Error
         compile_operator!(
             boxed_node!(Expression::String("test".to_string())),
             Operator::NotEqual,
-            boxed_node!(Expression::Numeric(10.0))
+            boxed_node!(Expression::F64(10.0))
         ),
         Err(_)
     ));
@@ -825,7 +825,7 @@ fn it_compiles_unary_operator() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::Unary(Unary {
             operator: Operator::Minus,
-            right: boxed_node!(Expression::Numeric(2.0)),
+            right: boxed_node!(Expression::F64(2.0)),
         }))],
     };
 
@@ -855,7 +855,7 @@ fn it_returns_err_when_wrong_unary_operator() -> Result<(), Box<dyn Error>> {
     let program = Program {
         body: vec![node!(Expression::Unary(Unary {
             operator: Operator::Plus,
-            right: boxed_node!(Expression::Numeric(2.0)),
+            right: boxed_node!(Expression::F64(2.0)),
         }))],
     };
 
@@ -891,8 +891,8 @@ fn it_compiles_ffi_calls() -> Result<(), Box<dyn Error>> {
             node!(Expression::Assignment(expression::Assignment {
                 left: boxed_node!(Expression::Identifier(String::from("sum"))),
                 right: boxed_node!(Expression::Extern(expression::Extern {
-                    types: [Type::Numeric, Type::Numeric].to_vec(),
-                    return_type: Type::Numeric,
+                    types: [Type::F64, Type::F64].to_vec(),
+                    return_type: Type::F64,
                     name: String::from("rockffitest"),
                 })),
             })),
@@ -930,11 +930,7 @@ fn it_compiles_ffi_calls() -> Result<(), Box<dyn Error>> {
             })),
             node!(Expression::FuncCall(expression::FuncCall {
                 calee: boxed_node!(Expression::Identifier(String::from("sum"))),
-                args: [
-                    node!(Expression::Numeric(2.0)),
-                    node!(Expression::Numeric(3.0))
-                ]
-                .to_vec(),
+                args: [node!(Expression::F64(2.0)), node!(Expression::F64(3.0))].to_vec(),
             })),
             node!(Expression::FuncCall(expression::FuncCall {
                 calee: boxed_node!(Expression::Identifier(String::from("passstr"))),
@@ -1008,7 +1004,7 @@ fn it_compile_break_in_while_and_if() -> Result<(), Box<dyn Error>> {
             predicate: boxed_node!(Expression::Bool(true)),
             body: vec![node!(Expression::Conditional(Conditional {
                 predicate: boxed_node!(Expression::Bool(true)),
-                body: vec![node!(Expression::Break), node!(Expression::Numeric(1.0))],
+                body: vec![node!(Expression::Break), node!(Expression::F64(1.0))],
                 else_body: vec![],
             }))],
         }))],

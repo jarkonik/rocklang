@@ -9,8 +9,8 @@ pub trait FuncCallVisitor<T> {
     fn visit_func_call(&mut self, expr: &expression::FuncCall, span: Span) -> T;
 }
 
-pub trait NumericVisitor<T> {
-    fn visit_numeric(&mut self, expr: &f64) -> T;
+pub trait F64Visitor<T> {
+    fn visit_f64(&mut self, expr: &f64) -> T;
 }
 
 pub trait StringVisitor<T> {
@@ -68,7 +68,7 @@ pub trait ExternVisitor<T> {
 pub trait Visitor<T>:
     BinaryVisitor<T>
     + FuncCallVisitor<T>
-    + NumericVisitor<T>
+    + F64Visitor<T>
     + StringVisitor<T>
     + ProgramVisitor<T>
     + AssignmentVisitor<T>

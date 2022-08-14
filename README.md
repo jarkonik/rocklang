@@ -35,7 +35,7 @@ print("Hello from rocklang")
 Sample implementation of Sieve of Eratosthenes written in Rock
 
 ```c
-mem_set = (vec: vec, val: number, n: number): vec => {
+mem_set = (vec: vec, val: f64, n: f64): vec => {
 	i = 0
 	while i < n {
 		vec_set(vec, i, val)
@@ -44,7 +44,7 @@ mem_set = (vec: vec, val: number, n: number): vec => {
 	vec
 }
 
-sieve = (n: number): void => {
+sieve = (n: f64): void => {
 	v = vec_new()
 	prime = mem_set(v, 1, n + 1)
 

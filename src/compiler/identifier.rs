@@ -13,7 +13,7 @@ impl IdentifierVisitor<CompilerResult<Value>> for Compiler {
                     .build_load(&var.llvm_type(&self.context), &var.into(), "");
                 Some(match var {
                     Variable::String(_) => Value::String(val),
-                    Variable::Numeric(_) => Value::Numeric(val),
+                    Variable::F64(_) => Value::F64(val),
                     Variable::Bool(_) => Value::Bool(val),
                     Variable::Function {
                         typ,

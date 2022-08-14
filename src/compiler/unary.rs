@@ -15,15 +15,15 @@ impl UnaryVisitor<CompilerResult<Value>> for Compiler {
         match &expr.operator {
             expression::Operator::Minus => {
                 let r = match self.walk(&expr.right)? {
-                    Value::Numeric(p) => p,
+                    Value::F64(p) => p,
                     val => Err(CompilerError::TypeError {
-                        expected: parser::Type::Numeric,
+                        expected: parser::Type::F64,
                         actual: val.get_type(),
                         span,
                     })?,
                 };
 
-                Ok(Value::Numeric(self.builder.build_fneg(r, "")))
+                Ok(Value::F64(self.builder.build_fneg(r, "")))
             }
             operator => Err(CompilerError::WrongOperator {
                 expected: expression::Operator::Minus,

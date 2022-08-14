@@ -79,7 +79,7 @@ pub enum Expression {
     Bool(bool),
     String(String),
     Identifier(String),
-    Numeric(f64),
+    F64(f64),
     Conditional(Conditional),
     Assignment(Assignment),
     Binary(Binary),

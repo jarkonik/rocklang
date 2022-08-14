@@ -16,7 +16,7 @@ fn compile_args<T: LLVMCompiler>(
             let val = match compiler.walk(arg)? {
                 Value::Void | Value::Break => Err(CompilerError::VoidAssignment)?,
                 Value::String(n) => n,
-                Value::Numeric(n) => n,
+                Value::F64(n) => n,
                 Value::Bool(n) => n,
                 Value::Vec(n) => n,
                 Value::Ptr(n) => n,
@@ -59,7 +59,7 @@ fn compile_func_call<T: LLVMCompiler>(
             let llvm_value = builder.build_call(&val, &args, "");
 
             let val = match return_type {
-                parser::Type::Numeric => Value::Numeric(llvm_value),
+                parser::Type::F64 => Value::F64(llvm_value),
                 parser::Type::Vector => {
                     let value = Value::Vec(llvm_value);
                     compiler.track_maybe_orphaned(value);
@@ -150,12 +150,12 @@ mod test {
                 .times(1)
                 .return_const_st(Some(fun_value.clone()));
 
-            let const_double = Value::Numeric(compiler.context().const_double(3.));
+            let const_double = Value::F64(compiler.context().const_double(3.));
 
             compiler
                 .expect_walk()
                 .returning_st(move |x| match x.expression {
-                    Expression::Numeric(_) => Ok(const_double),
+                    Expression::F64(_) => Ok(const_double),
                     _ => todo!(),
                 });
 
@@ -193,8 +193,8 @@ mod test {
 
     #[test]
     fn test_func_numeric_no_args_call() -> Result<(), CompilerError> {
-        let (ir, return_value) = test_func_call!(Type::Numeric, vec![], vec![]);
-        assert!(matches!(return_value, Value::Numeric(_)));
+        let (ir, return_value) = test_func_call!(Type::F64, vec![], vec![]);
+        assert!(matches!(return_value, Value::F64(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -252,8 +252,8 @@ mod test {
     fn test_func_one_arg() -> Result<(), CompilerError> {
         let (ir, return_value) = test_func_call!(
             Type::Void,
-            vec![Type::Numeric],
-            vec![node!(Expression::Numeric(3.0))]
+            vec![Type::F64],
+            vec![node!(Expression::F64(3.0))]
         );
         assert!(matches!(return_value, Value::Void));
         assert_eq_ir!(

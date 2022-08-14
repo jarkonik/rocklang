@@ -166,7 +166,7 @@ impl Tokenizer {
             }
         }
 
-        self.add_token(TokenKind::Numeric(
+        self.add_token(TokenKind::F64(
             literal.parse().expect("Error parsing number"),
         ));
     }

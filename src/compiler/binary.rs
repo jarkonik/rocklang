@@ -12,39 +12,31 @@ fn compile_binary<T: LLVMCompiler>(
     span: Span,
 ) -> CompilerResult<Value> {
     let lhs = match compiler.walk(&expr.left)? {
-        Value::Numeric(n) => n,
+        Value::F64(n) => n,
         expr => Err(CompilerError::TypeError {
-            expected: crate::parser::Type::Numeric,
+            expected: crate::parser::Type::F64,
             actual: expr.get_type(),
             span: span.clone(),
         })?,
     };
 
     let rhs = match compiler.walk(&expr.right)? {
-        Value::Numeric(n) => n,
+        Value::F64(n) => n,
         expr => Err(CompilerError::TypeError {
-            expected: crate::parser::Type::Numeric,
+            expected: crate::parser::Type::F64,
             actual: expr.get_type(),
             span,
         })?,
     };
 
     match expr.operator {
-        expression::Operator::Plus => {
-            Ok(Value::Numeric(compiler.builder().build_fadd(lhs, rhs, "")))
-        }
-        expression::Operator::Minus => {
-            Ok(Value::Numeric(compiler.builder().build_fsub(lhs, rhs, "")))
-        }
+        expression::Operator::Plus => Ok(Value::F64(compiler.builder().build_fadd(lhs, rhs, ""))),
+        expression::Operator::Minus => Ok(Value::F64(compiler.builder().build_fsub(lhs, rhs, ""))),
         expression::Operator::Asterisk => {
-            Ok(Value::Numeric(compiler.builder().build_fmul(lhs, rhs, "")))
+            Ok(Value::F64(compiler.builder().build_fmul(lhs, rhs, "")))
         }
-        expression::Operator::Slash => {
-            Ok(Value::Numeric(compiler.builder().build_fdiv(lhs, rhs, "")))
-        }
-        expression::Operator::Mod => {
-            Ok(Value::Numeric(compiler.builder().build_frem(lhs, rhs, "")))
-        }
+        expression::Operator::Slash => Ok(Value::F64(compiler.builder().build_fdiv(lhs, rhs, ""))),
+        expression::Operator::Mod => Ok(Value::F64(compiler.builder().build_frem(lhs, rhs, ""))),
         expression::Operator::Equal => Ok(Value::Bool(compiler.builder().build_fcmp(
             lhs,
             rhs,
@@ -118,7 +110,7 @@ mod test {
         compiler.expect_context().return_const(context);
         compiler.expect_builder().return_const(builder);
 
-        let const_double = Value::Numeric(compiler.context().const_double(3.0));
+        let const_double = Value::F64(compiler.context().const_double(3.0));
         compiler.expect_walk().return_const_st(Ok(const_double));
 
         let val: Value;
@@ -127,12 +119,12 @@ mod test {
                 &mut compiler,
                 &expression::Binary {
                     left: Box::new(Node {
-                        expression: expression::Expression::Numeric(6.0),
+                        expression: expression::Expression::F64(6.0),
                         span: Default::default(),
                     }),
                     operator,
                     right: Box::new(Node {
-                        expression: expression::Expression::Numeric(2.0),
+                        expression: expression::Expression::F64(2.0),
                         span: Default::default(),
                     }),
                 },
@@ -140,7 +132,7 @@ mod test {
             )?;
 
             match val {
-                Value::Numeric(val) => {
+                Value::F64(val) => {
                     let ptr = compiler
                         .builder()
                         .build_alloca(compiler.context().double_type(), "");
@@ -162,7 +154,7 @@ mod test {
     #[test]
     fn test_addition() -> Result<(), CompilerError> {
         let (ir, val) = test_binary_operation(expression::Operator::Plus)?;
-        assert!(matches!(val, Value::Numeric(_)));
+        assert!(matches!(val, Value::F64(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -180,7 +172,7 @@ mod test {
     #[test]
     fn test_subtraction() -> Result<(), CompilerError> {
         let (ir, val) = test_binary_operation(expression::Operator::Minus)?;
-        assert!(matches!(val, Value::Numeric(_)));
+        assert!(matches!(val, Value::F64(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -198,7 +190,7 @@ mod test {
     #[test]
     fn test_multiplication() -> Result<(), CompilerError> {
         let (ir, val) = test_binary_operation(expression::Operator::Asterisk)?;
-        assert!(matches!(val, Value::Numeric(_)));
+        assert!(matches!(val, Value::F64(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -216,7 +208,7 @@ mod test {
     #[test]
     fn test_division() -> Result<(), CompilerError> {
         let (ir, val) = test_binary_operation(expression::Operator::Slash)?;
-        assert!(matches!(val, Value::Numeric(_)));
+        assert!(matches!(val, Value::F64(_)));
         assert_eq_ir!(
             ir,
             r#"
@@ -234,7 +226,7 @@ mod test {
     #[test]
     fn test_remainder() -> Result<(), CompilerError> {
         let (ir, val) = test_binary_operation(expression::Operator::Mod)?;
-        assert!(matches!(val, Value::Numeric(_)));
+        assert!(matches!(val, Value::F64(_)));
         assert_eq_ir!(
             ir,
             r#"

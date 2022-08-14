@@ -62,8 +62,8 @@ macro_rules! mock_compiler {
         mock! {
             Compiler { }
 
-            impl NumericVisitor<CompilerResult<Value>> for Compiler {
-                fn visit_numeric(&mut self, expr: &f64) -> CompilerResult<Value>;
+            impl F64Visitor<CompilerResult<Value>> for Compiler {
+                fn visit_f64(&mut self, expr: &f64) -> CompilerResult<Value>;
             }
 
             impl BinaryVisitor<CompilerResult<Value>> for Compiler {

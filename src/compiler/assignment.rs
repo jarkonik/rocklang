@@ -59,7 +59,7 @@ fn compile_assignment<T: LLVMCompiler>(
                             "",
                         );
                     }
-                    Variable::Numeric(_)
+                    Variable::F64(_)
                     | Variable::Bool(_)
                     | Variable::Function { .. }
                     | Variable::Ptr(_) => {}
@@ -70,7 +70,7 @@ fn compile_assignment<T: LLVMCompiler>(
             None => {
                 let var = match right {
                     Value::String(_) => Variable::String(ptr),
-                    Value::Numeric(_) => Variable::Numeric(ptr),
+                    Value::F64(_) => Variable::F64(ptr),
                     Value::Bool(_) => Variable::Bool(ptr),
                     Value::Function {
                         return_type,
@@ -101,7 +101,7 @@ fn compile_assignment<T: LLVMCompiler>(
 
                 compiler.builder().build_call(&release, &[val], "");
             }
-            Value::Numeric(_) => {}
+            Value::F64(_) => {}
             Value::Bool(_) => {}
             Value::Function { .. } => {}
             Value::Vec(val) => {
@@ -165,13 +165,13 @@ mod test {
         compiler.expect_builder().return_const(builder);
         compiler.expect_get_var().return_const_st(None);
 
-        let const_double = Value::Numeric(compiler.context().const_double(3.0));
+        let const_double = Value::F64(compiler.context().const_double(3.0));
         compiler.expect_walk().return_const_st(Ok(const_double));
         compiler
             .expect_set_var()
             .with(
                 predicate::eq("test"),
-                predicate::function(|x| matches!(x, Variable::Numeric(_))),
+                predicate::function(|x| matches!(x, Variable::F64(_))),
             )
             .return_const(());
 
@@ -185,7 +185,7 @@ mod test {
                         span: Default::default(),
                     }),
                     right: Box::new(Node {
-                        expression: expression::Expression::Numeric(2.0),
+                        expression: expression::Expression::F64(2.0),
                         span: Default::default(),
                     }),
                 },

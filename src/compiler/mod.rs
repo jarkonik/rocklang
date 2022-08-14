@@ -129,7 +129,7 @@ impl Visitor<CompilerResult<Value>> for Compiler {
             Expression::Binary(expr) => self.visit_binary(expr, span),
             Expression::Unary(expr) => self.visit_unary(expr, span),
             Expression::FuncCall(expr) => self.visit_func_call(expr, span),
-            Expression::Numeric(expr) => self.visit_numeric(expr),
+            Expression::F64(expr) => self.visit_f64(expr),
             Expression::Assignment(expr) => self.visit_assignment(expr, span),
             Expression::Identifier(expr) => self.visit_identifier(expr),
             Expression::Conditional(expr) => self.visit_conditional(expr, span),
@@ -344,7 +344,7 @@ impl Compiler {
             "vec_get",
             vec_get_type,
             stdlib::vec_get as *mut c_void,
-            parser::Type::Numeric,
+            parser::Type::F64,
         );
 
         let vec_len_type = self.context.function_type(
@@ -356,7 +356,7 @@ impl Compiler {
             "vec_len",
             vec_len_type,
             stdlib::vec_len as *mut c_void,
-            parser::Type::Numeric,
+            parser::Type::F64,
         );
 
         let sqrt_type = self.context.function_type(
@@ -370,7 +370,7 @@ impl Compiler {
             Variable::Function {
                 val,
                 typ: sqrt_type,
-                return_type: parser::Type::Numeric,
+                return_type: parser::Type::F64,
             },
         );
     }
@@ -459,7 +459,7 @@ impl LLVMCompiler for Compiler {
                         .unwrap();
                     self.builder.build_call(&release, &[v], "");
                 }
-                Value::Numeric(_) => todo!(),
+                Value::F64(_) => todo!(),
                 Value::Bool(_) => todo!(),
                 Value::Function { .. } => todo!(),
                 Value::Vec(v) => {
@@ -486,7 +486,7 @@ impl LLVMCompiler for Compiler {
             Value::Function { val, .. } => val,
             Value::Void => todo!(),
             Value::String(_) => todo!(),
-            Value::Numeric(_) => todo!(),
+            Value::F64(_) => todo!(),
             Value::Bool(_) => todo!(),
             Value::Vec(_) => todo!(),
             Value::Break => todo!(),
@@ -511,7 +511,7 @@ impl LLVMCompiler for Compiler {
 
                     Value::String(val)
                 }
-                parser::Type::Numeric => Value::Numeric(val),
+                parser::Type::F64 => Value::F64(val),
                 parser::Type::Bool => Value::Bool(val),
                 parser::Type::Vector => {
                     let release = self.module.get_function("inc_vec_reference").unwrap();
@@ -536,7 +536,7 @@ impl LLVMCompiler for Compiler {
 
         let ret_val = match last_val {
             Value::Void => None,
-            Value::Numeric(n) => Some(n),
+            Value::F64(n) => Some(n),
             Value::Vec(n) => {
                 let release = self.module.get_function("inc_vec_reference").unwrap();
                 self.builder.build_call(&release, &[n], "");
