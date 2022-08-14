@@ -302,49 +302,61 @@ fn it_parses_conditionals() {
                     "expression": {
                         "Conditional": {
                             "predicate": {
-                                "Binary": {
-                                    "left":{
-                                        "span": {
-                                            "column": 0,
-                                            "line": 0
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Binary": {
+                                        "left":{
+                                            "span": {
+                                                "column": 0,
+                                                "line": 0
+                                            },
+                                            "expression": {
+                                                "Identifier": "x"
+                                            }
                                         },
-                                        "expression": {
-                                            "Identifier": "x"
-                                        }
-                                    },
-                                    "operator": "Less",
-                                    "right":{
-                                        "span": {
-                                            "column": 0,
-                                            "line": 0
-                                        },
-                                        "expression": {
-                                            "Numeric": 10.0
+                                        "operator": "Less",
+                                        "right":{
+                                            "span": {
+                                                "column": 0,
+                                                "line": 0
+                                            },
+                                            "expression": {
+                                                "Numeric": 10.0
+                                            }
                                         }
                                     }
                                 }
                             },
                             "body": [
                                 {
-                                    "FuncCall": {
-                                        "args": [
-                                            {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "FuncCall": {
+                                            "args": [
+                                                {
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                    "expression": {
+                                                        "String": "hello"
+                                                    }
+                                                }
+                                            ],
+                                            "calee": {
                                                 "span": {
                                                     "column": 0,
                                                     "line": 0
                                                 },
                                                 "expression": {
-                                                    "String": "hello"
+                                                    "Identifier": "print"
                                                 }
-                                            }
-                                        ],
-                                        "calee": {
-                                            "span": {
-                                                "column": 0,
-                                                "line": 0
-                                            },
-                                            "expression": {
-                                                "Identifier": "print"
                                             }
                                         }
                                     }
@@ -427,25 +439,31 @@ fn it_parses_conditionals_with_else() {
                             },
                             "body": [
                                 {
-                                    "FuncCall": {
-                                        "args": [
-                                            {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "FuncCall": {
+                                            "args": [
+                                                {
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
+                                                    "expression": {
+                                                        "String": "hello"
+                                                    }
+                                                }
+                                            ],
+                                            "calee": {
                                                 "span": {
                                                     "column": 0,
                                                     "line": 0
                                                 },
                                                 "expression": {
-                                                    "String": "hello"
+                                                    "Identifier": "print"
                                                 }
-                                            }
-                                        ],
-                                        "calee": {
-                                            "span": {
-                                                "column": 0,
-                                                "line": 0
-                                            },
-                                            "expression": {
-                                                "Identifier": "print"
                                             }
                                         }
                                     }
@@ -453,16 +471,28 @@ fn it_parses_conditionals_with_else() {
                             ],
                             "else_body": [
                                 {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
                                     "expression": {
                                         "FuncCall": {
                                             "args": [
                                                 {
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
                                                     "expression": {
                                                         "String": "else"
                                                     }
                                                 }
                                             ],
                                             "calee": {
+                                                    "span": {
+                                                        "column": 0,
+                                                        "line": 0
+                                                    },
                                                     "expression": {
                                                         "Identifier": "print"
                                                     }
@@ -572,14 +602,26 @@ fn it_parses_assignments() {
         json!(
             [
                 {
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
                     "expression": {
                         "Assignment": {
                             "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
                                 "expression": {
                                     "Identifier": "x"
                                 }
                             },
                             "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
                                 "expression": {
                                     "Numeric": 10.0
                                 }
@@ -1857,12 +1899,24 @@ fn it_parses_func_call() {
         json!(
             [
                 {
-                    "FuncCall": {
-                        "args": [],
-                        "calee": {
-                            "Identifier": "print"
-                        }
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "FuncCall": {
+                            "args": [],
+                            "calee": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "print"
+                                }
+                            }
 
+                        }
                     }
                 }
             ]
