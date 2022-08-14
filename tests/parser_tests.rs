@@ -773,13 +773,31 @@ fn it_parses_modulo() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Numeric": 10.0
-                        },
-                        "operator": "Mod",
-                        "right": {
-                            "Identifier": "x"
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            },
+                            "operator": "Mod",
+                            "right": {
+                                "span": {
+                                    "column": 0,
+                                    "line": 0
+                                },
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            }
                         }
                     }
                 }
@@ -805,13 +823,19 @@ fn it_parses_multiplication() {
         json!(
             [
                 {
-                    "Binary": {
-                        "left": {
-                            "Numeric": 10.0
-                        },
-                        "operator": "Asterisk",
-                        "right": {
-                            "Identifier": "x"
+                    "expression": {
+                        "Binary": {
+                            "left": {
+                                "expression": {
+                                    "Numeric": 10.0
+                                }
+                            },
+                            "operator": "Asterisk",
+                            "right": {
+                                "expression": {
+                                    "Identifier": "x"
+                                }
+                            }
                         }
                     }
                 }
@@ -1250,33 +1274,45 @@ fn it_parses_func_declaration_with_multiple_params() {
         json!(
             [
                 {
-                    "FuncDecl": {
-                        "return_type": "Null",
-                        "params": [
-                            {
-                                "typ": "Function",
-                                "name": "a"
-                            },
-                            {
-                                "typ": "Numeric",
-                                "name": "b"
-                            }
-                        ],
-                        "body": [
-                            {
-                                "FuncCall": {
-                                    "args": [
-                                        {
-                                            "String": "hello"
-                                        }
-                                    ],
-                                    "calee": {
-                                        "Identifier": "print"
-                                    }
-
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "FuncDecl": {
+                            "return_type": "Void",
+                            "params": [
+                                {
+                                    "typ": "Function",
+                                    "name": "a"
+                                },
+                                {
+                                    "typ": "Numeric",
+                                    "name": "b"
                                 }
-                            }
-                        ]
+                            ],
+                            "body": [
+                                {
+                                    "span": {
+                                        "column": 0,
+                                        "line": 0
+                                    },
+                                    "expression": {
+                                        "FuncCall": {
+                                            "args": [
+                                                {
+                                                    "String": "hello"
+                                                }
+                                            ],
+                                            "calee": {
+                                                "Identifier": "print"
+                                            }
+
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             ]
@@ -1779,7 +1815,13 @@ fn it_parses_true_bool_literal() {
         json!(
             [
                 {
-                    "Bool": true
+                    "span": {
+                        "column": 0,
+                        "line": 0
+                    },
+                    "expression": {
+                        "Bool": true
+                    }
                 }
             ]
         ),
