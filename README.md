@@ -48,7 +48,7 @@ print("Hello from rocklang")
 ```
 sudo sh -c 'curl -L https://github.com/jarkonik/rocklang/releases/latest/download/rocklang-macos-latest -o /usr/local/bin/rocklang && chmod +x /usr/local/bin/rocklang'
 ```
-2. Create a file named `main.rck` in a directory of your choice, with following
+2. Create a file named `main.rck` in a directory of your choice, with the following
    content:
 ```
 print("Hello from rocklang")
