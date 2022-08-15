@@ -16,19 +16,45 @@ JIT-compiled programming language.
 
 ## Getting started
 
-### Windows
+### Linux
 
-1. [Download and run the installer.](https://github.com/jarkonik/rocklang/releases/latest/download/rocklang-windows-latest.msi)
-2. At this point, if you haven't changed the default installer options,
-   `rocklang.exe` should be installed and added to your `PATH`.
-3. Create a file named `main.rck` in a directory of your choice, with following
+1. Copy and paste the following command in a shell:
+```
+sudo sh -c 'curl -L https://github.com/jarkonik/rocklang/releases/latest/download/rocklang-ubuntu-latest -o /usr/local/bin/rocklang && chmod +x /usr/local/bin/rocklang'
+```
+2. Create a file named `main.rck` in a directory of your choice, with following
    content:
 ```
 print("Hello from rocklang")
 ```
-4. While being in the same directory, that you've created the source file in, run `rocklang main.rc` from PowerShell or
+3. While being in the same directory, that you've created the source file in, run `rocklang main.rck` from a shell.
+4. You should see text `Hello from rocklang` printed in your terminal.
+
+### Windows
+
+1. [Download and run the installer.](https://github.com/jarkonik/rocklang/releases/latest/download/rocklang-windows-latest.msi)
+2. Create a file named `main.rck` in a directory of your choice, with the following
+   content:
+```
+print("Hello from rocklang")
+```
+3. While being in the same directory, that you've created the source file in, run `rocklang main.rck` from PowerShell or
    Command Prompt.
-5. You should see text `Hello from rocklang` printed in your terminal.
+4. You should see text `Hello from rocklang` printed in your terminal.
+
+### MacOS
+
+1. Copy and paste the following command in a shell:
+```
+sudo sh -c 'curl -L https://github.com/jarkonik/rocklang/releases/latest/download/rocklang-macos-latest -o /usr/local/bin/rocklang && chmod +x /usr/local/bin/rocklang'
+```
+2. Create a file named `main.rck` in a directory of your choice, with following
+   content:
+```
+print("Hello from rocklang")
+```
+3. While being in the same directory, that you've created the source file in, run `rocklang main.rck` from a shell.
+4. You should see text `Hello from rocklang` printed in your terminal.
 
 ## Example
 
