@@ -1,7 +1,7 @@
 WIDTH = 30
 HEIGHT = 30
 
-complexprint = (c: vec): void => {
+complexprint = (c: vec) => void {
 	print(string(vec_get(c, 0)))
 	print("+")
 	print(string(vec_get(c, 1)))
@@ -9,7 +9,7 @@ complexprint = (c: vec): void => {
 	print("\n")
 }
 
-complexadd = (a: vec, b: vec): vec => {
+complexadd = (a: vec, b: vec) => vec {
 	r = vec_get(a, 0) + vec_get(b, 0)
 	img = vec_get(a, 1) + vec_get(b, 1)
 
@@ -21,7 +21,7 @@ complexadd = (a: vec, b: vec): vec => {
 }
 
 
-complexmul = (a: vec, b: vec): vec => {
+complexmul = (a: vec, b: vec) => vec {
 	r = vec_get(a, 0) * vec_get(b, 0) - vec_get(a, 1) * vec_get(b, 1)
 	img = vec_get(a, 0) * vec_get(b, 1) + vec_get(a, 1) * vec_get(b, 0)
 

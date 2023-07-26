@@ -1180,9 +1180,8 @@ fn it_parses_func_declaration_with_no_params() {
     let mut parser = Parser::new(&vec![
         token!(TokenKind::LeftParen),
         token!(TokenKind::RightParen),
-        token!(TokenKind::Colon),
-        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::Arrow),
+        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -1257,9 +1256,8 @@ fn it_parses_func_declaration_with_one_number_param() {
         token!(TokenKind::Colon),
         token!(TokenKind::Identifier("number".to_string())),
         token!(TokenKind::RightParen),
-        token!(TokenKind::Colon),
-        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::Arrow),
+        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -1339,9 +1337,8 @@ fn it_parses_func_declaration_with_one_vec_param() {
         token!(TokenKind::Colon),
         token!(TokenKind::Identifier("vec".to_string())),
         token!(TokenKind::RightParen),
-        token!(TokenKind::Colon),
-        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::Arrow),
+        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -1421,9 +1418,8 @@ fn it_parses_func_declaration_with_one_fun_param() {
         token!(TokenKind::Colon),
         token!(TokenKind::Identifier("fun".to_string())),
         token!(TokenKind::RightParen),
-        token!(TokenKind::Colon),
-        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::Arrow),
+        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -1507,9 +1503,8 @@ fn it_parses_func_declaration_with_multiple_params() {
         token!(TokenKind::Colon),
         token!(TokenKind::Identifier("number".to_string())),
         token!(TokenKind::RightParen),
-        token!(TokenKind::Colon),
-        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::Arrow),
+        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -1707,41 +1702,6 @@ fn it_returns_an_error_when_func_has_no_arg_type_after_arg_name() {
 }
 
 #[test]
-fn it_returns_an_error_when_func_has_no_return_type() {
-    let mut parser = Parser::new(&vec![
-        token!(TokenKind::LeftParen),
-        token!(TokenKind::Identifier("a".to_string())),
-        token!(TokenKind::Colon),
-        token!(TokenKind::Identifier("fun".to_string())),
-        token!(TokenKind::RightParen),
-        token!(TokenKind::Arrow),
-        token!(TokenKind::LCurly),
-        token!(TokenKind::Identifier("print".to_string())),
-        token!(TokenKind::LeftParen),
-        token!(TokenKind::String("hello".to_string())),
-        token!(TokenKind::RightParen),
-        token!(TokenKind::RCurly),
-        token!(TokenKind::Eof),
-    ]);
-
-    match parser.parse() {
-        Ok(_) => assert!(false, "should return an error"),
-        Err(e) => {
-            assert!(matches!(
-                e,
-                ParserError::SyntaxError {
-                    token: Token {
-                        kind: TokenKind::Arrow,
-                        ..
-                    },
-                    ..
-                },
-            ));
-        }
-    };
-}
-
-#[test]
 fn it_returns_an_error_when_func_has_unknown_return_type() {
     let mut parser = Parser::new(&vec![
         token!(TokenKind::LeftParen),
@@ -1749,9 +1709,8 @@ fn it_returns_an_error_when_func_has_unknown_return_type() {
         token!(TokenKind::Colon),
         token!(TokenKind::Identifier("fun".to_string())),
         token!(TokenKind::RightParen),
-        token!(TokenKind::Colon),
-        token!(TokenKind::Identifier("wrongtype".to_string())),
         token!(TokenKind::Arrow),
+        token!(TokenKind::Identifier("wrongtype".to_string())),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -1786,9 +1745,8 @@ fn it_returns_an_error_when_func_has_non_type_expression_as_return_type() {
         token!(TokenKind::Colon),
         token!(TokenKind::Identifier("fun".to_string())),
         token!(TokenKind::RightParen),
-        token!(TokenKind::Colon),
-        token!(TokenKind::String("string".to_string())),
         token!(TokenKind::Arrow),
+        token!(TokenKind::String("string".to_string())),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
         token!(TokenKind::LeftParen),
@@ -1823,7 +1781,6 @@ fn it_returns_error_when_func_decl_has_no_arrow() {
         token!(TokenKind::Colon),
         token!(TokenKind::Identifier("fun".to_string())),
         token!(TokenKind::RightParen),
-        token!(TokenKind::Colon),
         token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::LCurly),
         token!(TokenKind::Identifier("print".to_string())),
@@ -1841,7 +1798,7 @@ fn it_returns_error_when_func_decl_has_no_arrow() {
                 e,
                 ParserError::SyntaxError {
                     token: Token {
-                        kind: TokenKind::LCurly,
+                        kind: TokenKind::Identifier(_),
                         ..
                     },
                     ..
@@ -1859,9 +1816,8 @@ fn it_returns_error_when_func_decl_has_no_body() {
         token!(TokenKind::Colon),
         token!(TokenKind::Identifier("fun".to_string())),
         token!(TokenKind::RightParen),
-        token!(TokenKind::Colon),
-        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::Arrow),
+        token!(TokenKind::Identifier("void".to_string())),
         token!(TokenKind::String("hello".to_string())),
         token!(TokenKind::Eof),
     ]);

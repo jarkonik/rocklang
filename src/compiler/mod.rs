@@ -186,7 +186,6 @@ impl Compiler {
             Err(_) => Err(CompilerError::EngineInitError {})?,
         };
         let pass_manager = llvm::PassManager::new(&module);
-
         Ok(Compiler {
             after_loop_blocks: Vec::new(),
             maybe_orphaned: Vec::new(),
