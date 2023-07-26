@@ -525,7 +525,7 @@ impl Parser {
                 }
 
                 match self.advance().kind {
-                    TokenKind::Colon => (),
+                    TokenKind::Arrow => (),
                     _ => {
                         return Err(ParserError::SyntaxError {
                             token: self.previous().clone(),
@@ -554,15 +554,6 @@ impl Parser {
                     }
                 };
 
-                match self.advance().kind {
-                    TokenKind::Arrow => (),
-                    _ => {
-                        return Err(ParserError::SyntaxError {
-                            token: self.previous().clone(),
-                            backtrace: Backtrace::new(),
-                        })
-                    }
-                }
 
                 match self.advance().kind {
                     TokenKind::LCurly => (),
